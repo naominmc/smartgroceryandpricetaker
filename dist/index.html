@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Smart Grocery &amp; Budget Safety Tracker</title>
+    <meta name="description" content="Aplikasi pencatatan belanja bulanan dan pengendali anggaran cerdas untuk mahasiswa rantau saat belanja supermarket dengan Budget Safety Cap dan komparator harga." />
+    
+    <meta name="theme-color" content="#2563EB" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Smart Grocery" />
+    
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/pwa-192x192.png" />
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              background: '#F7F8FA',
+              card: '#FFFFFF',
+              primary: {
+                DEFAULT: '#2563EB',
+                hover: '#1D4ED8',
+                light: '#EFF6FF',
+                dark: '#3B82F6',
+              },
+              success: {
+                DEFAULT: '#16A34A',
+                light: '#F0FDF4',
+              },
+              warning: {
+                DEFAULT: '#F59E0B',
+                light: '#FFFBEB',
+              },
+              danger: {
+                DEFAULT: '#DC2626',
+                light: '#FEF2F2',
+              },
+              text: {
+                main: '#111827',
+                secondary: '#6B7280',
+              },
+              border: '#E5E7EB',
+              dark: {
+                bg: '#0F172A',
+                card: '#1E293B',
+                border: '#334155',
+                text: '#F8FAFC',
+                subtext: '#94A3B8',
+                hover: '#293548',
+              }
+            },
+            borderRadius: {
+              'card': '18px',
+              'card-lg': '22px',
+              'card-sm': '14px',
+            },
+            boxShadow: {
+              'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+              'float': '0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04)',
+              'modal': '0 -8px 30px rgba(0, 0, 0, 0.12)',
+              'dark-float': '0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3)',
+            }
+          }
+        }
+      };
+    </script>
+
+    <!-- Custom CSS styles -->
+    <link rel="stylesheet" href="/dist/bundle.css" />
+
+    <!-- ESM Importmap -->
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@19.0.0",
+        "react/": "https://esm.sh/react@19.0.0/",
+        "react-dom": "https://esm.sh/react-dom@19.0.0",
+        "react-dom/": "https://esm.sh/react-dom@19.0.0/",
+        "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
+        "lucide-react": "https://esm.sh/lucide-react@0.475.0",
+        "dexie": "https://esm.sh/dexie@4.0.11",
+        "dexie-react-hooks": "https://esm.sh/dexie-react-hooks@1.1.7?deps=dexie@4.0.11,react@19.0.0",
+        "zustand": "https://esm.sh/zustand@5.0.3",
+        "canvas-confetti": "https://esm.sh/canvas-confetti@1.9.4",
+        "react-hook-form": "https://esm.sh/react-hook-form@7.54.2?deps=react@19.0.0",
+        "zod": "https://esm.sh/zod@3.24.2",
+        "@hookform/resolvers/zod": "https://esm.sh/@hookform/resolvers@3.10.0/zod?deps=react-hook-form@7.54.2,zod@3.24.2"
+      }
+    }
+    </script>
+  </head>
+  <body class="bg-gray-100 text-text-main antialiased selection:bg-blue-100 selection:text-blue-700">
+    <div id="root"></div>
+    <script type="module" src="/dist/bundle.js"></script>
+  </body>
+</html>
