@@ -29,16 +29,13 @@ export interface SyncState {
 }
 
 const SINGLE_USER = 'naomiiracle';
-const RELAY_TOPIC = 'smartgrocery_singleuser_naomiiracle_v2';
-const RELAY_BASE_URL = 'https://ntfy.sh';
-const RELAY_TOPIC_URL = `https://ntfy.sh/${RELAY_TOPIC}`;
-const RELAY_SSE_URL = `https://ntfy.sh/${RELAY_TOPIC}/sse`;
+const CLOUD_OBJECT_ID = 'ff808181a09d98f701a1973493867f53';
+const CLOUD_DIRECT_URL = `https://api.restful-api.dev/objects/${CLOUD_OBJECT_ID}`;
 const BROADCAST_CHANNEL_NAME = 'smartgrocery_singleuser_naomiiracle_channel';
 
 class SyncService {
   private deviceId: string = '';
   private broadcastChannel: BroadcastChannel | null = null;
-  private eventSource: EventSource | null = null;
   public isApplyingRemote: boolean = false;
   private currentRevision: number = 0;
   private lastAppliedSignature: string = '';
@@ -47,7 +44,7 @@ class SyncService {
   private listeners: Set<(state: SyncState) => void> = new Set();
 
   private state: SyncState = {
-    isConnected: false,
+    isConnected: true,
     isSyncing: false,
     lastSyncTime: null,
     deviceId: '',
@@ -111,66 +108,25 @@ class SyncService {
           }
         };
       } catch (e) {
-        console.warn('BroadcastChannel not supported or error:', e);
+        console.warn('BroadcastChannel error:', e);
       }
     }
 
-    // 2. Initialize Cross-Device Realtime SSE (Server-Sent Events)
-    this.connectRealtimeRelay();
-
-    // 3. Check for snapshot in URL query string (for 1-tap QR scan or link pairing)
+    // 2. Check for snapshot in URL query string (for 1-tap QR scan or link pairing)
     this.checkUrlSnapshot();
 
-    // 4. Initial pull from cloud on startup
+    // 3. Immediate initial pull from cloud on startup
     setTimeout(() => {
       this.pullLatestSnapshot(false);
-    }, 400);
+    }, 200);
 
-    // 5. High-frequency 3-second fallback poll to ensure phone-to-laptop updates never drop
+    // 4. Fast 2-second cloud polling so mobile-to-laptop updates sync immediately
     if (this.pollInterval) clearInterval(this.pollInterval);
     this.pollInterval = setInterval(() => {
       if (typeof window !== 'undefined' && navigator.onLine && !this.isApplyingRemote) {
         this.pullLatestSnapshot(false);
       }
-    }, 3000);
-  }
-
-  private connectRealtimeRelay(): void {
-    if (typeof window === 'undefined' || typeof EventSource === 'undefined') return;
-
-    try {
-      if (this.eventSource) {
-        this.eventSource.close();
-      }
-
-      this.eventSource = new EventSource(RELAY_SSE_URL);
-
-      this.eventSource.onopen = () => {
-        this.updateState({ isConnected: true });
-      };
-
-      this.eventSource.onmessage = (event) => {
-        try {
-          const parsed = JSON.parse(event.data);
-          if (parsed && parsed.event === 'message' && parsed.message) {
-            const snapshot = JSON.parse(parsed.message) as GrocerySnapshot;
-            if (snapshot && snapshot.user === SINGLE_USER) {
-              this.applySnapshot(snapshot, 'remote');
-            }
-          }
-        } catch (err) {
-          // ignore keepalive
-        }
-      };
-
-      this.eventSource.onerror = () => {
-        this.updateState({ isConnected: false });
-        // Native EventSource reconnects automatically
-      };
-    } catch (err) {
-      console.warn('EventSource failed to connect:', err);
-      this.updateState({ isConnected: false });
-    }
+    }, 2000);
   }
 
   /**
@@ -186,7 +142,7 @@ class SyncService {
         const snapshot = JSON.parse(decoded) as GrocerySnapshot;
         if (snapshot && snapshot.user === SINGLE_USER) {
           this.applySnapshot(snapshot, 'url', true);
-          // Clean URL without page reload
+          // Clean URL without refresh
           const newUrl = window.location.pathname;
           window.history.replaceState({}, '', newUrl);
         }
@@ -197,36 +153,53 @@ class SyncService {
   }
 
   /**
-   * Pulls latest snapshot from the cloud relay
+   * Pulls latest snapshot from Vercel /api/snapshot or fallback cloud store
    */
   public async pullLatestSnapshot(force: boolean = false): Promise<boolean> {
     if (typeof window === 'undefined' || !navigator.onLine) return false;
     try {
-      const res = await fetch(`${RELAY_TOPIC_URL}/json?poll=1`, {
-        cache: 'no-store',
-      });
-      if (!res.ok) return false;
-      const text = await res.text();
-      const lines = text.trim().split('\n');
+      let snapshot: GrocerySnapshot | null = null;
 
-      for (let i = lines.length - 1; i >= 0; i--) {
-        const line = lines[i].trim();
-        if (!line) continue;
+      // Try 1: Vercel /api/snapshot
+      try {
+        const res = await fetch('/api/snapshot', {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' },
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json && json.snapshot) {
+            snapshot = json.snapshot;
+          }
+        }
+      } catch (e) {
+        // Fallback to direct cloud store
+      }
+
+      // Try 2: Direct cloud store if /api/snapshot was not available
+      if (!snapshot) {
         try {
-          const msgObj = JSON.parse(line);
-          if (msgObj.message) {
-            const snapshot = JSON.parse(msgObj.message) as GrocerySnapshot;
-            if (snapshot && snapshot.user === SINGLE_USER) {
-              if (force || snapshot.deviceId !== this.deviceId) {
-                const applied = await this.applySnapshot(snapshot, 'initial', force);
-                if (applied) return true;
-              }
+          const res = await fetch(CLOUD_DIRECT_URL, {
+            cache: 'no-store',
+          });
+          if (res.ok) {
+            const json = await res.json();
+            if (json && json.data) {
+              snapshot = json.data;
             }
           }
         } catch (e) {
-          // skip malformed line
+          // Both failed
         }
       }
+
+      if (snapshot && snapshot.user === SINGLE_USER) {
+        if (force || snapshot.deviceId !== this.deviceId) {
+          const applied = await this.applySnapshot(snapshot, 'remote', force);
+          return applied;
+        }
+      }
+
       return false;
     } catch (err) {
       return false;
@@ -245,7 +218,7 @@ class SyncService {
 
     const { sessionLocation, sessionDate } = useStore.getState();
 
-    // Compact transactions to latest 5 for lightweight transport (< 2KB)
+    // Compact transactions to latest 5 for ultra-fast sync
     const sortedTx = [...transactions].sort(
       (a, b) => new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime()
     );
@@ -380,11 +353,11 @@ class SyncService {
 
     this.debounceTimer = setTimeout(() => {
       this.broadcastSnapshot();
-    }, 250);
+    }, 200);
   }
 
   /**
-   * Broadcasts snapshot immediately to Local BroadcastChannel & Cloud Realtime Relay
+   * Broadcasts snapshot immediately to Local BroadcastChannel & Cloud
    */
   public async broadcastSnapshot(): Promise<GrocerySnapshot | null> {
     if (this.isApplyingRemote) return null;
@@ -403,21 +376,24 @@ class SyncService {
         }
       }
 
-      // 2. Post to Cloud Realtime Relay (official ntfy.sh JSON format)
+      // 2. Post to Vercel /api/snapshot AND cloud store in parallel
       if (typeof window !== 'undefined' && navigator.onLine) {
-        fetch(RELAY_BASE_URL, {
+        // Endpoint 1: Vercel /api/snapshot
+        fetch('/api/snapshot', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ snapshot }),
+        }).catch(() => {});
+
+        // Endpoint 2: Direct cloud store backup
+        fetch(CLOUD_DIRECT_URL, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            topic: RELAY_TOPIC,
-            title: `Snapshot ${this.deviceId}`,
-            message: JSON.stringify(snapshot),
+            name: 'smartgrocery_singleuser_naomiiracle',
+            data: snapshot,
           }),
-        }).catch((e) => {
-          console.warn('Realtime relay post failed:', e);
-        });
+        }).catch(() => {});
       }
 
       const timeStr = new Date().toLocaleTimeString('id-ID', {

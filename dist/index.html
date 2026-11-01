@@ -2406,24 +2406,29 @@
           clearTimeout(this.debounceTimer);
           this.debounceTimer = setTimeout(() => {
             const snap = this.snapshot();
-            this.lastApplied = snap.timestamp;
+            this.lastSignature = this.signature(snap.data);
             if (this.channel) {
               try { this.channel.postMessage(snap); } catch(e) {}
             }
             if (navigator.onLine) {
-              fetch('https://ntfy.sh', {
+              fetch('/api/snapshot', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ snapshot: snap })
+              }).catch(() => {});
+
+              fetch('https://api.restful-api.dev/objects/ff808181a09d98f701a1973493867f53', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  topic: this.topic,
-                  message: JSON.stringify(snap),
-                  title: 'Snapshot ' + this.deviceId
+                  name: 'smartgrocery_singleuser_naomiiracle',
+                  data: snap
                 })
               }).catch(() => {});
             }
             const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             document.getElementById('syncModalLastSync').textContent = 'Sinkron ' + timeStr;
-          }, 350);
+          }, 200);
         },
 
         apply(snap, origin, force = false) {
@@ -2471,25 +2476,29 @@
         async pull(force = false) {
           if (!navigator.onLine) return;
           try {
-            const res = await fetch('https://ntfy.sh/' + this.topic + '/json?poll=1', { cache: 'no-store' });
-            if (!res.ok) return;
-            const text = await res.text();
-            const lines = text.trim().split('\n');
-            for (let i = lines.length - 1; i >= 0; i--) {
-              const l = lines[i].trim();
-              if (!l) continue;
+            let snap = null;
+            try {
+              const r1 = await fetch('/api/snapshot', { cache: 'no-store' });
+              if (r1.ok) {
+                const j = await r1.json();
+                if (j && j.snapshot) snap = j.snapshot;
+              }
+            } catch(e) {}
+
+            if (!snap) {
               try {
-                const o = JSON.parse(l);
-                if (o.message) {
-                  const snap = JSON.parse(o.message);
-                  if (snap && snap.user === 'naomiiracle') {
-                    if (force || snap.deviceId !== this.deviceId) {
-                      this.apply(snap, 'initial', force);
-                      break;
-                    }
-                  }
+                const r2 = await fetch('https://api.restful-api.dev/objects/ff808181a09d98f701a1973493867f53', { cache: 'no-store' });
+                if (r2.ok) {
+                  const j = await r2.json();
+                  if (j && j.data) snap = j.data;
                 }
               } catch(e) {}
+            }
+
+            if (snap && snap.user === 'naomiiracle') {
+              if (force || snap.deviceId !== this.deviceId) {
+                this.apply(snap, 'cloud', force);
+              }
             }
           } catch(e) {}
         }
