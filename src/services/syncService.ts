@@ -160,36 +160,13 @@ class SyncService {
     try {
       let snapshot: GrocerySnapshot | null = null;
 
-      // Try 1: Vercel /api/snapshot
-      try {
-        const res = await fetch('/api/snapshot', {
-          cache: 'no-store',
-          headers: { 'Cache-Control': 'no-cache' },
-        });
-        if (res.ok) {
-          const json = await res.json();
-          if (json && json.snapshot) {
-            snapshot = json.snapshot;
-          }
-        }
-      } catch (e) {
-        // Fallback to direct cloud store
-      }
-
-      // Try 2: Direct cloud store if /api/snapshot was not available
-      if (!snapshot) {
-        try {
-          const res = await fetch(CLOUD_DIRECT_URL, {
-            cache: 'no-store',
-          });
-          if (res.ok) {
-            const json = await res.json();
-            if (json && json.data) {
-              snapshot = json.data;
-            }
-          }
-        } catch (e) {
-          // Both failed
+      const res = await fetch(CLOUD_DIRECT_URL, {
+        cache: 'no-store',
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json && json.data) {
+          snapshot = json.data;
         }
       }
 
@@ -376,16 +353,8 @@ class SyncService {
         }
       }
 
-      // 2. Post to Vercel /api/snapshot AND cloud store in parallel
+      // 2. Post to central cloud store
       if (typeof window !== 'undefined' && navigator.onLine) {
-        // Endpoint 1: Vercel /api/snapshot
-        fetch('/api/snapshot', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ snapshot }),
-        }).catch(() => {});
-
-        // Endpoint 2: Direct cloud store backup
         fetch(CLOUD_DIRECT_URL, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
