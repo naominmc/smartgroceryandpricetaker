@@ -256,7 +256,7 @@ export const ShoppingPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 pb-36">
+    <div className="space-y-4 pb-40">
       {/* PWA Installation Prompt if applicable */}
       <PWAInstallBanner />
 
@@ -466,30 +466,7 @@ export const ShoppingPage: React.FC = () => {
             </span>
           )}
         </div>
-
-        {/* Dual Actions: Scan Barcode & Manual Add */}
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={openScanner}
-            className="inline-flex items-center gap-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 active:scale-95 text-white font-bold text-xs px-3 py-2 rounded-xl shadow-soft transition-all min-h-[44px]"
-            title="Scan Barcode Supermarket Tanpa Input Manual"
-          >
-            <Scan className="w-3.5 h-3.5" />
-            <span>Scan Barcode</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => openAddItemSheet(null)}
-            className="inline-flex items-center gap-1 bg-primary hover:bg-primary-hover active:scale-95 text-white font-bold text-xs px-3 py-2 rounded-xl shadow-soft transition-all min-h-[44px]"
-            title="Tambah Barang Manual"
-          >
-            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>Manual</span>
-          </button>
-        </div>
-      </div>
+</div>
 
       {/* Grocery Items List */}
       {cartItems.length === 0 ? (
@@ -657,15 +634,18 @@ export const ShoppingPage: React.FC = () => {
         onCancel={() => setIsCheckoutDialogOpen(false)}
       />
 
-      {/* Floating Sticky Quick Action Dock (Always within Thumb Reach on Mobile - No Scrolling Needed!) */}
-      <div className="fixed bottom-[74px] left-0 right-0 z-30 flex justify-center pointer-events-none px-4">
-        <div className="w-full max-w-[430px] flex items-center justify-between gap-2.5 pointer-events-auto">
+      {/* Floating Sticky Quick Action Dock (Floating Island di atas Bottom Nav) */}
+      <div
+        className="fixed left-0 right-0 z-30 flex justify-center pointer-events-none px-4"
+        style={{ bottom: 'calc(env(safe-area-inset-bottom, 12px) + 72px)' }}
+      >
+        <div className="w-full max-w-[430px] bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-1.5 rounded-2xl shadow-2xl border border-gray-200/80 dark:border-slate-700/80 flex items-center justify-between gap-2.5 pointer-events-auto">
           {/* Quick Scan Barcode Floating Button */}
           <button
             type="button"
             onClick={openScanner}
-            className="flex-1 flex items-center justify-center gap-1.5 py-3 px-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-600 hover:to-amber-800 active:scale-95 text-white font-extrabold text-xs shadow-lg shadow-amber-500/30 transition-all border border-amber-300/30 backdrop-blur-md min-h-[46px] cursor-pointer"
-            title="Scan Barcode Supermarket Tanpa Perlu Scroll"
+            className="flex-1 flex items-center justify-center gap-1.5 py-3 px-3.5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-600 hover:to-amber-800 active:scale-95 text-white font-extrabold text-xs shadow-md shadow-amber-500/25 transition-all min-h-[46px] cursor-pointer"
+            title="Scan Barcode Supermarket"
           >
             <Scan className="w-4 h-4 text-white" />
             <span>Scan Barcode</span>
@@ -675,8 +655,8 @@ export const ShoppingPage: React.FC = () => {
           <button
             type="button"
             onClick={() => openAddItemSheet(null)}
-            className="flex-1 flex items-center justify-center gap-1.5 py-3 px-3.5 rounded-2xl bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 active:scale-95 text-white font-extrabold text-xs shadow-lg shadow-blue-500/30 transition-all border border-blue-400/30 backdrop-blur-md min-h-[46px] cursor-pointer"
-            title="Tambah Barang Belanja Tanpa Perlu Scroll"
+            className="flex-1 flex items-center justify-center gap-1.5 py-3 px-3.5 rounded-xl bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 active:scale-95 text-white font-extrabold text-xs shadow-md shadow-blue-500/25 transition-all min-h-[46px] cursor-pointer"
+            title="Tambah Barang Belanja"
           >
             <Plus className="w-4 h-4 stroke-[3] text-white" />
             <span>Tambah Barang</span>
