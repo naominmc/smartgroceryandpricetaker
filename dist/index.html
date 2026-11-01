@@ -529,7 +529,11 @@
             <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Harga Satuan (Rp):</label>
             <div class="relative">
               <span class="absolute left-3 top-2.5 text-slate-400 font-bold text-xs">Rp</span>
-              <input type="number" id="inputItemPrice" placeholder="28000" inputmode="numeric" required class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <input type="number" id="inputItemPrice" placeholder="28000" inputmode="numeric" min="0" step="any" required class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+            </div>
+            <div id="errorItemPrice" class="mt-1 text-[11px] font-bold text-rose-500 hidden flex items-center gap-1">
+              <i data-lucide="alert-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+              <span>Harga tidak boleh negatif!</span>
             </div>
           </div>
 
@@ -794,7 +798,11 @@
         </div>
         <div>
           <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Harga Bulan Lalu (Rp):</label>
-          <input type="number" id="inputDbPrice" placeholder="72000" required class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <input type="number" id="inputDbPrice" placeholder="72000" min="0" step="any" required class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+          <div id="errorDbPrice" class="mt-1 text-[11px] font-bold text-rose-500 hidden flex items-center gap-1">
+            <i data-lucide="alert-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+            <span>Harga patokan tidak boleh negatif!</span>
+          </div>
         </div>
         <div>
           <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Satuan:</label>
@@ -804,6 +812,26 @@
           Simpan Patokan
         </button>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal Konfirmasi Hapus & Peringatan Tindakan Tempat Sampah -->
+  <div id="confirmDeleteModalBackdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-rose-100 dark:border-rose-900/50 text-center animate-in fade-in zoom-in-95 duration-200">
+      <div class="w-14 h-14 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 mx-auto flex items-center justify-center mb-4 ring-8 ring-rose-50/50 dark:ring-rose-950/30">
+        <i data-lucide="alert-triangle" class="w-7 h-7"></i>
+      </div>
+      <h3 id="confirmDeleteTitle" class="text-base font-extrabold text-slate-900 dark:text-white mb-2">Konfirmasi Hapus</h3>
+      <p id="confirmDeleteMessage" class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-6"></p>
+      <div class="grid grid-cols-2 gap-3">
+        <button id="btnCancelDelete" type="button" class="py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition active:scale-95">
+          Batal
+        </button>
+        <button id="btnExecuteDelete" type="button" class="py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold shadow-lg shadow-rose-600/30 transition flex items-center justify-center gap-1.5 active:scale-95">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          <span id="confirmDeleteActionText">Ya, Hapus</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -930,14 +958,38 @@
       } catch(e) {}
     }
 
-    function showToast(msg, icon = 'check-circle-2') {
+    function showToast(msg, icon = 'check-circle-2', variant = 'default') {
       const container = document.getElementById('toastContainer');
       const toast = document.createElement('div');
-      toast.className = 'bg-slate-900/90 text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-xl flex items-center gap-2 pointer-events-auto backdrop-blur';
-      toast.innerHTML = `<i data-lucide="${icon}" class="w-4 h-4 text-emerald-400"></i> <span>${msg}</span>`;
+      const isDanger = variant === 'danger' || icon === 'trash-2' || icon === 'alert-triangle' || icon === 'alert-circle';
+      const iconColor = isDanger ? 'text-rose-400' : 'text-emerald-400';
+      toast.className = 'bg-slate-900/90 text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-xl flex items-center gap-2 pointer-events-auto backdrop-blur transition-all duration-200';
+      toast.innerHTML = `<i data-lucide="${icon}" class="w-4 h-4 ${iconColor}"></i> <span>${msg}</span>`;
       container.appendChild(toast);
       lucide.createIcons();
-      setTimeout(() => toast.remove(), 2500);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-6px)';
+        setTimeout(() => toast.remove(), 200);
+      }, 2500);
+    }
+
+    // Modal Peringatan & Konfirmasi Hapus (Tempat Sampah)
+    let currentDeleteCallback = null;
+
+    function showDeleteConfirmation({ title, message, actionText = 'Ya, Hapus', onConfirm }) {
+      document.getElementById('confirmDeleteTitle').textContent = title || 'Konfirmasi Hapus';
+      document.getElementById('confirmDeleteMessage').innerHTML = message;
+      document.getElementById('confirmDeleteActionText').textContent = actionText;
+      currentDeleteCallback = onConfirm;
+      document.getElementById('confirmDeleteModalBackdrop').classList.remove('hidden');
+      lucide.createIcons();
+      playBeep(650, 0.12);
+    }
+
+    function closeDeleteModal() {
+      document.getElementById('confirmDeleteModalBackdrop').classList.add('hidden');
+      currentDeleteCallback = null;
     }
 
     // F-03: Multi-tier Discount Calculator
@@ -1236,11 +1288,11 @@
     function updateQty(id, delta) {
       const it = AppState.cart.find(i => i.id === id);
       if (!it) return;
-      it.qty += delta;
-      if (it.qty <= 0) {
+      if (it.qty + delta <= 0) {
         deleteCartItem(id);
         return;
       }
+      it.qty += delta;
       it.subtotal = (it.finalUnitPrice || it.unitPrice) * it.qty;
       saveState();
       renderCart();
@@ -1248,10 +1300,22 @@
     }
 
     function deleteCartItem(id) {
-      AppState.cart = AppState.cart.filter(i => i.id !== id);
-      saveState();
-      renderCart();
-      showToast('Barang dihapus dari troli');
+      const it = AppState.cart.find(i => i.id === id);
+      const itemName = it ? it.name : 'Barang ini';
+      const itemDetail = it ? `<div class="mt-2 py-1.5 px-3 rounded-xl bg-slate-100 dark:bg-slate-900 text-[11px] font-mono text-slate-700 dark:text-slate-300 font-bold">${it.qty} ${it.unit} • ${formatRp(it.subtotal)}</div>` : '';
+      
+      showDeleteConfirmation({
+        title: 'Hapus Barang dari Troli?',
+        message: `Apakah Anda yakin ingin menghapus <b>"${itemName}"</b> dari troli belanja?${itemDetail}`,
+        actionText: 'Ya, Hapus',
+        onConfirm: () => {
+          AppState.cart = AppState.cart.filter(i => i.id !== id);
+          saveState();
+          renderCart();
+          showToast(`"${itemName}" dihapus dari troli`, 'trash-2', 'danger');
+          playBeep(850, 0.08);
+        }
+      });
     }
 
     function updateCategoryPills(activeCat) {
@@ -1275,8 +1339,21 @@
 
     function updateModalCalculations() {
       const name = document.getElementById('inputItemName').value;
-      const unitPrice = parseFloat(document.getElementById('inputItemPrice').value) || 0;
-      const qty = parseInt(document.getElementById('inputItemQty').value) || 1;
+      const priceInput = document.getElementById('inputItemPrice');
+      const errEl = document.getElementById('errorItemPrice');
+      const rawPrice = priceInput.value;
+      const isNegative = rawPrice !== '' && (parseFloat(rawPrice) < 0 || rawPrice.includes('-'));
+
+      if (isNegative) {
+        errEl.classList.remove('hidden');
+        priceInput.classList.add('border-rose-500', 'ring-2', 'ring-rose-500');
+      } else {
+        errEl.classList.add('hidden');
+        priceInput.classList.remove('border-rose-500', 'ring-2', 'ring-rose-500');
+      }
+
+      const unitPrice = Math.max(0, parseFloat(rawPrice) || 0);
+      const qty = Math.max(1, parseInt(document.getElementById('inputItemQty').value) || 1);
       const unit = document.getElementById('inputItemUnit').value;
       const discRaw = document.getElementById('inputItemDiscount').value;
       const discType = document.getElementById('selectDiscountType').value;
@@ -1291,23 +1368,30 @@
       document.getElementById('modalRowSubtotal').textContent = formatRp(sub);
 
       // Comparator
-      const comp = compareWithLastMonth(name, unitPrice);
-      document.getElementById('modalComparatorText').textContent = comp.text;
-      const badge = document.getElementById('modalComparatorBadge');
-      const badgeText = document.getElementById('modalComparatorBadgeText');
-
-      if (comp.status === 'up') {
+      if (isNegative) {
+        document.getElementById('modalComparatorText').textContent = 'Harga negatif tidak diperbolehkan';
+        const badge = document.getElementById('modalComparatorBadge');
         badge.className = 'px-2.5 py-1 rounded-lg text-xs font-extrabold bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-200';
-        badgeText.textContent = `+${comp.diffPct}% Naik`;
-      } else if (comp.status === 'down') {
-        badge.className = 'px-2.5 py-1 rounded-lg text-xs font-extrabold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200';
-        badgeText.textContent = `-${comp.diffPct}% Turun`;
-      } else if (comp.status === 'stable') {
-        badge.className = 'px-2.5 py-1 rounded-lg text-xs font-extrabold bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200';
-        badgeText.textContent = 'Stabil';
+        document.getElementById('modalComparatorBadgeText').textContent = 'Error Negatif';
       } else {
-        badge.className = 'px-2.5 py-1 rounded-lg text-xs font-extrabold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400';
-        badgeText.textContent = 'Item Baru';
+        const comp = compareWithLastMonth(name, unitPrice);
+        document.getElementById('modalComparatorText').textContent = comp.text;
+        const badge = document.getElementById('modalComparatorBadge');
+        const badgeText = document.getElementById('modalComparatorBadgeText');
+
+        if (comp.status === 'up') {
+          badge.className = 'px-2.5 py-1 rounded-lg text-xs font-extrabold bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-200';
+          badgeText.textContent = `+${comp.diffPct}% Naik`;
+        } else if (comp.status === 'down') {
+          badge.className = 'px-2.5 py-1 rounded-lg text-xs font-extrabold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200';
+          badgeText.textContent = `-${comp.diffPct}% Turun`;
+        } else if (comp.status === 'stable') {
+          badge.className = 'px-2.5 py-1 rounded-lg text-xs font-extrabold bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200';
+          badgeText.textContent = 'Stabil';
+        } else {
+          badge.className = 'px-2.5 py-1 rounded-lg text-xs font-extrabold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400';
+          badgeText.textContent = 'Item Baru';
+        }
       }
     }
 
@@ -1322,6 +1406,9 @@
       document.getElementById('inputItemNote').value = '';
       document.getElementById('inputItemCategory').value = 'Bahan Pokok';
       document.getElementById('inputItemUnit').value = 'pcs';
+
+      document.getElementById('errorItemPrice').classList.add('hidden');
+      document.getElementById('inputItemPrice').classList.remove('border-rose-500', 'ring-2', 'ring-rose-500');
 
       updateCategoryPills('Bahan Pokok');
       updateUnitPills('pcs');
@@ -1346,6 +1433,9 @@
       document.getElementById('inputItemNote').value = it.note || '';
       document.getElementById('inputItemCategory').value = it.category || 'Bahan Pokok';
       document.getElementById('inputItemUnit').value = it.unit || 'pcs';
+
+      document.getElementById('errorItemPrice').classList.add('hidden');
+      document.getElementById('inputItemPrice').classList.remove('border-rose-500', 'ring-2', 'ring-rose-500');
 
       updateCategoryPills(it.category || 'Bahan Pokok');
       updateUnitPills(it.unit || 'pcs');
@@ -1393,6 +1483,8 @@
       document.getElementById('inputDbName').value = '';
       document.getElementById('inputDbPrice').value = '';
       document.getElementById('inputDbUnit').value = 'pcs';
+      document.getElementById('errorDbPrice').classList.add('hidden');
+      document.getElementById('inputDbPrice').classList.remove('border-rose-500', 'ring-2', 'ring-rose-500');
       document.getElementById('dbItemModalBackdrop').classList.remove('hidden');
     }
 
@@ -1404,15 +1496,27 @@
       document.getElementById('inputDbName').value = it.name;
       document.getElementById('inputDbPrice').value = it.price;
       document.getElementById('inputDbUnit').value = it.unit;
+      document.getElementById('errorDbPrice').classList.add('hidden');
+      document.getElementById('inputDbPrice').classList.remove('border-rose-500', 'ring-2', 'ring-rose-500');
       document.getElementById('dbItemModalBackdrop').classList.remove('hidden');
     }
 
     function deleteDbItem(id) {
-      AppState.referencePrices = AppState.referencePrices.filter(r => r.id !== id);
-      saveState();
-      renderReferenceDatabase();
-      renderCart();
-      showToast('Patokan harga dihapus', 'trash-2');
+      const item = AppState.referencePrices.find(r => r.id === id);
+      const name = item ? item.name : 'patokan harga ini';
+      showDeleteConfirmation({
+        title: 'Hapus Patokan Harga?',
+        message: `Apakah Anda yakin ingin menghapus data patokan harga untuk <b>"${name}"</b> dari database referensi?`,
+        actionText: 'Ya, Hapus',
+        onConfirm: () => {
+          AppState.referencePrices = AppState.referencePrices.filter(r => r.id !== id);
+          saveState();
+          renderReferenceDatabase();
+          renderCart();
+          showToast(`Patokan "${name}" telah dihapus`, 'trash-2', 'danger');
+          playBeep(850, 0.08);
+        }
+      });
     }
 
     // Render History Sessions
@@ -1464,10 +1568,20 @@
     }
 
     function deleteHistorySession(id) {
-      AppState.history = AppState.history.filter(h => h.id !== id);
-      saveState();
-      renderHistory();
-      showToast('Riwayat transaksi dihapus', 'trash-2');
+      const hist = AppState.history.find(h => h.id === id);
+      const label = hist ? `${hist.location} (${hist.date})` : 'struk ini';
+      showDeleteConfirmation({
+        title: 'Hapus Riwayat Belanja?',
+        message: `Apakah Anda yakin ingin menghapus catatan riwayat transaksi belanja <b>"${label}"</b>?`,
+        actionText: 'Ya, Hapus',
+        onConfirm: () => {
+          AppState.history = AppState.history.filter(h => h.id !== id);
+          saveState();
+          renderHistory();
+          showToast('Riwayat transaksi telah dihapus', 'trash-2', 'danger');
+          playBeep(850, 0.08);
+        }
+      });
     }
 
     // Checkout Modal
@@ -1759,20 +1873,65 @@
         document.getElementById(id).addEventListener('input', updateModalCalculations);
       });
 
+      // Validasi penolakan harga negatif secara realtime pada form belanja
+      const priceInput = document.getElementById('inputItemPrice');
+      priceInput.addEventListener('keydown', (e) => {
+        if (e.key === '-' || e.key === 'Subtract') {
+          e.preventDefault();
+          showToast('Harga barang tidak boleh bertanda minus (-)!', 'alert-circle', 'danger');
+          playBeep(450, 0.15);
+        }
+      });
+      priceInput.addEventListener('input', () => {
+        const val = priceInput.value;
+        const err = document.getElementById('errorItemPrice');
+        if (val.includes('-') || (val !== '' && parseFloat(val) < 0)) {
+          priceInput.value = Math.max(0, Math.abs(parseFloat(val)) || 0);
+          err.classList.remove('hidden');
+          priceInput.classList.add('border-rose-500', 'ring-2', 'ring-rose-500');
+          showToast('Nominal harga negatif otomatis ditolak!', 'alert-triangle', 'danger');
+        } else {
+          err.classList.add('hidden');
+          priceInput.classList.remove('border-rose-500', 'ring-2', 'ring-rose-500');
+        }
+      });
+
       // Submit Add/Edit Item Form
       document.getElementById('itemForm').addEventListener('submit', (e) => {
         e.preventDefault();
+        const rawPrice = priceInput.value.trim();
+        const unitPrice = parseFloat(rawPrice);
+        const err = document.getElementById('errorItemPrice');
+
+        // Validasi ketat: Tolak harga bernilai negatif atau tidak valid
+        if (rawPrice === '' || isNaN(unitPrice) || unitPrice < 0 || rawPrice.includes('-')) {
+          err.classList.remove('hidden');
+          priceInput.classList.add('border-rose-500', 'ring-2', 'ring-rose-500');
+          priceInput.focus();
+          showToast('Ditolak! Harga barang tidak boleh bernilai negatif.', 'alert-triangle', 'danger');
+          playBeep(450, 0.2);
+          return;
+        }
+
+        const qty = parseInt(document.getElementById('inputItemQty').value) || 1;
+        if (qty <= 0) {
+          showToast('Ditolak! Jumlah (Qty) barang minimal 1.', 'alert-triangle', 'danger');
+          return;
+        }
+
         const editId = document.getElementById('editItemId').value;
         const name = document.getElementById('inputItemName').value.trim();
         const cat = document.getElementById('inputItemCategory').value;
         const unit = document.getElementById('inputItemUnit').value;
-        const unitPrice = parseFloat(document.getElementById('inputItemPrice').value) || 0;
-        const qty = parseInt(document.getElementById('inputItemQty').value) || 1;
         const discRaw = document.getElementById('inputItemDiscount').value.trim();
         const discType = document.getElementById('selectDiscountType').value;
         const note = document.getElementById('inputItemNote').value.trim();
 
         const discCalc = calculateDiscount(unitPrice, discRaw, discType);
+        if (discCalc.finalUnitPrice < 0) {
+          showToast('Ditolak! Diskon melebihi harga satuan barang.', 'alert-triangle', 'danger');
+          return;
+        }
         const subtotal = discCalc.finalUnitPrice * qty;
 
         if (editId) {
@@ -1824,13 +1983,33 @@
       });
       document.getElementById('btnConfirmSaveReceipt').addEventListener('click', confirmSaveReceipt);
 
-      // Clear Cart
+      // Clear Cart (Peringatan & Konfirmasi Tempat Sampah)
       document.getElementById('btnClearCart').addEventListener('click', () => {
-        if (confirm('Kosongkan seluruh barang di troli?')) {
-          AppState.cart = [];
-          saveState();
-          renderCart();
-          showToast('Troli dikosongkan', 'trash-2');
+        if (!AppState.cart || AppState.cart.length === 0) {
+          showToast('Troli belanja Anda sudah kosong', 'shopping-cart');
+          return;
+        }
+        showDeleteConfirmation({
+          title: 'Kosongkan Seluruh Troli?',
+          message: `⚠️ <b>Peringatan Keras:</b> Seluruh <b>${AppState.cart.length} barang</b> di dalam troli belanja akan dihapus sekaligus. Tindakan ini tidak dapat dibatalkan!`,
+          actionText: 'Ya, Kosongkan Troli',
+          onConfirm: () => {
+            AppState.cart = [];
+            saveState();
+            renderCart();
+            showToast('Seluruh isi troli telah dikosongkan', 'trash-2', 'danger');
+            playBeep(600, 0.15);
+          }
+        });
+      });
+
+      // Modal Konfirmasi Hapus Event Listeners
+      document.getElementById('btnCancelDelete').addEventListener('click', closeDeleteModal);
+      document.getElementById('btnExecuteDelete').addEventListener('click', () => {
+        const cb = currentDeleteCallback;
+        closeDeleteModal();
+        if (typeof cb === 'function') {
+          cb();
         }
       });
 
@@ -1848,7 +2027,13 @@
         });
       });
       document.getElementById('btnSaveModalBudget').addEventListener('click', () => {
-        const val = parseInt(document.getElementById('inputModalBudget').value) || 1200000;
+        const raw = document.getElementById('inputModalBudget').value.trim();
+        const val = parseInt(raw);
+        if (raw === '' || isNaN(val) || val < 0) {
+          showToast('Ditolak! Batas anggaran tidak boleh negatif.', 'alert-triangle', 'danger');
+          playBeep(450, 0.2);
+          return;
+        }
         AppState.budgetCap = val;
         document.getElementById('inputBudgetSetting').value = val;
         saveState();
@@ -1865,7 +2050,13 @@
         });
       });
       document.getElementById('btnSaveBudgetSetting').addEventListener('click', () => {
-        const val = parseInt(document.getElementById('inputBudgetSetting').value) || 1200000;
+        const raw = document.getElementById('inputBudgetSetting').value.trim();
+        const val = parseInt(raw);
+        if (raw === '' || isNaN(val) || val < 0) {
+          showToast('Ditolak! Batas anggaran tidak boleh negatif.', 'alert-triangle', 'danger');
+          playBeep(450, 0.2);
+          return;
+        }
         AppState.budgetCap = val;
         saveState();
         renderSafetyCap();
@@ -1880,12 +2071,47 @@
       document.getElementById('btnCloseDbItemModal').addEventListener('click', () => {
         document.getElementById('dbItemModalBackdrop').classList.add('hidden');
       });
+
+      // Validasi input patokan harga realtime
+      const dbPriceInput = document.getElementById('inputDbPrice');
+      dbPriceInput.addEventListener('keydown', (e) => {
+        if (e.key === '-' || e.key === 'Subtract') {
+          e.preventDefault();
+          showToast('Harga patokan tidak boleh bertanda minus (-)!', 'alert-circle', 'danger');
+          playBeep(450, 0.15);
+        }
+      });
+      dbPriceInput.addEventListener('input', () => {
+        const val = dbPriceInput.value;
+        const err = document.getElementById('errorDbPrice');
+        if (val.includes('-') || (val !== '' && parseFloat(val) < 0)) {
+          dbPriceInput.value = Math.max(0, Math.abs(parseFloat(val)) || 0);
+          err.classList.remove('hidden');
+          dbPriceInput.classList.add('border-rose-500', 'ring-2', 'ring-rose-500');
+          showToast('Harga patokan negatif ditolak!', 'alert-triangle', 'danger');
+        } else {
+          err.classList.add('hidden');
+          dbPriceInput.classList.remove('border-rose-500', 'ring-2', 'ring-rose-500');
+        }
+      });
+
       document.getElementById('dbItemForm').addEventListener('submit', (e) => {
         e.preventDefault();
         const editId = document.getElementById('editDbId').value;
         const name = document.getElementById('inputDbName').value.trim();
-        const price = parseFloat(document.getElementById('inputDbPrice').value) || 0;
+        const rawPrice = dbPriceInput.value.trim();
+        const price = parseFloat(rawPrice);
         const unit = document.getElementById('inputDbUnit').value.trim() || 'pcs';
+        const err = document.getElementById('errorDbPrice');
+
+        if (rawPrice === '' || isNaN(price) || price < 0 || rawPrice.includes('-')) {
+          err.classList.remove('hidden');
+          dbPriceInput.classList.add('border-rose-500', 'ring-2', 'ring-rose-500');
+          dbPriceInput.focus();
+          showToast('Ditolak! Harga patokan tidak boleh bernilai negatif.', 'alert-triangle', 'danger');
+          playBeep(450, 0.2);
+          return;
+        }
 
         if (editId) {
           const item = AppState.referencePrices.find(r => r.id === editId);
@@ -1950,15 +2176,20 @@
       });
 
       document.getElementById('btnResetDefaults').addEventListener('click', () => {
-        if (confirm('Kembalikan database patokan harga dan anggaran ke data default?')) {
-          AppState.referencePrices = DEFAULT_REFERENCE_PRICES;
-          AppState.budgetCap = 1200000;
-          document.getElementById('inputBudgetSetting').value = 1200000;
-          saveState();
-          renderReferenceDatabase();
-          renderSafetyCap();
-          showToast('Data dikembalikan ke standar awal', 'refresh-cw');
-        }
+        showDeleteConfirmation({
+          title: 'Reset ke Data Awal?',
+          message: '⚠️ <b>Peringatan:</b> Seluruh data patokan harga kustom dan anggaran belanja akan dikembalikan ke settingan bawaan awal.',
+          actionText: 'Ya, Reset Standar',
+          onConfirm: () => {
+            AppState.referencePrices = DEFAULT_REFERENCE_PRICES;
+            AppState.budgetCap = 1200000;
+            document.getElementById('inputBudgetSetting').value = 1200000;
+            saveState();
+            renderReferenceDatabase();
+            renderSafetyCap();
+            showToast('Data dikembalikan ke standar awal', 'refresh-cw');
+          }
+        });
       });
 
       // Initial Render
