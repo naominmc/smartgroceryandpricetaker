@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import confetti from 'canvas-confetti';
 import {
@@ -75,9 +75,52 @@ export const ShoppingPage: React.FC = () => {
 
   // Live queries to Dexie IndexedDB
   const cartItems = useLiveQuery(() => db.cartItems.toArray()) || [];
-  const recommendations = useLiveQuery(async () => {
-    return await groceryService.getRecommendedItemsFromHistory();
-  }) || [];
+  const allTransactions = useLiveQuery(() => db.transactions.toArray()) || [];
+  const recommendations = useMemo(() => {
+    const itemMap = new Map<string, {
+      name: string;
+      category: ProductCategory;
+      unit: string;
+      lastUnitPrice: number;
+      discounts: number[];
+      purchaseCount: number;
+      lastPurchasedAt: string;
+    }>();
+
+    const sortedTx = [...allTransactions].sort(
+      (a, b) => new Date(a.purchasedAt).getTime() - new Date(b.purchasedAt).getTime()
+    );
+
+    for (const tx of sortedTx) {
+      if (Array.isArray(tx.items)) {
+        for (const item of tx.items) {
+          const rawName = item.nameSnapshot || (item as any).name || '';
+          const name = rawName.trim();
+          if (!name) continue;
+          const key = name.toLowerCase();
+          const existing = itemMap.get(key);
+          if (existing) {
+            existing.purchaseCount += 1;
+            existing.lastUnitPrice = item.unitPrice;
+            existing.discounts = item.discounts || [];
+            existing.lastPurchasedAt = tx.purchasedAt;
+          } else {
+            itemMap.set(key, {
+              name: name,
+              category: item.categorySnapshot,
+              unit: item.unit || 'pcs',
+              lastUnitPrice: item.unitPrice,
+              discounts: item.discounts || [],
+              purchaseCount: 1,
+              lastPurchasedAt: tx.purchasedAt,
+            });
+          }
+        }
+      }
+    }
+
+    return Array.from(itemMap.values());
+  }, [allTransactions]);
 
   const budgetRecord = useLiveQuery(() => db.budgets.where('period').equals(currentPeriod).first());
 

@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { groceryService } from '../services/groceryService';
+import { db } from '../db/database';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -84,9 +85,52 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
   const liveCalc = calculateItemSubtotals(watchedQty, watchedPrice, watchedDiscounts);
 
   // Recommendations from purchase history
-  const recommendations = useLiveQuery(async () => {
-    return await groceryService.getRecommendedItemsFromHistory();
-  }) || [];
+  const allTransactions = useLiveQuery(() => db.transactions.toArray()) || [];
+  const recommendations = useMemo(() => {
+    const itemMap = new Map<string, {
+      name: string;
+      category: ProductCategory;
+      unit: string;
+      lastUnitPrice: number;
+      discounts: number[];
+      purchaseCount: number;
+      lastPurchasedAt: string;
+    }>();
+
+    const sortedTx = [...allTransactions].sort(
+      (a, b) => new Date(a.purchasedAt).getTime() - new Date(b.purchasedAt).getTime()
+    );
+
+    for (const tx of sortedTx) {
+      if (Array.isArray(tx.items)) {
+        for (const item of tx.items) {
+          const rawName = item.nameSnapshot || (item as any).name || '';
+          const name = rawName.trim();
+          if (!name) continue;
+          const key = name.toLowerCase();
+          const existing = itemMap.get(key);
+          if (existing) {
+            existing.purchaseCount += 1;
+            existing.lastUnitPrice = item.unitPrice;
+            existing.discounts = item.discounts || [];
+            existing.lastPurchasedAt = tx.purchasedAt;
+          } else {
+            itemMap.set(key, {
+              name: name,
+              category: item.categorySnapshot,
+              unit: item.unit || 'pcs',
+              lastUnitPrice: item.unitPrice,
+              discounts: item.discounts || [],
+              purchaseCount: 1,
+              lastPurchasedAt: tx.purchasedAt,
+            });
+          }
+        }
+      }
+    }
+
+    return Array.from(itemMap.values());
+  }, [allTransactions]);
 
   useEffect(() => {
     if (editingItem) {
@@ -348,32 +392,40 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-sm text-gray-400">
                 Rp
               </span>
-              <input
-                type="number"
-                min="0"
-                step="any"
-                inputMode="numeric"
-                placeholder="Contoh: 15000"
-                onKeyDown={(e) => {
-                  if (e.key === '-' || e.key === 'Subtract') {
-                    e.preventDefault();
-                  }
-                }}
-                onFocus={(e) => {
-                  if (e.target.value === '0') {
-                    setValue('unitPrice', '' as any);
-                  }
-                }}
-                {...register('unitPrice', {
-                  setValueAs: (v) => (v === '' ? '' : Number(v)),
-                  onChange: (e) => {
-                    const val = parseFloat(e.target.value);
-                    if (val < 0) {
-                      setValue('unitPrice', Math.abs(val) || ('' as any));
+              <Controller
+                name="unitPrice"
+                control={control}
+                render={({ field }) => (
+                  <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    inputMode="numeric"
+                    placeholder="Contoh: 15000"
+                    value={
+                      field.value === 0 || field.value === '0' || field.value === '' || field.value === null || field.value === undefined
+                        ? ''
+                        : field.value
                     }
-                  },
-                })}
-                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm font-bold min-h-[44px]"
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '') {
+                        field.onChange('');
+                      } else {
+                        const num = parseFloat(val);
+                        if (!isNaN(num)) {
+                          field.onChange(Math.max(0, num));
+                        }
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === '-' || e.key === 'Subtract') {
+                        e.preventDefault();
+                      }
+                    }}
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm font-bold min-h-[44px]"
+                  />
+                )}
               />
             </div>
             {errors.unitPrice && (
