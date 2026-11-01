@@ -12,6 +12,101 @@ import { getCurrentMonthPeriod, getPreviousMonthPeriod } from '../utils/priceCom
 
 export const groceryService = {
   /**
+   * Get recommended items from purchase history (F-06 / User Recommendation)
+   * Aggregates past purchases, counts frequency, and tracks latest prices.
+   */
+  async getRecommendedItemsFromHistory(): Promise<
+    Array<{
+      name: string;
+      category: ProductCategory;
+      unit: string;
+      lastUnitPrice: number;
+      discounts: number[];
+      purchaseCount: number;
+    }>
+  > {
+    const transactions = await db.transactions.toArray();
+    const itemMap = new Map<
+      string,
+      {
+        name: string;
+        category: ProductCategory;
+        unit: string;
+        lastUnitPrice: number;
+        discounts: number[];
+        purchaseCount: number;
+        lastPurchasedAt: string;
+      }
+    >();
+
+    // Sort transactions oldest to newest so lastUnitPrice reflects the newest purchase
+    const sortedTx = [...transactions].sort(
+      (a, b) => new Date(a.purchasedAt).getTime() - new Date(b.purchasedAt).getTime()
+    );
+
+    for (const tx of sortedTx) {
+      if (Array.isArray(tx.items)) {
+        for (const item of tx.items) {
+          const key = (item.nameSnapshot || '').trim().toLowerCase();
+          if (!key) continue;
+          const existing = itemMap.get(key);
+          if (existing) {
+            existing.purchaseCount += 1;
+            existing.lastUnitPrice = item.unitPrice;
+            existing.discounts = item.discounts || [];
+            existing.lastPurchasedAt = tx.purchasedAt;
+          } else {
+            itemMap.set(key, {
+              name: item.nameSnapshot,
+              category: item.categorySnapshot,
+              unit: item.unit || 'pcs',
+              lastUnitPrice: item.unitPrice,
+              discounts: item.discounts || [],
+              purchaseCount: 1,
+              lastPurchasedAt: tx.purchasedAt,
+            });
+          }
+        }
+      }
+    }
+
+    // Default staple items fallback if transaction history is still small
+    const defaults: Array<{
+      name: string;
+      category: ProductCategory;
+      unit: string;
+      lastUnitPrice: number;
+      discounts: number[];
+      purchaseCount: number;
+      lastPurchasedAt: string;
+    }> = [
+      { name: 'Beras Ramos 5kg', category: 'Beras dan bahan pokok', unit: 'pack', lastUnitPrice: 72000, discounts: [], purchaseCount: 1, lastPurchasedAt: '2026-01-01' },
+      { name: 'Minyak Goreng 2L', category: 'Beras dan bahan pokok', unit: 'pack', lastUnitPrice: 37000, discounts: [], purchaseCount: 1, lastPurchasedAt: '2026-01-01' },
+      { name: 'Telur Ayam 1kg', category: 'Daging dan protein', unit: 'kg', lastUnitPrice: 28000, discounts: [], purchaseCount: 1, lastPurchasedAt: '2026-01-01' },
+      { name: 'Indomie Goreng', category: 'Makanan instan', unit: 'bungkus', lastUnitPrice: 3100, discounts: [], purchaseCount: 1, lastPurchasedAt: '2026-01-01' },
+      { name: 'Susu UHT Full Cream 1L', category: 'Susu dan produk dingin', unit: 'botol', lastUnitPrice: 20500, discounts: [], purchaseCount: 1, lastPurchasedAt: '2026-01-01' },
+      { name: 'Sabun Mandi 450ml', category: 'Perlengkapan mandi', unit: 'botol', lastUnitPrice: 25000, discounts: [], purchaseCount: 1, lastPurchasedAt: '2026-01-01' },
+    ];
+
+    for (const d of defaults) {
+      const key = d.name.trim().toLowerCase();
+      if (!itemMap.has(key)) {
+        itemMap.set(key, d);
+      }
+    }
+
+    const result = Array.from(itemMap.values());
+    result.sort((a, b) => {
+      if (b.purchaseCount !== a.purchaseCount) {
+        return b.purchaseCount - a.purchaseCount;
+      }
+      return new Date(b.lastPurchasedAt).getTime() - new Date(a.lastPurchasedAt).getTime();
+    });
+
+    return result;
+  },
+
+  /**
    * Finds or creates a product in catalog and gets previous month unit price
    */
   async findOrCreateProduct(

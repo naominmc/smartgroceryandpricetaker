@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { groceryService } from '../services/groceryService';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { X, ShoppingBag, Sparkles } from 'lucide-react';
+import { X, ShoppingBag, Sparkles, History } from 'lucide-react';
 import type { ProductCategory, CartItem } from '../types';
 import { PRODUCT_CATEGORIES, STANDARD_UNITS } from '../types';
 import { DiscountEditor } from './DiscountEditor';
@@ -15,7 +17,10 @@ const itemSchema = z.object({
   category: z.string().min(1, 'Pilih kategori produk'),
   unit: z.string().min(1, 'Pilih satuan produk'),
   quantity: z.number().min(0.01, 'Kuantitas harus lebih dari 0'),
-  unitPrice: z.number().min(0, 'Harga satuan tidak boleh negatif'),
+  unitPrice: z.preprocess(
+    (v) => (v === '' || v === null || isNaN(Number(v)) ? 0 : Number(v)),
+    z.number().min(0, 'Harga satuan tidak boleh negatif')
+  ),
   discounts: z.array(z.number()),
 });
 
@@ -66,17 +71,22 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
       category: 'Beras dan bahan pokok',
       unit: 'pcs',
       quantity: 1,
-      unitPrice: 0,
+      unitPrice: '' as unknown as number,
       discounts: [],
     },
   });
 
   const watchedQty = watch('quantity') || 0;
-  const watchedPrice = watch('unitPrice') || 0;
+  const watchedPrice = Number(watch('unitPrice')) || 0;
   const watchedDiscounts = watch('discounts') || [];
 
   // Realtime calculation preview
   const liveCalc = calculateItemSubtotals(watchedQty, watchedPrice, watchedDiscounts);
+
+  // Recommendations from purchase history
+  const recommendations = useLiveQuery(async () => {
+    return await groceryService.getRecommendedItemsFromHistory();
+  }) || [];
 
   useEffect(() => {
     if (editingItem) {
@@ -97,7 +107,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
         category: 'Beras dan bahan pokok',
         unit: 'pcs',
         quantity: 1,
-        unitPrice: 0,
+        unitPrice: '' as unknown as number,
         discounts: [],
       });
     }
@@ -190,6 +200,41 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
               >
                 Scan Barcode 📷
               </button>
+            </div>
+          )}
+
+          
+          {/* Rekomendasi dari Riwayat Pembelian (Quick Auto-Fill) */}
+          {recommendations.length > 0 && (
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-slate-800 p-3 rounded-2xl border border-amber-200/80 dark:border-amber-900/50 space-y-2">
+              <div className="flex items-center justify-between text-xs font-bold text-amber-900 dark:text-amber-200">
+                <span className="flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
+                  Rekomendasi dari Riwayat:
+                </span>
+                <span className="text-[10px] text-amber-700 dark:text-amber-400 font-normal">
+                  Klik untuk isi otomatis
+                </span>
+              </div>
+              <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+                {recommendations.slice(0, 8).map((rec) => (
+                  <button
+                    key={rec.name}
+                    type="button"
+                    onClick={() => {
+                      setValue('name', rec.name);
+                      setValue('category', rec.category);
+                      setValue('unit', rec.unit);
+                      setValue('unitPrice', rec.lastUnitPrice);
+                      setValue('discounts', rec.discounts || []);
+                    }}
+                    className="flex-shrink-0 text-[11px] font-semibold bg-white dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-slate-800 dark:text-slate-100 px-2.5 py-1.5 rounded-xl border border-amber-200 dark:border-slate-700 shadow-2xs transition-all active:scale-95 flex items-center gap-1 min-h-[32px]"
+                  >
+                    <span>{rec.name}</span>
+                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">({formatRupiah(rec.lastUnitPrice)})</span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -308,18 +353,23 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
                 min="0"
                 step="any"
                 inputMode="numeric"
-                placeholder="15000"
+                placeholder="Contoh: 15000"
                 onKeyDown={(e) => {
                   if (e.key === '-' || e.key === 'Subtract') {
                     e.preventDefault();
                   }
                 }}
+                onFocus={(e) => {
+                  if (e.target.value === '0') {
+                    setValue('unitPrice', '' as any);
+                  }
+                }}
                 {...register('unitPrice', {
-                  valueAsNumber: true,
+                  setValueAs: (v) => (v === '' ? '' : Number(v)),
                   onChange: (e) => {
                     const val = parseFloat(e.target.value);
                     if (val < 0) {
-                      setValue('unitPrice', Math.abs(val) || 0);
+                      setValue('unitPrice', Math.abs(val) || ('' as any));
                     }
                   },
                 })}

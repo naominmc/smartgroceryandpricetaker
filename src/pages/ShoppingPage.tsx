@@ -4,6 +4,8 @@ import confetti from 'canvas-confetti';
 import {
   Plus,
   Trash2,
+  Sparkles,
+  History,
   MapPin,
   Calendar,
   ShoppingCart,
@@ -73,6 +75,10 @@ export const ShoppingPage: React.FC = () => {
 
   // Live queries to Dexie IndexedDB
   const cartItems = useLiveQuery(() => db.cartItems.toArray()) || [];
+  const recommendations = useLiveQuery(async () => {
+    return await groceryService.getRecommendedItemsFromHistory();
+  }) || [];
+
   const budgetRecord = useLiveQuery(() => db.budgets.where('period').equals(currentPeriod).first());
 
   useEffect(() => {
@@ -338,6 +344,68 @@ export const ShoppingPage: React.FC = () => {
                 <span>Checkout</span>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      
+      {/* Rekomendasi Barang dari Riwayat Pembelian (Beli Lagi 1-Klik) */}
+      {recommendations.length > 0 && (
+        <div className="bg-gradient-to-r from-amber-50/70 via-orange-50/40 to-blue-50/50 dark:from-slate-800 dark:to-slate-850 p-3.5 rounded-card border border-amber-200/70 dark:border-slate-700 shadow-soft space-y-2.5 animate-fade-in">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-text-main dark:text-slate-100">
+              <Sparkles className="w-4 h-4 text-amber-500 fill-amber-400" />
+              <span>Rekomendasi dari Riwayat Belanja</span>
+            </div>
+            <span className="text-[10px] text-text-secondary dark:text-slate-400 font-medium">
+              Beli lagi dengan 1 klik
+            </span>
+          </div>
+
+          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar scroll-smooth">
+            {recommendations.slice(0, 10).map((rec) => {
+              const inCart = cartItems.some(
+                (ci) => ci.nameSnapshot.toLowerCase() === rec.name.toLowerCase()
+              );
+              return (
+                <button
+                  key={rec.name}
+                  type="button"
+                  onClick={() => {
+                    handleSaveItem({
+                      name: rec.name,
+                      category: rec.category,
+                      unit: rec.unit,
+                      quantity: 1,
+                      unitPrice: rec.lastUnitPrice,
+                      discounts: rec.discounts || [],
+                    });
+                  }}
+                  className={`flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-2xl border text-left transition-all active:scale-95 shadow-2xs min-h-[44px] ${
+                    inCart
+                      ? 'bg-blue-50 dark:bg-blue-950/70 border-blue-300 dark:border-blue-700 text-blue-950 dark:text-blue-100'
+                      : 'bg-white dark:bg-slate-800 border-gray-200/90 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-600 text-text-main dark:text-slate-100'
+                  }`}
+                >
+                  <div className="w-7 h-7 rounded-xl bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 flex items-center justify-center flex-shrink-0">
+                    <History className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="min-w-0 pr-1">
+                    <div className="text-xs font-bold truncate max-w-[125px] leading-tight">
+                      {rec.name}
+                    </div>
+                    <div className="text-[10px] text-text-secondary dark:text-slate-400 font-mono font-medium">
+                      {formatRupiah(rec.lastUnitPrice)}/{rec.unit}
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0 pl-1 border-l border-gray-200 dark:border-slate-700">
+                    <span className="text-[10px] font-bold text-primary dark:text-blue-300 bg-blue-50 dark:bg-blue-900/50 px-2 py-1 rounded-lg">
+                      {inCart ? '+1' : '+ Beli'}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
