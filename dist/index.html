@@ -229,6 +229,20 @@
           </div>
         </div>
 
+        <!-- Checkout Action Bar (Dipindah ke ATAS agar langsung bisa checkout tanpa scroll) -->
+        <div id="cartActionBar" class="pt-1 flex flex-col gap-1.5">
+          <button id="btnCheckout" class="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-sm shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 transition active:scale-98">
+            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+            <span>Selesaikan Belanja (Checkout Struk BCA)</span>
+          </button>
+          <div class="flex items-center justify-end px-1">
+            <button id="btnClearCart" class="py-1 px-2.5 text-[11px] font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950 rounded-lg transition flex items-center gap-1">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              <span>Kosongkan Seluruh Troli</span>
+            </button>
+          </div>
+        </div>
+
         <!-- Empty Cart State -->
         <div id="emptyCartBox" class="bg-white dark:bg-slate-800 rounded-3xl p-8 border border-dashed border-slate-200 dark:border-slate-700 text-center flex flex-col items-center justify-center my-6">
           <div class="w-16 h-16 rounded-3xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3">
@@ -249,18 +263,6 @@
         <!-- Cart Items Container (Dengan Komparator Harga & Diskon) -->
         <div id="cartItemsContainer" class="space-y-2.5">
           <!-- Rendered via JS -->
-        </div>
-
-        <!-- Checkout Action Bar -->
-        <div id="cartActionBar" class="pt-2 flex flex-col gap-2">
-          <button id="btnCheckout" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-sm shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 transition active:scale-98">
-            <i data-lucide="check-circle-2" class="w-5 h-5"></i>
-            <span>Selesaikan Belanja (Checkout Struk BCA)</span>
-          </button>
-          <button id="btnClearCart" class="w-full py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950 rounded-xl transition flex items-center justify-center gap-1.5">
-            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-            <span>Kosongkan Seluruh Troli</span>
-          </button>
         </div>
       </section>
 
