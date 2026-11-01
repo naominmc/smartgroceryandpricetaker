@@ -1,109 +1,883 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>Smart Grocery &amp; Budget Safety Tracker</title>
-    <meta name="description" content="Aplikasi pencatatan belanja bulanan dan pengendali anggaran cerdas untuk mahasiswa rantau saat belanja supermarket dengan Budget Safety Cap dan komparator harga." />
-    
-    <meta name="theme-color" content="#2563EB" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Smart Grocery" />
-    
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" href="/pwa-192x192.png" />
-    
-    <!-- Google Fonts: Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            colors: {
-              background: '#F7F8FA',
-              card: '#FFFFFF',
-              primary: {
-                DEFAULT: '#2563EB',
-                hover: '#1D4ED8',
-                light: '#EFF6FF',
-                dark: '#3B82F6',
-              },
-              success: {
-                DEFAULT: '#16A34A',
-                light: '#F0FDF4',
-              },
-              warning: {
-                DEFAULT: '#F59E0B',
-                light: '#FFFBEB',
-              },
-              danger: {
-                DEFAULT: '#DC2626',
-                light: '#FEF2F2',
-              },
-              text: {
-                main: '#111827',
-                secondary: '#6B7280',
-              },
-              border: '#E5E7EB',
-              dark: {
-                bg: '#0F172A',
-                card: '#1E293B',
-                border: '#334155',
-                text: '#F8FAFC',
-                subtext: '#94A3B8',
-                hover: '#293548',
-              }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Smart Grocery &amp; Budget Safety Tracker</title>
+  <meta name="description" content="Aplikasi pencatatan belanja bulanan dan pengendali anggaran cerdas untuk mahasiswa rantau naomiiracle saat belanja supermarket." />
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            primary: {
+              DEFAULT: '#2563EB',
+              hover: '#1D4ED8',
+              light: '#EFF6FF',
+              dark: '#3B82F6',
             },
-            borderRadius: {
-              'card': '18px',
-              'card-lg': '22px',
-              'card-sm': '14px',
+            success: {
+              DEFAULT: '#16A34A',
+              light: '#F0FDF4',
             },
-            boxShadow: {
-              'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
-              'float': '0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04)',
-              'modal': '0 -8px 30px rgba(0, 0, 0, 0.12)',
-              'dark-float': '0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3)',
+            warning: {
+              DEFAULT: '#F59E0B',
+              light: '#FFFBEB',
+            },
+            danger: {
+              DEFAULT: '#DC2626',
+              light: '#FEF2F2',
             }
           }
         }
-      };
-    </script>
-
-    <!-- Custom CSS styles -->
-    <link rel="stylesheet" href="/dist/bundle.css" />
-
-    <!-- ESM Importmap -->
-    <script type="importmap">
-    {
-      "imports": {
-        "react": "https://esm.sh/react@19.0.0",
-        "react/": "https://esm.sh/react@19.0.0/",
-        "react-dom": "https://esm.sh/react-dom@19.0.0",
-        "react-dom/": "https://esm.sh/react-dom@19.0.0/",
-        "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
-        "lucide-react": "https://esm.sh/lucide-react@0.475.0",
-        "dexie": "https://esm.sh/dexie@4.0.11",
-        "dexie-react-hooks": "https://esm.sh/dexie-react-hooks@1.1.7?deps=dexie@4.0.11,react@19.0.0",
-        "zustand": "https://esm.sh/zustand@5.0.3",
-        "canvas-confetti": "https://esm.sh/canvas-confetti@1.9.4",
-        "react-hook-form": "https://esm.sh/react-hook-form@7.54.2?deps=react@19.0.0",
-        "zod": "https://esm.sh/zod@3.24.2",
-        "@hookform/resolvers/zod": "https://esm.sh/@hookform/resolvers@3.10.0/zod?deps=react-hook-form@7.54.2,zod@3.24.2"
       }
+    };
+  </script>
+
+  <!-- Lucide Icons & Confetti -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js"></script>
+
+  <style>
+    body {
+      background-color: #E5E7EB;
+      font-family: 'Inter', system-ui, sans-serif;
+      touch-action: manipulation;
+      user-select: none;
     }
-    </script>
-  </head>
-  <body class="bg-gray-100 text-text-main antialiased selection:bg-blue-100 selection:text-blue-700">
-    <div id="root"></div>
-    <script type="module" src="/dist/bundle.js"></script>
-  </body>
+    .dark body {
+      background-color: #0B0F19;
+    }
+    /* Hide number spinner */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+    /* Scanner laser animation */
+    @keyframes laserScan {
+      0% { top: 10%; opacity: 0.8; }
+      50% { top: 85%; opacity: 1; }
+      100% { top: 10%; opacity: 0.8; }
+    }
+    .laser-line {
+      animation: laserScan 2s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="flex justify-center items-center min-h-screen p-0 sm:p-4 text-slate-900 transition-colors duration-200">
+
+  <!-- Mobile Viewport Shell (Max width 430px) -->
+  <div class="w-full sm:max-w-[430px] h-screen sm:h-[900px] bg-slate-50 dark:bg-slate-900 sm:rounded-[36px] shadow-2xl sm:border-[8px] sm:border-slate-800 flex flex-col overflow-hidden relative transition-colors duration-200">
+
+    <!-- Top App Header: Profile naomiiracle, Bank BCA, Scan, Dark Mode -->
+    <header class="px-4 pt-3.5 pb-3 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 dark:from-slate-900 dark:via-blue-950 dark:to-indigo-950 text-white shadow-md relative overflow-hidden flex-shrink-0 z-20">
+      
+      <!-- User Profile Row -->
+      <div class="relative z-10 flex items-center justify-between gap-2 mb-2.5">
+        <div class="flex items-center gap-2">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-300 to-pink-400 p-0.5 shadow-md flex-shrink-0">
+            <div class="w-full h-full bg-white dark:bg-slate-900 rounded-[14px] flex items-center justify-center font-extrabold text-blue-700 dark:text-blue-400 text-base">
+              N
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <h2 class="font-extrabold text-sm tracking-tight text-white leading-none">naomiiracle</h2>
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300 fill-amber-300"></i>
+            </div>
+            <p class="text-[10px] text-blue-100 dark:text-blue-200 font-medium mt-0.5">Mahasiswa Rantau • Troli Belanja</p>
+          </div>
+        </div>
+
+        <!-- Action Buttons: Dark Mode & Barcode Scanner -->
+        <div class="flex items-center gap-1.5">
+          <button id="btnToggleTheme" class="p-2 rounded-xl bg-white/15 hover:bg-white/25 text-white transition active:scale-95" title="Ganti Mode Gelap/Terang">
+            <i data-lucide="moon" class="w-4 h-4" id="themeIcon"></i>
+          </button>
+          <button id="btnOpenScanner" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-xs shadow-md shadow-emerald-500/25 flex items-center gap-1.5 transition active:scale-95">
+            <i data-lucide="scan" class="w-3.5 h-3.5"></i>
+            <span>Scan</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Payment Method Selection Row (Bank BCA Default) -->
+      <div class="relative z-10 flex items-center justify-between bg-black/20 dark:bg-black/40 rounded-xl px-2.5 py-1.5 backdrop-blur-xs border border-white/10">
+        <div class="flex items-center gap-2">
+          <div class="w-5 h-5 rounded-md bg-blue-500 text-white flex items-center justify-center text-[10px] font-black">
+            BCA
+          </div>
+          <div class="text-left">
+            <div id="paymentMethodLabel" class="text-[11px] font-bold text-white leading-tight">Bank BCA (Utama)</div>
+            <div id="paymentMethodDetail" class="text-[9px] text-blue-200">BCA Mobile `5271-8892-01`</div>
+          </div>
+        </div>
+        <button id="btnChangePayment" class="text-[10px] font-bold text-amber-300 hover:text-amber-200 underline decoration-dotted">
+          Ganti
+        </button>
+      </div>
+
+      <!-- Safety Cap Live Budget Bar (F-05) -->
+      <div class="mt-2.5 bg-white/10 dark:bg-black/30 rounded-2xl p-2.5 backdrop-blur border border-white/15">
+        <div class="flex items-center justify-between mb-1">
+          <div id="safetyBadge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-400/25 text-emerald-200 border border-emerald-400/30">
+            <i data-lucide="shield-check" class="w-3 h-3" id="safetyBadgeIcon"></i>
+            <span id="safetyBadgeText">ZONA AMAN</span>
+          </div>
+          <button id="btnEditBudget" class="text-[10px] font-semibold text-white/80 hover:text-white flex items-center gap-1">
+            <span id="headerBudgetCapDisplay">Batas: Rp 1.200.000</span>
+            <i data-lucide="edit-3" class="w-2.5 h-2.5"></i>
+          </button>
+        </div>
+
+        <div class="flex items-baseline justify-between mb-1.5">
+          <div>
+            <div id="headerTotalSpent" class="text-xl font-black font-mono tracking-tight text-white">Rp 0</div>
+            <div id="headerRemainingAmount" class="text-[10px] font-medium text-blue-100">Sisa Dompet: Rp 1.200.000</div>
+          </div>
+          <div class="text-right">
+            <span id="headerBudgetPercent" class="text-xl font-black font-mono text-emerald-300">0%</span>
+            <span class="text-[9px] text-blue-200 block uppercase font-bold tracking-wider">Terpakai</span>
+          </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="w-full h-2 bg-white/20 rounded-full overflow-hidden p-0.5">
+          <div id="budgetProgressFill" class="h-full bg-emerald-400 rounded-full transition-all duration-500" style="width: 0%;"></div>
+        </div>
+
+        <div class="flex items-center justify-between text-[10px] text-blue-100 mt-1.5 font-medium">
+          <span id="safetyAdviceText" class="truncate max-w-[220px]">Dompet aman. Belanja masih terkendali.</span>
+          <span id="cartTotalItemsCount" class="font-bold text-white bg-white/20 px-1.5 py-0.5 rounded">0 Item</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Scrollable Content Area -->
+    <main class="flex-1 overflow-y-auto px-4 py-3 relative dark:text-slate-100" id="mainContentScroll">
+
+      <!-- ==========================================
+           TAB 1: BELANJA (Active Shopping Cart)
+           ========================================== -->
+      <section id="view-shopping" class="space-y-3 pb-24">
+        <!-- Sub-Banner Troli -->
+        <div class="flex items-center justify-between px-1">
+          <div class="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300">
+            <i data-lucide="shopping-cart" class="w-4 h-4 text-blue-600"></i>
+            <span id="cartCountSummary">Troli: 0 Produk</span>
+          </div>
+          <div id="cartSavingsSummary" class="hidden items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-600"></i>
+            <span id="cartTotalSavingsText">Hemat Rp 0</span>
+          </div>
+        </div>
+
+        <!-- Empty Cart State -->
+        <div id="emptyCartBox" class="bg-white dark:bg-slate-800 rounded-3xl p-8 border border-dashed border-slate-200 dark:border-slate-700 text-center flex flex-col items-center justify-center my-6">
+          <div class="w-16 h-16 rounded-3xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3">
+            <i data-lucide="shopping-cart" class="w-8 h-8"></i>
+          </div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white mb-1">Troli naomiiracle Masih Kosong</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 max-w-[220px] mb-4">Tambahkan barang belanjaan supermarket atau scan barcode otomatis!</p>
+          <div class="flex gap-2">
+            <button id="btnEmptyAdd" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition active:scale-95">
+              <i data-lucide="plus" class="w-4 h-4"></i> Tambah Manual
+            </button>
+            <button id="btnEmptyScan" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition active:scale-95">
+              <i data-lucide="scan" class="w-4 h-4"></i> Scan Barcode
+            </button>
+          </div>
+        </div>
+
+        <!-- Cart Items Container -->
+        <div id="cartItemsContainer" class="space-y-2.5">
+          <!-- Rendered via JS -->
+        </div>
+
+        <!-- Checkout Action Bar -->
+        <div id="cartActionBar" class="pt-2 flex flex-col gap-2">
+          <button id="btnCheckout" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-sm shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 transition active:scale-98">
+            <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+            <span>Bayar via Bank BCA (Checkout Struk)</span>
+          </button>
+          <button id="btnClearCart" class="w-full py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950 rounded-xl transition flex items-center justify-center gap-1.5">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            <span>Kosongkan Seluruh Troli</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           TAB 2: RIWAYAT BELANJA (F-06 History)
+           ========================================== -->
+      <section id="view-history" class="space-y-3 pb-24 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700">
+          <h2 class="text-sm font-extrabold text-slate-900 dark:text-white">Riwayat Belanja naomiiracle</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Arsip transaksi supermarket &amp; snapshot metode bayar.</p>
+
+          <div class="grid grid-cols-2 gap-2.5 mt-3">
+            <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-100 dark:border-slate-800">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Belanja</span>
+              <div id="statsTotalSpent" class="text-lg font-black text-slate-900 dark:text-white font-mono mt-0.5">Rp 0</div>
+            </div>
+            <div class="bg-emerald-50 dark:bg-emerald-950 rounded-xl p-3 border border-emerald-100 dark:border-emerald-900">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Total Dihemat</span>
+              <div id="statsTotalSaved" class="text-lg font-black text-emerald-700 dark:text-emerald-300 font-mono mt-0.5">Rp 0</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="historyListContainer" class="space-y-3">
+          <!-- Rendered via JS -->
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-3.5 border border-slate-200 dark:border-slate-700 space-y-2">
+          <h3 class="text-xs font-extrabold text-slate-800 dark:text-slate-200">Cadangan &amp; Pemulihan Data (IndexedDB)</h3>
+          <div class="grid grid-cols-2 gap-2">
+            <button id="btnExportData" class="py-2.5 px-3 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 transition">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i> Backup JSON
+            </button>
+            <button id="btnImportTrigger" class="py-2.5 px-3 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 transition">
+              <i data-lucide="upload" class="w-3.5 h-3.5"></i> Restore JSON
+            </button>
+            <input type="file" id="fileImportInput" accept=".json" class="hidden">
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           TAB 3: ANGGARAN & DATABASE (F-05)
+           ========================================== -->
+      <section id="view-budget" class="space-y-3 pb-24 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 space-y-3">
+          <div class="flex items-center gap-2">
+            <div class="p-2 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400">
+              <i data-lucide="wallet" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h2 class="text-sm font-extrabold text-slate-900 dark:text-white">Pagu Batas Anggaran (Safety Cap)</h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Batas pengeluaran bulanan saat mendorong troli.</p>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Batas Anggaran (Rp):</label>
+            <div class="relative">
+              <span class="absolute left-3.5 top-3 text-slate-400 font-bold text-sm">Rp</span>
+              <input type="number" id="inputBudgetSetting" placeholder="1200000" inputmode="numeric" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 font-mono font-bold text-lg text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+          </div>
+
+          <!-- Preset Chips -->
+          <div class="grid grid-cols-2 gap-1.5">
+            <button class="preset-chip py-1.5 px-2 rounded-lg bg-slate-50 dark:bg-slate-900 hover:bg-blue-50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold" data-preset="800000">Rp 800.000 (Hemat)</button>
+            <button class="preset-chip py-1.5 px-2 rounded-lg bg-slate-50 dark:bg-slate-900 hover:bg-blue-50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold" data-preset="1200000">Rp 1.200.000 (Standar)</button>
+            <button class="preset-chip py-1.5 px-2 rounded-lg bg-slate-50 dark:bg-slate-900 hover:bg-blue-50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold" data-preset="1500000">Rp 1.500.000 (Lengkap)</button>
+            <button class="preset-chip py-1.5 px-2 rounded-lg bg-slate-50 dark:bg-slate-900 hover:bg-blue-50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold" data-preset="2000000">Rp 2.000.000 (Penuh)</button>
+          </div>
+
+          <button id="btnSaveBudgetSetting" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-1.5">
+            <i data-lucide="check" class="w-4 h-4"></i> Simpan Batas Anggaran
+          </button>
+        </div>
+
+        <!-- Database Patokan Harga Supermarket (F-04) -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">Database Patokan Harga</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Dasar komparator harga naik / turun vs bulan lalu.</p>
+            </div>
+            <button id="btnAddNewDbItem" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold text-xs hover:bg-blue-100 transition">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Tambah
+            </button>
+          </div>
+
+          <div class="relative">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
+            <input type="text" id="inputSearchDb" placeholder="Cari barang di database acuan..." class="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+
+          <div id="dbItemsListContainer" class="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Floating Action Button (FAB) -->
+    <button id="fabQuickAdd" class="absolute bottom-20 right-5 z-20 px-4 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-xs shadow-xl shadow-blue-600/30 flex items-center gap-2 transition active:scale-95">
+      <i data-lucide="plus" class="w-5 h-5"></i>
+      <span>Tambah Barang</span>
+    </button>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="h-16 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-800 flex items-center justify-around px-2 z-20 flex-shrink-0">
+      <button class="nav-tab-btn flex-1 py-1 flex flex-col items-center justify-center text-blue-600 font-bold transition" data-tab="view-shopping" id="tabNavShopping">
+        <div class="relative">
+          <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+          <span id="bottomNavBadge" class="hidden absolute -top-1 -right-2 w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] font-black items-center justify-center">0</span>
+        </div>
+        <span class="text-[10px] mt-0.5">Belanja</span>
+      </button>
+
+      <button class="nav-tab-btn flex-1 py-1 flex flex-col items-center justify-center text-slate-400 font-semibold hover:text-slate-600 transition" data-tab="view-history" id="tabNavHistory">
+        <i data-lucide="history" class="w-5 h-5"></i>
+        <span class="text-[10px] mt-0.5">Riwayat</span>
+      </button>
+
+      <button class="nav-tab-btn flex-1 py-1 flex flex-col items-center justify-center text-slate-400 font-semibold hover:text-slate-600 transition" data-tab="view-budget" id="tabNavBudget">
+        <i data-lucide="wallet" class="w-5 h-5"></i>
+        <span class="text-[10px] mt-0.5">Anggaran</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- ========================================================
+       MODAL: BARCODE SCANNER SUPERMARKET OTOMATIS
+       ======================================================== -->
+  <div id="barcodeModalBackdrop" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 text-white w-full max-w-[380px] rounded-3xl p-5 border border-slate-800 shadow-2xl flex flex-col items-center">
+      <div class="w-full flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+        <div class="flex items-center gap-2">
+          <i data-lucide="camera" class="w-5 h-5 text-emerald-400"></i>
+          <h3 class="text-sm font-extrabold">Scanner Barcode Supermarket</h3>
+        </div>
+        <button id="btnCloseScanner" class="p-1.5 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Viewfinder with Laser -->
+      <div class="w-64 h-48 rounded-2xl bg-slate-950 border-2 border-emerald-500/80 relative overflow-hidden flex items-center justify-center shadow-inner shadow-emerald-500/20">
+        <!-- Laser scanner line -->
+        <div class="laser-line absolute left-2 right-2 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_8px_#10b981]"></div>
+        
+        <div class="text-center p-3 text-slate-500 text-xs font-mono pointer-events-none">
+          <i data-lucide="scan" class="w-10 h-10 mx-auto text-emerald-500/40 mb-2"></i>
+          <span>Arahkan kamera ke barcode produk supermarket</span>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-slate-400 text-center mt-3 mb-4">
+        Klik salah satu sampel barcode produk supermarket Indonesia untuk simulasi scan otomatis:
+      </p>
+
+      <!-- Barcode simulation buttons -->
+      <div class="w-full space-y-1.5 max-h-48 overflow-y-auto pr-1">
+        <button class="btn-sample-barcode w-full p-2 rounded-xl bg-slate-800 hover:bg-emerald-950/60 border border-slate-700 hover:border-emerald-500/60 text-left flex items-center justify-between text-xs transition" data-code="8998866200223" data-name="Indomie Goreng Spesial" data-price="3100" data-cat="Mie &amp; Instan" data-unit="pcs">
+          <div>
+            <div class="font-bold text-white">Indomie Goreng Spesial</div>
+            <div class="text-[10px] text-slate-400 font-mono">Barcode: 8998866200223</div>
+          </div>
+          <span class="font-bold font-mono text-emerald-400">Rp 3.100</span>
+        </button>
+
+        <button class="btn-sample-barcode w-full p-2 rounded-xl bg-slate-800 hover:bg-emerald-950/60 border border-slate-700 hover:border-emerald-500/60 text-left flex items-center justify-between text-xs transition" data-code="8992753011119" data-name="Ultra Milk Coklat 1000ml" data-price="19500" data-cat="Minuman &amp; Susu" data-unit="pcs">
+          <div>
+            <div class="font-bold text-white">Ultra Milk Coklat 1L</div>
+            <div class="text-[10px] text-slate-400 font-mono">Barcode: 8992753011119</div>
+          </div>
+          <span class="font-bold font-mono text-emerald-400">Rp 19.500</span>
+        </button>
+
+        <button class="btn-sample-barcode w-full p-2 rounded-xl bg-slate-800 hover:bg-emerald-950/60 border border-slate-700 hover:border-emerald-500/60 text-left flex items-center justify-between text-xs transition" data-code="8996001301017" data-name="Aqua Galon 19L" data-price="21000" data-cat="Minuman &amp; Susu" data-unit="galon">
+          <div>
+            <div class="font-bold text-white">Aqua Galon 19L</div>
+            <div class="text-[10px] text-slate-400 font-mono">Barcode: 8996001301017</div>
+          </div>
+          <span class="font-bold font-mono text-emerald-400">Rp 21.000</span>
+        </button>
+
+        <button class="btn-sample-barcode w-full p-2 rounded-xl bg-slate-800 hover:bg-emerald-950/60 border border-slate-700 hover:border-emerald-500/60 text-left flex items-center justify-between text-xs transition" data-code="8993175538118" data-name="Minyak Sania Pouch 2L" data-price="38000" data-cat="Bahan Pokok" data-unit="pack">
+          <div>
+            <div class="font-bold text-white">Minyak Sania 2L</div>
+            <div class="text-[10px] text-slate-400 font-mono">Barcode: 8993175538118</div>
+          </div>
+          <span class="font-bold font-mono text-emerald-400">Rp 38.000</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL: PILIH REKENING / PENYIMPANAN DUIT (BANK BCA)
+       ======================================================== -->
+  <div id="paymentModalBackdrop" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-[360px] rounded-3xl p-5 shadow-2xl space-y-3 border dark:border-slate-800">
+      <div class="flex items-center justify-between pb-2 border-b dark:border-slate-800">
+        <div>
+          <h3 class="text-sm font-black text-slate-900 dark:text-white">Pilih Sumber Dana Belanja</h3>
+          <p class="text-[11px] text-slate-400">naomiiracle financial account</p>
+        </div>
+        <button id="btnClosePaymentModal" class="p-1 rounded-full text-slate-400 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-2">
+        <button class="btn-select-payment w-full p-3 rounded-2xl border-2 border-blue-600 bg-blue-50/50 dark:bg-blue-950/40 flex items-center justify-between text-left transition" data-label="Bank BCA (Utama)" data-detail="BCA Mobile `5271-8892-01`">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-xs">BCA</div>
+            <div>
+              <div class="text-xs font-extrabold text-slate-900 dark:text-white">Bank BCA (Rekening Utama)</div>
+              <div class="text-[10px] text-slate-500 font-mono">No. Rek: 5271-8892-01</div>
+            </div>
+          </div>
+          <i data-lucide="check" class="w-4 h-4 text-blue-600"></i>
+        </button>
+
+        <button class="btn-select-payment w-full p-3 rounded-2xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between text-left transition" data-label="Blu by BCA Digital" data-detail="Blu Account `0021-9941-88`">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-sky-500 text-white flex items-center justify-center font-bold text-xs">blu</div>
+            <div>
+              <div class="text-xs font-extrabold text-slate-900 dark:text-white">Blu by BCA Digital</div>
+              <div class="text-[10px] text-slate-500 font-mono">No. Rek: 0021-9941-88</div>
+            </div>
+          </div>
+        </button>
+
+        <button class="btn-select-payment w-full p-3 rounded-2xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between text-left transition" data-label="Dompet Tunai Kos" data-detail="Uang Cash Fisik">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xs">💵</div>
+            <div>
+              <div class="text-xs font-extrabold text-slate-900 dark:text-white">Dompet Tunai Fisik</div>
+              <div class="text-[10px] text-slate-500">Uang saku cash kos</div>
+            </div>
+          </div>
+        </button>
+
+        <button class="btn-select-payment w-full p-3 rounded-2xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between text-left transition" data-label="QRIS / GoPay" data-detail="GoPay / ShopeePay e-wallet">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-teal-600 text-white flex items-center justify-center font-bold text-xs">QR</div>
+            <div>
+              <div class="text-xs font-extrabold text-slate-900 dark:text-white">QRIS / E-Wallet</div>
+              <div class="text-[10px] text-slate-500">GoPay / Dana / ShopeePay</div>
+            </div>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL: FORM TAMBAH / EDIT BARANG BELANJA
+       ======================================================== -->
+  <div id="itemModalBackdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
+    <div class="bg-white dark:bg-slate-900 w-full sm:max-w-[420px] rounded-t-[32px] sm:rounded-3xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl">
+      <div class="px-5 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between flex-shrink-0">
+        <div>
+          <h3 id="itemModalTitle" class="text-base font-extrabold text-slate-900 dark:text-white">Tambah Barang Belanja</h3>
+          <p class="text-[11px] text-slate-400">Kalkulasi kuantitas &amp; diskon bertingkat otomatis</p>
+        </div>
+        <button id="btnCloseItemModal" class="p-2 rounded-full text-slate-400 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="itemForm" class="p-5 overflow-y-auto space-y-4">
+        <input type="hidden" id="editItemId" value="">
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Nama Barang Supermarket:</label>
+          <input type="text" id="inputItemName" placeholder="Contoh: Beras Ramos 5kg, Telur 1kg..." required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Harga Satuan (Rp):</label>
+            <div class="relative">
+              <span class="absolute left-3 top-2.5 text-slate-400 font-bold text-xs">Rp</span>
+              <input type="number" id="inputItemPrice" placeholder="28000" inputmode="numeric" required class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Jumlah (Qty):</label>
+            <div class="flex items-center h-[38px] rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-slate-50 dark:bg-slate-800">
+              <button type="button" id="modalQtyMinus" class="w-9 h-full flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200">
+                <i data-lucide="minus" class="w-3.5 h-3.5"></i>
+              </button>
+              <input type="number" id="inputItemQty" value="1" min="1" step="1" class="w-full text-center text-xs font-bold bg-transparent focus:outline-none font-mono">
+              <button type="button" id="modalQtyPlus" class="w-9 h-full flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Diskon Promosi -->
+        <div class="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-bold text-amber-900 dark:text-amber-200 inline-flex items-center gap-1.5">
+              <i data-lucide="tag" class="w-3.5 h-3.5 text-amber-700"></i>
+              Diskon Promosi:
+            </label>
+            <span class="text-[10px] text-amber-700 dark:text-amber-400">Tunggal / Bertingkat</span>
+          </div>
+
+          <div class="flex gap-2">
+            <input type="text" id="inputItemDiscount" placeholder="Contoh: 25% atau 50% + 20%" class="flex-1 px-3 py-1.5 rounded-xl border border-amber-200 dark:border-amber-800 text-xs font-bold bg-white dark:bg-slate-800 text-amber-900 dark:text-white focus:outline-none">
+            <select id="selectDiscountType" class="px-2 py-1.5 rounded-xl border border-amber-200 dark:border-amber-800 text-xs font-bold bg-white dark:bg-slate-800 text-amber-900 dark:text-white focus:outline-none">
+              <option value="percent">Persen (%)</option>
+              <option value="nominal">Nominal (Rp)</option>
+            </select>
+          </div>
+
+          <div id="discountCalcPreview" class="text-[11px] font-medium text-amber-800 dark:text-amber-300">
+            Tanpa diskon.
+          </div>
+        </div>
+
+        <!-- Subtotal Preview -->
+        <div class="p-3.5 rounded-2xl bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-900 flex items-center justify-between">
+          <div>
+            <div class="text-[10px] uppercase font-bold text-blue-800 dark:text-blue-300">Subtotal Baris:</div>
+            <div id="modalRowFormula" class="text-xs font-semibold text-blue-700 dark:text-blue-400">1 pcs × Rp 0</div>
+          </div>
+          <div id="modalRowSubtotal" class="text-xl font-black text-blue-700 dark:text-blue-300 font-mono">
+            Rp 0
+          </div>
+        </div>
+
+        <button type="submit" class="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm shadow-lg shadow-blue-600/25 transition">
+          Masukkan ke Troli Belanja
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2 pointer-events-none"></div>
+
+  <!-- SCRIPT LOGIC -->
+  <script>
+    // State management for naomiiracle's app
+    const Storage = {
+      get(k, def) {
+        try { const v = localStorage.getItem('sg_main_' + k); return v ? JSON.parse(v) : def; } catch(e) { return def; }
+      },
+      set(k, v) {
+        try { localStorage.setItem('sg_main_' + k, JSON.stringify(v)); } catch(e) {}
+      }
+    };
+
+    let AppState = {
+      theme: Storage.get('theme', 'light'),
+      budgetCap: Storage.get('budgetCap', 1200000),
+      paymentMethod: Storage.get('paymentMethod', { label: 'Bank BCA (Utama)', detail: 'BCA Mobile `5271-8892-01`' }),
+      cart: Storage.get('cart', [
+        { id: 'c1', name: 'Beras Ramos 5kg', unitPrice: 72000, qty: 1, subtotal: 72000, savings: 0, unit: 'pack', category: 'Bahan Pokok' },
+        { id: 'c2', name: 'Indomie Goreng', unitPrice: 3100, qty: 10, subtotal: 31000, savings: 0, unit: 'pcs', category: 'Mie & Instan' }
+      ]),
+      referencePrices: Storage.get('referencePrices', [
+        { id: 'r1', name: 'Beras Ramos 5kg', price: 72000, unit: 'pack' },
+        { id: 'r2', name: 'Indomie Goreng', price: 3100, unit: 'pcs' },
+        { id: 'r3', name: 'Minyak Goreng 2L', price: 37000, unit: 'pack' },
+        { id: 'r4', name: 'Telur Ayam 1kg', price: 28000, unit: 'kg' }
+      ]),
+      history: Storage.get('history', [])
+    };
+
+    function saveState() {
+      Storage.set('theme', AppState.theme);
+      Storage.set('budgetCap', AppState.budgetCap);
+      Storage.set('paymentMethod', AppState.paymentMethod);
+      Storage.set('cart', AppState.cart);
+      Storage.set('referencePrices', AppState.referencePrices);
+      Storage.set('history', AppState.history);
+    }
+
+    function formatRp(n) {
+      return 'Rp ' + Math.round(Number(n) || 0).toLocaleString('id-ID');
+    }
+
+    function playBeep(freq = 1200, duration = 0.08) {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+      } catch(e) {}
+    }
+
+    function showToast(msg, icon = 'check-circle-2') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'bg-slate-900 text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-xl flex items-center gap-2 pointer-events-auto';
+      toast.innerHTML = `<i data-lucide="${icon}" class="w-4 h-4 text-emerald-400"></i> <span>${msg}</span>`;
+      container.appendChild(toast);
+      lucide.createIcons();
+      setTimeout(() => toast.remove(), 2500);
+    }
+
+    function renderSafetyCap() {
+      const totalSpent = AppState.cart.reduce((s, i) => s + (i.subtotal || 0), 0);
+      const cap = AppState.budgetCap || 1200000;
+      const remaining = cap - totalSpent;
+      const pct = Math.round((totalSpent / cap) * 100);
+
+      document.getElementById('headerBudgetCapDisplay').textContent = 'Batas: ' + formatRp(cap);
+      document.getElementById('headerTotalSpent').textContent = formatRp(totalSpent);
+      document.getElementById('headerBudgetPercent').textContent = pct + '%';
+      document.getElementById('budgetProgressFill').style.width = Math.min(100, pct) + '%';
+
+      const remElem = document.getElementById('headerRemainingAmount');
+      if (remaining >= 0) {
+        remElem.textContent = 'Sisa Dompet: ' + formatRp(remaining);
+      } else {
+        remElem.textContent = 'Terlampaui: ' + formatRp(Math.abs(remaining));
+      }
+
+      const totalItems = AppState.cart.reduce((s, i) => s + (i.qty || 1), 0);
+      document.getElementById('cartTotalItemsCount').textContent = totalItems + ' Item';
+      document.getElementById('cartCountSummary').textContent = `Troli: ${AppState.cart.length} Produk (${totalItems} Item)`;
+
+      const bNavBadge = document.getElementById('bottomNavBadge');
+      if (AppState.cart.length > 0) {
+        bNavBadge.textContent = AppState.cart.length;
+        bNavBadge.classList.remove('hidden');
+        bNavBadge.classList.add('flex');
+      } else {
+        bNavBadge.classList.add('hidden');
+        bNavBadge.classList.remove('flex');
+      }
+
+      lucide.createIcons();
+    }
+
+    function renderCart() {
+      const container = document.getElementById('cartItemsContainer');
+      const emptyBox = document.getElementById('emptyCartBox');
+      const actionBar = document.getElementById('cartActionBar');
+
+      if (AppState.cart.length === 0) {
+        emptyBox.classList.remove('hidden');
+        actionBar.classList.add('hidden');
+        container.innerHTML = '';
+        renderSafetyCap();
+        return;
+      }
+
+      emptyBox.classList.add('hidden');
+      actionBar.classList.remove('hidden');
+
+      container.innerHTML = AppState.cart.map(item => `
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-3.5 border border-slate-200 dark:border-slate-700 shadow-sm">
+          <div class="flex items-start justify-between">
+            <div>
+              <h4 class="text-xs font-black text-slate-900 dark:text-white">${item.name}</h4>
+              <span class="text-[10px] text-slate-400 font-medium">${item.category || 'Supermarket'}</span>
+            </div>
+            <button onclick="deleteCartItem('${item.id}')" class="p-1 rounded-lg text-slate-400 hover:text-rose-600 transition">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+            <div class="flex items-center h-7 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 overflow-hidden">
+              <button onclick="updateQty('${item.id}', -1)" class="w-7 h-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200">
+                <i data-lucide="minus" class="w-3 h-3"></i>
+              </button>
+              <span class="w-8 text-center text-xs font-bold font-mono">${item.qty}</span>
+              <button onclick="updateQty('${item.id}', 1)" class="w-7 h-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200">
+                <i data-lucide="plus" class="w-3 h-3"></i>
+              </button>
+            </div>
+
+            <div class="text-right">
+              <div class="text-xs font-black font-mono text-slate-900 dark:text-white">${formatRp(item.subtotal)}</div>
+              <div class="text-[10px] text-slate-400">@ ${formatRp(item.unitPrice)}</div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      renderSafetyCap();
+      lucide.createIcons();
+    }
+
+    function updateQty(id, delta) {
+      const it = AppState.cart.find(i => i.id === id);
+      if (!it) return;
+      it.qty += delta;
+      if (it.qty <= 0) {
+        deleteCartItem(id);
+        return;
+      }
+      it.subtotal = it.unitPrice * it.qty;
+      saveState();
+      renderCart();
+      playBeep(1400, 0.04);
+    }
+
+    function deleteCartItem(id) {
+      AppState.cart = AppState.cart.filter(i => i.id !== id);
+      saveState();
+      renderCart();
+      showToast('Barang dihapus dari troli');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Theme toggle
+      function applyTheme(t) {
+        if (t === 'dark') {
+          document.documentElement.classList.add('dark');
+          document.getElementById('themeIcon').setAttribute('data-lucide', 'sun');
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.getElementById('themeIcon').setAttribute('data-lucide', 'moon');
+        }
+        lucide.createIcons();
+      }
+      applyTheme(AppState.theme);
+
+      document.getElementById('btnToggleTheme').addEventListener('click', () => {
+        AppState.theme = AppState.theme === 'dark' ? 'light' : 'dark';
+        saveState();
+        applyTheme(AppState.theme);
+      });
+
+      // Tab navigation
+      document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tabId = btn.dataset.tab;
+          document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
+          document.getElementById(tabId).classList.remove('hidden');
+
+          document.querySelectorAll('.nav-tab-btn').forEach(b => {
+            b.classList.remove('text-blue-600', 'font-bold');
+            b.classList.add('text-slate-400', 'font-semibold');
+          });
+          btn.classList.add('text-blue-600', 'font-bold');
+          btn.classList.remove('text-slate-400', 'font-semibold');
+        });
+      });
+
+      // Scanner modal
+      const scanModal = document.getElementById('barcodeModalBackdrop');
+      document.getElementById('btnOpenScanner').addEventListener('click', () => scanModal.classList.remove('hidden'));
+      document.getElementById('btnEmptyScan').addEventListener('click', () => scanModal.classList.remove('hidden'));
+      document.getElementById('btnCloseScanner').addEventListener('click', () => scanModal.classList.add('hidden'));
+
+      document.querySelectorAll('.btn-sample-barcode').forEach(b => {
+        b.addEventListener('click', () => {
+          const name = b.dataset.name;
+          const price = parseFloat(b.dataset.price);
+          const cat = b.dataset.cat;
+          const unit = b.dataset.unit;
+
+          AppState.cart.push({
+            id: 'scan_' + Date.now(),
+            name,
+            unitPrice: price,
+            qty: 1,
+            subtotal: price,
+            savings: 0,
+            unit,
+            category: cat
+          });
+          saveState();
+          renderCart();
+          scanModal.classList.add('hidden');
+          playBeep(1800, 0.12);
+          showToast(`Berhasil dipindai: ${name}`, 'scan');
+        });
+      });
+
+      // Payment method modal
+      const payModal = document.getElementById('paymentModalBackdrop');
+      document.getElementById('btnChangePayment').addEventListener('click', () => payModal.classList.remove('hidden'));
+      document.getElementById('btnClosePaymentModal').addEventListener('click', () => payModal.classList.add('hidden'));
+
+      document.querySelectorAll('.btn-select-payment').forEach(b => {
+        b.addEventListener('click', () => {
+          AppState.paymentMethod = { label: b.dataset.label, detail: b.dataset.detail };
+          document.getElementById('paymentMethodLabel').textContent = b.dataset.label;
+          document.getElementById('paymentMethodDetail').textContent = b.dataset.detail;
+          saveState();
+          payModal.classList.add('hidden');
+          showToast('Metode bayar diubah: ' + b.dataset.label, 'credit-card');
+        });
+      });
+
+      // Add item modal
+      const itemModal = document.getElementById('itemModalBackdrop');
+      document.getElementById('fabQuickAdd').addEventListener('click', () => itemModal.classList.remove('hidden'));
+      document.getElementById('btnEmptyAdd').addEventListener('click', () => itemModal.classList.remove('hidden'));
+      document.getElementById('btnCloseItemModal').addEventListener('click', () => itemModal.classList.add('hidden'));
+
+      document.getElementById('itemForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = document.getElementById('inputItemName').value.trim();
+        const price = parseFloat(document.getElementById('inputItemPrice').value) || 0;
+        const qty = parseInt(document.getElementById('inputItemQty').value) || 1;
+
+        AppState.cart.push({
+          id: 'manual_' + Date.now(),
+          name,
+          unitPrice: price,
+          qty,
+          subtotal: price * qty,
+          savings: 0,
+          unit: 'pcs',
+          category: 'Bahan Pokok'
+        });
+        saveState();
+        renderCart();
+        itemModal.classList.add('hidden');
+        playBeep(1400, 0.08);
+        showToast('Dimasukkan ke troli naomiiracle', 'shopping-cart');
+      });
+
+      // Checkout
+      document.getElementById('btnCheckout').addEventListener('click', () => {
+        const total = AppState.cart.reduce((s, i) => s + (i.subtotal || 0), 0);
+        confetti({ particleCount: 70, spread: 60 });
+        playBeep(1600, 0.15);
+        showToast(`Checkout Berhasil! Dibayar via ${AppState.paymentMethod.label}: ${formatRp(total)}`, 'check-circle-2');
+        AppState.cart = [];
+        saveState();
+        renderCart();
+      });
+
+      // Clear cart
+      document.getElementById('btnClearCart').addEventListener('click', () => {
+        if (confirm('Kosongkan troli belanja?')) {
+          AppState.cart = [];
+          saveState();
+          renderCart();
+          showToast('Troli dikosongkan', 'trash-2');
+        }
+      });
+
+      renderCart();
+    });
+  </script>
+</body>
 </html>
