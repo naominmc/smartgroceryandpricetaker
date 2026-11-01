@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   X,
   RefreshCw,
-  Share2,
   QrCode,
   Check,
   Smartphone,
@@ -10,7 +9,6 @@ import {
   CheckCircle2,
   Radio,
   Copy,
-  ExternalLink,
   ShieldCheck,
   Sparkles,
 } from 'lucide-react';
