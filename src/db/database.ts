@@ -23,6 +23,25 @@ export class GroceryDatabase extends Dexie {
 export const db = new GroceryDatabase();
 
 /**
+ * Setup Realtime Database Sync Hooks
+ * Automatically broadcasts snapshot when cartItems, budgets, or transactions mutate
+ */
+export function setupDatabaseSyncHooks(notifyFn: () => void) {
+  const tables = [db.cartItems, db.budgets, db.transactions];
+  tables.forEach((table) => {
+    table.hook('creating', () => {
+      notifyFn();
+    });
+    table.hook('updating', () => {
+      notifyFn();
+    });
+    table.hook('deleting', () => {
+      notifyFn();
+    });
+  });
+}
+
+/**
  * Seeds initial demo data if database is fresh, providing instant delight
  * including a budget and previous month transactions so F-04 comparator has rich real data!
  */

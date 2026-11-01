@@ -108,9 +108,17 @@ export const useStore = create<AppState>((set, get) => ({
   setSessionLocation: (loc) => {
     if (typeof window !== 'undefined') localStorage.setItem('smart_grocery_location', loc);
     set({ sessionLocation: loc });
+    if (typeof window !== 'undefined' && (window as any).__smart_grocery_notify_sync) {
+      (window as any).__smart_grocery_notify_sync();
+    }
   },
   sessionDate: new Date().toISOString().split('T')[0],
-  setSessionDate: (d) => set({ sessionDate: d }),
+  setSessionDate: (d) => {
+    set({ sessionDate: d });
+    if (typeof window !== 'undefined' && (window as any).__smart_grocery_notify_sync) {
+      (window as any).__smart_grocery_notify_sync();
+    }
+  },
 
   isAddItemSheetOpen: false,
   editingItem: null,

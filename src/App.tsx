@@ -8,6 +8,8 @@ import { HistoryPage } from './pages/HistoryPage';
 import { BudgetPage } from './pages/BudgetPage';
 import { PaymentMethodSelectorModal } from './components/PaymentMethodSelectorModal';
 import { BarcodeScannerModal } from './components/BarcodeScannerModal';
+import { SyncModal } from './components/SyncModal';
+import { syncService } from './services/syncService';
 import { groceryService } from './services/groceryService';
 import type { ProductCategory } from './types';
 import { CreditCard, Sparkles, Scan, Sun, Moon } from 'lucide-react';
@@ -25,6 +27,7 @@ export const App: React.FC = () => {
   } = useStore();
   const [isInitialized, setIsInitialized] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
 
   // Load cart items count for navigation badge
   const cartItems = useLiveQuery(() => db.cartItems.toArray()) || [];
@@ -42,6 +45,7 @@ export const App: React.FC = () => {
     async function init() {
       try {
         await seedInitialDataIfNeeded();
+        syncService.init();
       } catch (err) {
         console.error('Failed to initialize seed data:', err);
       } finally {
@@ -99,11 +103,17 @@ export const App: React.FC = () => {
 
           <div className="relative z-10 flex items-center justify-between gap-2">
             {/* User Profile Info */}
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-300 to-pink-400 p-0.5 shadow-md flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => setIsSyncModalOpen(true)}
+              className="flex items-center gap-2 text-left group hover:opacity-95 active:scale-95 transition-all cursor-pointer"
+              title="Kelola Sinkronisasi Realtime dan Snapshot Perangkat (naomiiracle)"
+            >
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-300 to-pink-400 p-0.5 shadow-md flex-shrink-0 relative">
                 <div className="w-full h-full bg-white/90 dark:bg-slate-900 rounded-[14px] flex items-center justify-center font-extrabold text-blue-700 dark:text-blue-400 text-base">
                   N
                 </div>
+                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900 animate-pulse" />
               </div>
 
               <div>
@@ -113,11 +123,18 @@ export const App: React.FC = () => {
                   </h2>
                   <Sparkles className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
                 </div>
-                <p className="text-[10px] text-blue-100 dark:text-blue-200 font-medium mt-0.5">
-                  Mahasiswa Rantau • Troli Belanja
-                </p>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <span className="text-[10px] text-blue-100 dark:text-blue-200 font-medium">
+                    Single User
+                  </span>
+                  <span className="text-white/40">•</span>
+                  <span className="text-[10px] text-emerald-300 font-bold flex items-center gap-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping inline-block" />
+                    Realtime
+                  </span>
+                </div>
               </div>
-            </div>
+            </button>
 
             {/* Quick Action Buttons: Theme Toggle, Scan, & Bank Selector */}
             <div className="flex items-center gap-1.5">
@@ -183,6 +200,11 @@ export const App: React.FC = () => {
         <PaymentMethodSelectorModal
           isOpen={isPaymentModalOpen}
           onClose={() => setIsPaymentModalOpen(false)}
+        />
+
+        <SyncModal
+          isOpen={isSyncModalOpen}
+          onClose={() => setIsSyncModalOpen(false)}
         />
       </main>
     </div>
