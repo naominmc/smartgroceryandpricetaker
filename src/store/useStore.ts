@@ -22,6 +22,12 @@ interface AppState {
   selectedPaymentMethod: string;
   setSelectedPaymentMethod: (method: string) => void;
 
+  // Session Location & Date
+  sessionLocation: string;
+  setSessionLocation: (location: string) => void;
+  sessionDate: string;
+  setSessionDate: (date: string) => void;
+
   // Add/Edit sheet state
   isAddItemSheetOpen: boolean;
   editingItem: CartItem | null;
@@ -97,6 +103,14 @@ export const useStore = create<AppState>((set, get) => ({
   // Default payment storage / bank: Bank BCA requested by user
   selectedPaymentMethod: PAYMENT_ACCOUNTS[0].name, // 'Bank BCA'
   setSelectedPaymentMethod: (method) => set({ selectedPaymentMethod: method }),
+
+  sessionLocation: typeof window !== 'undefined' ? (localStorage.getItem('smart_grocery_location') || 'Lotte Mart Grocery - Puri Indah') : 'Lotte Mart Grocery - Puri Indah',
+  setSessionLocation: (loc) => {
+    if (typeof window !== 'undefined') localStorage.setItem('smart_grocery_location', loc);
+    set({ sessionLocation: loc });
+  },
+  sessionDate: new Date().toISOString().split('T')[0],
+  setSessionDate: (d) => set({ sessionDate: d }),
 
   isAddItemSheetOpen: false,
   editingItem: null,

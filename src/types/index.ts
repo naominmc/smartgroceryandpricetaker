@@ -100,6 +100,7 @@ export interface PurchaseTransaction {
   id: string;
   period: string; // YYYY-MM
   purchasedAt: string; // ISO
+  location?: string;
   items: TransactionItemSnapshot[];
   grossTotal: number;
   discountTotal: number;

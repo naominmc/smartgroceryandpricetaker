@@ -235,7 +235,12 @@ export const groceryService = {
    * Completes shopping session, saves immutable snapshot to transactions, then clears cart
    * F-06
    */
-  async completeCheckout(currentBudgetLimit: number, paymentMethod: string = 'Bank BCA'): Promise<PurchaseTransaction> {
+  async completeCheckout(
+    currentBudgetLimit: number,
+    paymentMethod: string = 'Bank BCA',
+    location: string = 'Lotte Mart Grocery - Puri Indah',
+    sessionDate?: string
+  ): Promise<PurchaseTransaction> {
     const cartItems = await db.cartItems.toArray();
     if (cartItems.length === 0) {
       throw new Error('Keranjang belanja kosong');
@@ -266,7 +271,8 @@ export const groceryService = {
     const transaction: PurchaseTransaction = {
       id: `tx-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
       period: currentPeriod,
-      purchasedAt: new Date().toISOString(),
+      purchasedAt: sessionDate ? new Date(sessionDate).toISOString() : new Date().toISOString(),
+      location,
       items: itemSnapshots,
       grossTotal: totals.grossTotal,
       discountTotal: totals.discountTotal,

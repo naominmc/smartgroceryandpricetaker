@@ -4,6 +4,8 @@ import confetti from 'canvas-confetti';
 import {
   Plus,
   Trash2,
+  MapPin,
+  Calendar,
   ShoppingCart,
   Wifi,
   WifiOff,
@@ -36,6 +38,10 @@ export const ShoppingPage: React.FC = () => {
     closeAddItemSheet,
     openScanner,
     selectedPaymentMethod,
+    sessionLocation,
+    setSessionLocation,
+    sessionDate,
+    setSessionDate,
     isOnline,
     setIsOnline,
   } = useStore();
@@ -171,7 +177,7 @@ export const ShoppingPage: React.FC = () => {
   const handleConfirmCheckout = async () => {
     try {
       setCheckoutErrorMessage(null);
-      const completedTx = await groceryService.completeCheckout(budgetLimit, selectedPaymentMethod);
+      const completedTx = await groceryService.completeCheckout(budgetLimit, selectedPaymentMethod, sessionLocation, sessionDate);
       setIsCheckoutDialogOpen(false);
 
       // Trigger celebration confetti
@@ -186,7 +192,7 @@ export const ShoppingPage: React.FC = () => {
       }
 
       setCheckoutSuccessMessage(
-        `Belanja berhasil diselesaikan via ${selectedPaymentMethod}! Total ${formatRupiah(
+        `Belanja di ${sessionLocation} berhasil diselesaikan via ${selectedPaymentMethod}! Total ${formatRupiah(
           completedTx.finalTotal
         )} tersimpan permanen di riwayat.`
       );
@@ -252,6 +258,44 @@ export const ShoppingPage: React.FC = () => {
           <span className="font-semibold">{checkoutErrorMessage}</span>
         </div>
       )}
+
+      {/* Sesi Belanja: Lokasi & Tanggal Supermarket (Fitur Lokasi) */}
+      <div className="bg-card dark:bg-slate-800 rounded-2xl p-2.5 border border-border dark:border-slate-700 shadow-soft flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <div className="p-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/80 text-primary dark:text-blue-400 flex-shrink-0">
+            <MapPin className="w-4 h-4" />
+          </div>
+          <input
+            type="text"
+            list="locationSuggestions"
+            value={sessionLocation}
+            onChange={(e) => setSessionLocation(e.target.value)}
+            placeholder="Ketik / pilih lokasi supermarket..."
+            className="w-full text-xs font-bold text-text-main dark:text-slate-100 bg-transparent focus:outline-none placeholder-gray-400 dark:placeholder-slate-500 truncate"
+          />
+          <datalist id="locationSuggestions">
+            <option value="Lotte Mart Grocery - Puri Indah" />
+            <option value="Superindo - Puri Indah" />
+            <option value="Hypermart - Puri Mall" />
+            <option value="Grand Lucky Superstore" />
+            <option value="Farmers Market" />
+            <option value="Indomaret Fresh" />
+            <option value="Alfamidi Super" />
+            <option value="Hero Supermarket" />
+            <option value="Papaya Fresh Gallery" />
+          </datalist>
+        </div>
+
+        <div className="flex items-center gap-1.5 pl-2.5 border-l border-gray-200 dark:border-slate-700 flex-shrink-0">
+          <Calendar className="w-3.5 h-3.5 text-gray-400 dark:text-slate-400" />
+          <input
+            type="date"
+            value={sessionDate}
+            onChange={(e) => setSessionDate(e.target.value)}
+            className="text-xs font-semibold text-text-secondary dark:text-slate-300 bg-transparent focus:outline-none cursor-pointer"
+          />
+        </div>
+      </div>
 
       {/* F-05 Budget Safety Card */}
       <BudgetSafetyCard
@@ -493,7 +537,7 @@ export const ShoppingPage: React.FC = () => {
       <ConfirmDialog
         isOpen={isCheckoutDialogOpen}
         title="Selesaikan Belanja Sekarang?"
-        message={`Total tagihan kasir adalah ${formatRupiah(
+        message={`Lokasi: ${sessionLocation}. Total tagihan kasir adalah ${formatRupiah(
           totals.finalTotal
         )} (${cartItems.length} jenis barang). Pembayaran dicatat menggunakan ${selectedPaymentMethod}. Transaksi akan disimpan ke riwayat dan keranjang belanja dikosongkan.`}
         confirmLabel="Ya, Selesai Belanja"

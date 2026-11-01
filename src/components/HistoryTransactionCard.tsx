@@ -30,6 +30,12 @@ export const HistoryTransactionCard: React.FC<HistoryTransactionCardProps> = ({ 
             <div className="flex items-center gap-1.5 text-[11px] text-text-secondary dark:text-slate-400 font-medium">
               <Calendar className="w-3.5 h-3.5" />
               <span>{formattedDate}</span>
+              {transaction.location && (
+                <>
+                  <span>•</span>
+                  <span className="text-primary dark:text-blue-400 font-semibold">{transaction.location}</span>
+                </>
+              )}
             </div>
             <span className="text-xs font-semibold text-text-main dark:text-slate-100">
               {transaction.items.length} jenis barang dibeli
