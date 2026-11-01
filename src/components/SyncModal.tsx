@@ -12,6 +12,7 @@ import {
   Copy,
   ExternalLink,
   ShieldCheck,
+  Sparkles,
 } from 'lucide-react';
 import { syncService, type SyncState } from '../services/syncService';
 
@@ -55,19 +56,19 @@ export const SyncModal: React.FC<SyncModalProps> = ({ isOpen, onClose }) => {
   const handleManualPush = async () => {
     setActionMessage('Mengirim snapshot ke semua perangkat...');
     await syncService.broadcastSnapshot();
-    setActionMessage('Snapshot berhasil disiarkan!');
-    setTimeout(() => setActionMessage(null), 3000);
+    setActionMessage('Snapshot berhasil disiarkan ke cloud & HP!');
+    setTimeout(() => setActionMessage(null), 3500);
   };
 
   const handleManualPull = async () => {
-    setActionMessage('Memeriksa snapshot terbaru dari cloud...');
-    const updated = await syncService.pullLatestSnapshot();
+    setActionMessage('Mengambil data troli & belanja dari cloud...');
+    const updated = await syncService.pullLatestSnapshot(true);
     if (updated) {
-      setActionMessage('Snapshot terbaru berhasil dimuat!');
+      setActionMessage('Data belanja berhasil disamakan 100%!');
     } else {
-      setActionMessage('Perangkat ini sudah menggunakan data terbaru.');
+      setActionMessage('Sudah menggunakan data snapshot paling baru.');
     }
-    setTimeout(() => setActionMessage(null), 3000);
+    setTimeout(() => setActionMessage(null), 3500);
   };
 
   const handleCopyLink = async () => {
@@ -78,7 +79,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({ isOpen, onClose }) => {
       setTimeout(() => setCopied(false), 2500);
     } catch (err) {
       // Fallback
-      prompt('Salin link snapshot berikut:', shareUrl);
+      prompt('Salin link snapshot berikut untuk dibuka di HP:', shareUrl);
     }
   };
 
@@ -93,7 +94,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({ isOpen, onClose }) => {
           <button
             type="button"
             onClick={onClose}
-            className="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 flex items-center justify-center text-white transition-all"
+            className="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 flex items-center justify-center text-white transition-all cursor-pointer"
             aria-label="Tutup"
           >
             <X className="w-4 h-4" />
@@ -180,7 +181,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({ isOpen, onClose }) => {
               type="button"
               onClick={handleManualPush}
               disabled={syncState.isSyncing}
-              className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition-all disabled:opacity-50"
+              className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition-all disabled:opacity-50 cursor-pointer"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${syncState.isSyncing ? 'animate-spin' : ''}`} />
               <span>Kirim Snapshot</span>
@@ -190,24 +191,28 @@ export const SyncModal: React.FC<SyncModalProps> = ({ isOpen, onClose }) => {
               type="button"
               onClick={handleManualPull}
               disabled={syncState.isSyncing}
-              className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 active:scale-95 text-slate-800 dark:text-slate-100 font-bold text-xs rounded-xl border border-slate-200 dark:border-slate-700 transition-all disabled:opacity-50"
+              className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition-all disabled:opacity-50 cursor-pointer"
             >
-              <RefreshCw className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-              <span>Tarik Terbaru</span>
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Tarik Terbaru (HP)</span>
             </button>
           </div>
 
-          {/* Pairing & Sharing Options */}
-          <div className="border-t border-slate-100 dark:border-slate-800 pt-3 space-y-2">
-            <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-              Buka di HP / Laptop Lain:
-            </p>
+          {/* Instant 1-Tap Pairing & QR Code */}
+          <div className="bg-slate-50 dark:bg-slate-800/80 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                Samakan Langsung ke HP:
+              </span>
+              <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold">1-Detik Sync</span>
+            </div>
 
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={handleCopyLink}
-                className="flex-1 py-2 px-3 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-center gap-1.5 transition-all"
+                className="flex-1 py-2 px-3 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 active:scale-95 border border-slate-200 dark:border-slate-600 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs"
               >
                 {copied ? (
                   <>
@@ -217,7 +222,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({ isOpen, onClose }) => {
                 ) : (
                   <>
                     <Copy className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Salin Link Sync</span>
+                    <span>Salin Link untuk HP</span>
                   </>
                 )}
               </button>
@@ -225,36 +230,39 @@ export const SyncModal: React.FC<SyncModalProps> = ({ isOpen, onClose }) => {
               <button
                 type="button"
                 onClick={() => setShowQr(!showQr)}
-                className="py-2 px-3 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-center gap-1.5 transition-all"
+                className="py-2 px-3 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 active:scale-95 border border-slate-200 dark:border-slate-600 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs"
               >
                 <QrCode className="w-3.5 h-3.5 text-slate-500" />
-                <span>{showQr ? 'Tutup QR' : 'Scan QR'}</span>
+                <span>{showQr ? 'Tutup QR' : 'Scan QR HP'}</span>
               </button>
             </div>
 
             {/* QR Code display */}
             {showQr && (
               <div className="p-3 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 text-center space-y-2 animate-fadeIn">
-                <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                  Arahkan kamera HP ke QR Code ini untuk membuka troli &amp; data belanja langsung:
+                <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">
+                  📱 Buka Kamera HP dan Arahkan ke QR Code ini:
                 </p>
-                <div className="flex justify-center p-2 bg-white rounded-xl inline-block mx-auto shadow-sm">
+                <div className="flex justify-center p-2.5 bg-white rounded-2xl inline-block mx-auto shadow-md border border-slate-100">
                   <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
                       shareUrl || 'https://smartgroceryandpricetaker.vercel.app/'
                     )}`}
                     alt="QR Code Sinkronisasi"
-                    className="w-40 h-40 mx-auto"
+                    className="w-44 h-44 mx-auto"
                   />
                 </div>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                  Data troli &amp; belanja dari laptop akan langsung pindah 100% ke HP.
+                </p>
               </div>
             )}
           </div>
 
-          {/* Informational note */}
-          <div className="bg-slate-50 dark:bg-slate-800/40 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-            <p className="text-[10px] leading-relaxed text-slate-500 dark:text-slate-400">
-              💡 <strong>Realtime Snapshot:</strong> Setiap Anda menambah/mengubah barang di troli, mengatur anggaran, atau checkout di satu perangkat, data otomatis tersinkronisasi realtime ke semua perangkat Anda yang lain tanpa perlu login berulang.
+          {/* Explanation note */}
+          <div className="bg-blue-50/50 dark:bg-slate-800/40 p-2.5 rounded-xl border border-blue-100 dark:border-slate-800">
+            <p className="text-[10px] leading-relaxed text-slate-600 dark:text-slate-400">
+              💡 <strong>Tips jika HP masih beda:</strong> HP kemungkinan masih menyimpan cache lama PWA. Buka link via <strong>Incognito / Mode Penyamaran</strong>, atau tekan <strong>"Tarik Terbaru (HP)"</strong> / <strong>Scan QR</strong> di atas untuk memuat data laptop secara instan.
             </p>
           </div>
 
@@ -265,7 +273,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({ isOpen, onClose }) => {
           <button
             type="button"
             onClick={onClose}
-            className="w-full py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs rounded-xl transition-all"
+            className="w-full py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs rounded-xl transition-all cursor-pointer"
           >
             Tutup
           </button>
@@ -275,4 +283,3 @@ export const SyncModal: React.FC<SyncModalProps> = ({ isOpen, onClose }) => {
     </div>
   );
 };
-

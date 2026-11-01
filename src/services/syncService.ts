@@ -29,7 +29,8 @@ export interface SyncState {
 
 const SINGLE_USER = 'naomiiracle';
 const RELAY_TOPIC = 'smartgrocery_singleuser_naomiiracle_v2';
-const RELAY_HTTP_URL = `https://ntfy.sh/${RELAY_TOPIC}`;
+const RELAY_BASE_URL = 'https://ntfy.sh';
+const RELAY_TOPIC_URL = `https://ntfy.sh/${RELAY_TOPIC}`;
 const RELAY_SSE_URL = `https://ntfy.sh/${RELAY_TOPIC}/sse`;
 const BROADCAST_CHANNEL_NAME = 'smartgrocery_singleuser_naomiiracle_channel';
 
@@ -123,7 +124,16 @@ class SyncService {
     this.checkUrlSnapshot();
 
     // 4. Pull latest snapshot from cloud on startup
-    this.pullLatestSnapshot();
+    setTimeout(() => {
+      this.pullLatestSnapshot();
+    }, 500);
+
+    // 5. Periodic ping / catch-up pull every 15 seconds to ensure devices never fall behind
+    setInterval(() => {
+      if (navigator.onLine && !this.isApplyingRemote) {
+        this.pullLatestSnapshot(false);
+      }
+    }, 15000);
   }
 
   private connectRealtimeRelay(): void {
@@ -165,7 +175,7 @@ class SyncService {
   }
 
   /**
-   * Check if URL has ?sync_snapshot=... or ?sync=...
+   * Check if URL has ?sync_snapshot=... or ?snapshot=...
    */
   private checkUrlSnapshot(): void {
     if (typeof window === 'undefined') return;
@@ -176,7 +186,7 @@ class SyncService {
         const decoded = decodeURIComponent(rawSnapshot);
         const snapshot = JSON.parse(decoded) as GrocerySnapshot;
         if (snapshot && snapshot.user === SINGLE_USER) {
-          this.applySnapshot(snapshot, 'url');
+          this.applySnapshot(snapshot, 'url', true);
           // Clean URL without refresh
           const newUrl = window.location.pathname;
           window.history.replaceState({}, '', newUrl);
@@ -190,11 +200,11 @@ class SyncService {
   /**
    * Pulls latest snapshot from the cloud relay
    */
-  public async pullLatestSnapshot(): Promise<boolean> {
+  public async pullLatestSnapshot(forceApply: boolean = false): Promise<boolean> {
     if (typeof window === 'undefined' || !navigator.onLine) return false;
     try {
       this.updateState({ isSyncing: true });
-      const res = await fetch(`${RELAY_HTTP_URL}/json?poll=1`, {
+      const res = await fetch(`${RELAY_TOPIC_URL}/json?poll=1`, {
         cache: 'no-store',
       });
       if (!res.ok) throw new Error('Poll failed');
@@ -210,10 +220,12 @@ class SyncService {
           if (msgObj.message) {
             const snapshot = JSON.parse(msgObj.message) as GrocerySnapshot;
             if (snapshot && snapshot.user === SINGLE_USER) {
-              if (snapshot.timestamp > this.lastAppliedTimestamp && snapshot.deviceId !== this.deviceId) {
-                await this.applySnapshot(snapshot, 'initial');
-                this.updateState({ isSyncing: false });
-                return true;
+              if (snapshot.deviceId !== this.deviceId) {
+                if (forceApply || snapshot.timestamp > this.lastAppliedTimestamp) {
+                  await this.applySnapshot(snapshot, 'initial', forceApply);
+                  this.updateState({ isSyncing: false });
+                  return true;
+                }
               }
             }
           }
@@ -241,11 +253,11 @@ class SyncService {
 
     const { sessionLocation, sessionDate } = useStore.getState();
 
-    // Compact transactions to latest 10 for lightweight cross-device sync
+    // Compact transactions to latest 5 for lightweight cross-device sync (< 2KB)
     const sortedTx = [...transactions].sort(
       (a, b) => new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime()
     );
-    const compactTransactions = sortedTx.slice(0, 10);
+    const compactTransactions = sortedTx.slice(0, 5);
 
     return {
       version: 1,
@@ -267,15 +279,16 @@ class SyncService {
    */
   public async applySnapshot(
     snapshot: GrocerySnapshot,
-    origin: 'local' | 'remote' | 'url' | 'initial'
+    origin: 'local' | 'remote' | 'url' | 'initial',
+    force: boolean = false
   ): Promise<boolean> {
     if (!snapshot || snapshot.user !== SINGLE_USER) return false;
 
-    // Ignore echoes from self
-    if (snapshot.deviceId === this.deviceId) return false;
+    // Ignore echoes from self unless forced
+    if (!force && snapshot.deviceId === this.deviceId) return false;
 
-    // Ignore older snapshots
-    if (snapshot.timestamp <= this.lastAppliedTimestamp) return false;
+    // Ignore older snapshots unless forced
+    if (!force && snapshot.timestamp <= this.lastAppliedTimestamp) return false;
 
     this.isApplyingRemote = true;
     this.lastAppliedTimestamp = snapshot.timestamp;
@@ -333,7 +346,7 @@ class SyncService {
       // Re-enable local mutations after Dexie finishes
       setTimeout(() => {
         this.isApplyingRemote = false;
-      }, 50);
+      }, 80);
     }
   }
 
@@ -372,15 +385,18 @@ class SyncService {
         }
       }
 
-      // 2. Post to Cloud Realtime Relay (cross-device)
+      // 2. Post to Cloud Realtime Relay (official ntfy.sh JSON publishing format)
       if (typeof window !== 'undefined' && navigator.onLine) {
-        fetch(RELAY_HTTP_URL, {
+        fetch(RELAY_BASE_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Title: `Snapshot dari ${this.deviceId}`,
           },
-          body: JSON.stringify(snapshot),
+          body: JSON.stringify({
+            topic: RELAY_TOPIC,
+            title: `Snapshot ${this.deviceId}`,
+            message: JSON.stringify(snapshot),
+          }),
         }).catch((e) => {
           console.warn('Realtime relay post failed:', e);
         });

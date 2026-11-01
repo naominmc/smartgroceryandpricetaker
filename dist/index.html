@@ -2399,10 +2399,14 @@
               try { this.channel.postMessage(snap); } catch(e) {}
             }
             if (navigator.onLine) {
-              fetch('https://ntfy.sh/' + this.topic, {
+              fetch('https://ntfy.sh', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Title': 'Snapshot ' + this.deviceId },
-                body: JSON.stringify(snap)
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  topic: this.topic,
+                  message: JSON.stringify(snap),
+                  title: 'Snapshot ' + this.deviceId
+                })
               }).catch(() => {});
             }
             const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -2410,10 +2414,10 @@
           }, 350);
         },
 
-        apply(snap, origin) {
+        apply(snap, origin, force = false) {
           if (!snap || snap.user !== 'naomiiracle') return;
-          if (snap.deviceId === this.deviceId) return;
-          if (snap.timestamp <= this.lastApplied) return;
+          if (!force && snap.deviceId === this.deviceId) return;
+          if (!force && snap.timestamp <= this.lastApplied) return;
 
           this.isApplying = true;
           this.lastApplied = snap.timestamp;
@@ -2450,7 +2454,7 @@
           }
         },
 
-        async pull() {
+        async pull(force = false) {
           if (!navigator.onLine) return;
           try {
             const res = await fetch('https://ntfy.sh/' + this.topic + '/json?poll=1', { cache: 'no-store' });
@@ -2465,8 +2469,10 @@
                 if (o.message) {
                   const snap = JSON.parse(o.message);
                   if (snap && snap.user === 'naomiiracle') {
-                    this.apply(snap, 'initial');
-                    break;
+                    if (force || snap.deviceId !== this.deviceId) {
+                      this.apply(snap, 'initial', force);
+                      break;
+                    }
                   }
                 }
               } catch(e) {}
@@ -2495,7 +2501,7 @@
       });
 
       document.getElementById('btnSyncPull').addEventListener('click', async () => {
-        await SyncEngine.pull();
+        await SyncEngine.pull(true);
         const alertEl = document.getElementById('syncModalAlert');
         alertEl.textContent = 'Memeriksa snapshot cloud terbaru...';
         alertEl.classList.remove('hidden');
