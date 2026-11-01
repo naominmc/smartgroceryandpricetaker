@@ -50,7 +50,15 @@ export const BudgetPage: React.FC = () => {
 
   const handleSaveBudget = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (budgetLimitInput.includes('-')) {
+      alert('Batas anggaran tidak boleh bernilai negatif!');
+      return;
+    }
     const parsed = parseInt(budgetLimitInput.replace(/\D/g, ''), 10) || 0;
+    if (parsed < 0) {
+      alert('Batas anggaran tidak boleh bernilai negatif!');
+      return;
+    }
     await groceryService.setBudget(currentPeriod, parsed);
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3000);
@@ -139,6 +147,8 @@ export const BudgetPage: React.FC = () => {
             </span>
             <input
               type="number"
+              min="0"
+              onKeyDown={(e) => { if (e.key === "-" || e.key === "Subtract") e.preventDefault(); }}
               inputMode="numeric"
               value={budgetLimitInput}
               onChange={(e) => setBudgetLimitInput(e.target.value)}

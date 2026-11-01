@@ -106,6 +106,14 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
   if (!isOpen) return null;
 
   const onSubmit = async (data: ItemFormData) => {
+    if (data.unitPrice < 0) {
+      alert('Harga satuan barang tidak boleh bernilai negatif!');
+      return;
+    }
+    if (data.quantity <= 0) {
+      alert('Kuantitas barang harus lebih dari 0!');
+      return;
+    }
     try {
       setIsSubmitting(true);
       await onSave({
@@ -224,9 +232,15 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
               </label>
               <input
                 type="number"
+                min="0.01"
                 step="any"
                 inputMode="decimal"
                 placeholder="1"
+                onKeyDown={(e) => {
+                  if (e.key === '-' || e.key === 'Subtract') {
+                    e.preventDefault();
+                  }
+                }}
                 {...register('quantity', { valueAsNumber: true })}
                 className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm font-semibold min-h-[44px]"
               />
@@ -291,9 +305,24 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
               </span>
               <input
                 type="number"
+                min="0"
+                step="any"
                 inputMode="numeric"
                 placeholder="15000"
-                {...register('unitPrice', { valueAsNumber: true })}
+                onKeyDown={(e) => {
+                  if (e.key === '-' || e.key === 'Subtract') {
+                    e.preventDefault();
+                  }
+                }}
+                {...register('unitPrice', {
+                  valueAsNumber: true,
+                  onChange: (e) => {
+                    const val = parseFloat(e.target.value);
+                    if (val < 0) {
+                      setValue('unitPrice', Math.abs(val) || 0);
+                    }
+                  },
+                })}
                 className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm font-bold min-h-[44px]"
               />
             </div>

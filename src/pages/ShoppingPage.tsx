@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import confetti from 'canvas-confetti';
 import {
   Plus,
+  Trash2,
   ShoppingCart,
   Wifi,
   WifiOff,
@@ -46,6 +47,23 @@ export const ShoppingPage: React.FC = () => {
   const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
   const [checkoutSuccessMessage, setCheckoutSuccessMessage] = useState<string | null>(null);
   const [checkoutErrorMessage, setCheckoutErrorMessage] = useState<string | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<CartItem | null>(null);
+  const [isClearCartConfirmOpen, setIsClearCartConfirmOpen] = useState(false);
+
+  const playBeep = (freq = 1200, duration = 0.08) => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + duration);
+    } catch (e) {}
+  };
 
   // Live queries to Dexie IndexedDB
   const cartItems = useLiveQuery(() => db.cartItems.toArray()) || [];
@@ -82,15 +100,39 @@ export const ShoppingPage: React.FC = () => {
   };
 
   const handleDecreaseQty = async (id: string) => {
+    const item = cartItems.find((i) => i.id === id);
+    if (item && item.quantity <= 1) {
+      setItemToDelete(item);
+      return;
+    }
     await groceryService.adjustQuantity(id, -1);
+    playBeep(1400, 0.04);
   };
 
   const handleEditItem = (item: CartItem) => {
     openAddItemSheet(item);
   };
 
-  const handleDeleteItem = async (id: string) => {
-    await groceryService.deleteCartItem(id);
+  const handleDeleteItem = (id: string) => {
+    const item = cartItems.find((i) => i.id === id);
+    if (item) {
+      setItemToDelete(item);
+      playBeep(650, 0.1);
+    }
+  };
+
+  const handleConfirmDeleteItem = async () => {
+    if (itemToDelete) {
+      await groceryService.deleteCartItem(itemToDelete.id);
+      setItemToDelete(null);
+      playBeep(850, 0.08);
+    }
+  };
+
+  const handleConfirmClearCart = async () => {
+    await groceryService.clearCart();
+    setIsClearCartConfirmOpen(false);
+    playBeep(600, 0.12);
   };
 
   const handleToggleStatus = async (id: string) => {
@@ -218,6 +260,43 @@ export const ShoppingPage: React.FC = () => {
         totalSavings={totals.discountTotal}
         onEditBudget={() => setIsEditingBudget(true)}
       />
+
+      {/* Top Checkout Action Bar - Cepat checkout tanpa perlu scroll */}
+      {cartItems.length > 0 && (
+        <div className="bg-card dark:bg-slate-800 rounded-card p-3.5 border border-border dark:border-slate-700 shadow-soft space-y-2.5 animate-fade-in">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-[10px] text-text-secondary dark:text-slate-400 block font-medium">
+                Total Tagihan ({totals.totalQuantity} unit):
+              </span>
+              <span className="text-lg font-extrabold text-primary dark:text-blue-400">
+                {formatRupiah(totals.finalTotal)}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setIsClearCartConfirmOpen(true)}
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-danger dark:text-rose-400 hover:bg-red-50 dark:hover:bg-rose-950/70 px-2.5 py-2 rounded-xl transition-all min-h-[44px]"
+                title="Kosongkan Seluruh Troli"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Kosongkan</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsCheckoutDialogOpen(true)}
+                className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-soft transition-all min-h-[44px] flex items-center gap-1.5"
+              >
+                <Check className="w-4 h-4 stroke-[2.5]" />
+                <span>Checkout</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Items Section Header & Actions (Scan Barcode & Manual Add) */}
       <div className="flex items-center justify-between pt-1">
@@ -348,6 +427,8 @@ export const ShoppingPage: React.FC = () => {
               </span>
               <input
                 type="number"
+                min="0"
+                onKeyDown={(e) => { if (e.key === "-" || e.key === "Subtract") e.preventDefault(); }}
                 inputMode="numeric"
                 value={newBudgetInput}
                 onChange={(e) => setNewBudgetInput(e.target.value)}
@@ -382,6 +463,30 @@ export const ShoppingPage: React.FC = () => {
         onClose={closeAddItemSheet}
         onSave={handleSaveItem}
         editingItem={editingItem}
+      />
+
+      {/* Delete Single Item Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={!!itemToDelete}
+        title="Hapus Barang Belanja?"
+        message={`Apakah Anda yakin ingin menghapus "${itemToDelete?.nameSnapshot}" dari troli belanja?`}
+        confirmLabel="Ya, Hapus"
+        cancelLabel="Batal"
+        isDangerous={true}
+        onConfirm={handleConfirmDeleteItem}
+        onCancel={() => setItemToDelete(null)}
+      />
+
+      {/* Clear Entire Cart Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isClearCartConfirmOpen}
+        title="Kosongkan Seluruh Troli?"
+        message={`⚠️ Peringatan: Seluruh ${cartItems.length} jenis barang di dalam troli akan dihapus sekaligus. Tindakan ini tidak dapat dibatalkan!`}
+        confirmLabel="Ya, Kosongkan Troli"
+        cancelLabel="Batal"
+        isDangerous={true}
+        onConfirm={handleConfirmClearCart}
+        onCancel={() => setIsClearCartConfirmOpen(false)}
       />
 
       {/* Checkout Confirmation Dialog */}
