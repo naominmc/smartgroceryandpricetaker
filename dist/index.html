@@ -2321,11 +2321,23 @@
         sse: null,
         isApplying: false,
         lastApplied: 0,
+        lastSignature: '',
         debounceTimer: null,
         topic: 'smartgrocery_singleuser_naomiiracle_v2',
 
+        signature(data) {
+          const cart = (data.cart || []).map(c => `${c.id}:${c.qty}:${c.unitPrice}:${c.subtotal}`).join('|');
+          return `${data.cart?.length || 0}_${cart}_${data.sessionLocation}_${data.budgetCap}`;
+        },
+
         init() {
           document.getElementById('syncModalDeviceId').textContent = this.deviceId;
+          // 3-second polling fallback so mobile-to-laptop updates never stall
+          setInterval(() => {
+            if (navigator.onLine && !this.isApplying) {
+              this.pull(false);
+            }
+          }, 3000);
 
           // Local multi-tab BroadcastChannel
           try {
@@ -2417,9 +2429,11 @@
         apply(snap, origin, force = false) {
           if (!snap || snap.user !== 'naomiiracle') return;
           if (!force && snap.deviceId === this.deviceId) return;
-          if (!force && snap.timestamp <= this.lastApplied) return;
+          const sig = this.signature(snap.data);
+          if (!force && sig === this.lastSignature) return;
 
           this.isApplying = true;
+          this.lastSignature = sig;
           this.lastApplied = snap.timestamp;
 
           try {

@@ -1,4 +1,4 @@
-import { db, setupDatabaseSyncHooks } from '../db/database';
+import { db } from '../db/database';
 import { useStore } from '../store/useStore';
 import type { CartItem, Budget, PurchaseTransaction } from '../types';
 
@@ -12,6 +12,7 @@ export interface GrocerySnapshotData {
 
 export interface GrocerySnapshot {
   version: number;
+  revision: number;
   user: 'naomiiracle';
   deviceId: string;
   timestamp: number;
@@ -38,9 +39,11 @@ class SyncService {
   private deviceId: string = '';
   private broadcastChannel: BroadcastChannel | null = null;
   private eventSource: EventSource | null = null;
-  private isApplyingRemote: boolean = false;
-  private lastAppliedTimestamp: number = 0;
+  public isApplyingRemote: boolean = false;
+  private currentRevision: number = 0;
+  private lastAppliedSignature: string = '';
   private debounceTimer: any = null;
+  private pollInterval: any = null;
   private listeners: Set<(state: SyncState) => void> = new Set();
 
   private state: SyncState = {
@@ -55,6 +58,10 @@ class SyncService {
   constructor() {
     this.deviceId = this.getOrCreateDeviceId();
     this.state.deviceId = this.deviceId;
+    const savedRev = localStorage.getItem('smart_grocery_revision');
+    if (savedRev) {
+      this.currentRevision = parseInt(savedRev, 10) || 0;
+    }
   }
 
   public getDeviceId(): string {
@@ -94,15 +101,6 @@ class SyncService {
 
     (window as any).__smart_grocery_notify_sync = () => this.notifyChange();
 
-    // Hook Dexie mutations to notify changes
-    try {
-      setupDatabaseSyncHooks(() => {
-        this.notifyChange();
-      });
-    } catch (e) {
-      console.warn('Failed to attach Dexie hooks:', e);
-    }
-
     // 1. Initialize Local BroadcastChannel for instant multi-tab sync
     if ('BroadcastChannel' in window) {
       try {
@@ -123,17 +121,18 @@ class SyncService {
     // 3. Check for snapshot in URL query string (for 1-tap QR scan or link pairing)
     this.checkUrlSnapshot();
 
-    // 4. Pull latest snapshot from cloud on startup
+    // 4. Initial pull from cloud on startup
     setTimeout(() => {
-      this.pullLatestSnapshot();
-    }, 500);
+      this.pullLatestSnapshot(false);
+    }, 400);
 
-    // 5. Periodic ping / catch-up pull every 15 seconds to ensure devices never fall behind
-    setInterval(() => {
-      if (navigator.onLine && !this.isApplyingRemote) {
+    // 5. High-frequency 3-second fallback poll to ensure phone-to-laptop updates never drop
+    if (this.pollInterval) clearInterval(this.pollInterval);
+    this.pollInterval = setInterval(() => {
+      if (typeof window !== 'undefined' && navigator.onLine && !this.isApplyingRemote) {
         this.pullLatestSnapshot(false);
       }
-    }, 15000);
+    }, 3000);
   }
 
   private connectRealtimeRelay(): void {
@@ -160,13 +159,13 @@ class SyncService {
             }
           }
         } catch (err) {
-          // Non-JSON or keepalive heartbeat, ignore
+          // ignore keepalive
         }
       };
 
       this.eventSource.onerror = () => {
         this.updateState({ isConnected: false });
-        // Auto-reconnect managed natively by EventSource
+        // Native EventSource reconnects automatically
       };
     } catch (err) {
       console.warn('EventSource failed to connect:', err);
@@ -187,7 +186,7 @@ class SyncService {
         const snapshot = JSON.parse(decoded) as GrocerySnapshot;
         if (snapshot && snapshot.user === SINGLE_USER) {
           this.applySnapshot(snapshot, 'url', true);
-          // Clean URL without refresh
+          // Clean URL without page reload
           const newUrl = window.location.pathname;
           window.history.replaceState({}, '', newUrl);
         }
@@ -200,18 +199,16 @@ class SyncService {
   /**
    * Pulls latest snapshot from the cloud relay
    */
-  public async pullLatestSnapshot(forceApply: boolean = false): Promise<boolean> {
+  public async pullLatestSnapshot(force: boolean = false): Promise<boolean> {
     if (typeof window === 'undefined' || !navigator.onLine) return false;
     try {
-      this.updateState({ isSyncing: true });
       const res = await fetch(`${RELAY_TOPIC_URL}/json?poll=1`, {
         cache: 'no-store',
       });
-      if (!res.ok) throw new Error('Poll failed');
+      if (!res.ok) return false;
       const text = await res.text();
       const lines = text.trim().split('\n');
 
-      // Find the last valid snapshot message
       for (let i = lines.length - 1; i >= 0; i--) {
         const line = lines[i].trim();
         if (!line) continue;
@@ -220,23 +217,18 @@ class SyncService {
           if (msgObj.message) {
             const snapshot = JSON.parse(msgObj.message) as GrocerySnapshot;
             if (snapshot && snapshot.user === SINGLE_USER) {
-              if (snapshot.deviceId !== this.deviceId) {
-                if (forceApply || snapshot.timestamp > this.lastAppliedTimestamp) {
-                  await this.applySnapshot(snapshot, 'initial', forceApply);
-                  this.updateState({ isSyncing: false });
-                  return true;
-                }
+              if (force || snapshot.deviceId !== this.deviceId) {
+                const applied = await this.applySnapshot(snapshot, 'initial', force);
+                if (applied) return true;
               }
             }
           }
         } catch (e) {
-          // ignore individual line parse error
+          // skip malformed line
         }
       }
-      this.updateState({ isSyncing: false });
       return false;
     } catch (err) {
-      this.updateState({ isSyncing: false });
       return false;
     }
   }
@@ -253,14 +245,20 @@ class SyncService {
 
     const { sessionLocation, sessionDate } = useStore.getState();
 
-    // Compact transactions to latest 5 for lightweight cross-device sync (< 2KB)
+    // Compact transactions to latest 5 for lightweight transport (< 2KB)
     const sortedTx = [...transactions].sort(
       (a, b) => new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime()
     );
     const compactTransactions = sortedTx.slice(0, 5);
 
+    this.currentRevision += 1;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('smart_grocery_revision', this.currentRevision.toString());
+    }
+
     return {
       version: 1,
+      revision: this.currentRevision,
       user: SINGLE_USER,
       deviceId: this.deviceId,
       timestamp: Date.now(),
@@ -272,6 +270,17 @@ class SyncService {
         sessionDate: sessionDate || new Date().toISOString().split('T')[0],
       },
     };
+  }
+
+  /**
+   * Generates a signature for snapshot comparison
+   */
+  private generateSignature(snapshot: GrocerySnapshot): string {
+    const { cartItems, sessionLocation, sessionDate } = snapshot.data;
+    const cartSummary = (cartItems || [])
+      .map((c) => `${c.id}:${c.quantity}:${c.unitPrice}:${c.status}`)
+      .join('|');
+    return `${cartItems?.length || 0}_${cartSummary}_${sessionLocation}_${sessionDate}`;
   }
 
   /**
@@ -287,17 +296,27 @@ class SyncService {
     // Ignore echoes from self unless forced
     if (!force && snapshot.deviceId === this.deviceId) return false;
 
-    // Ignore older snapshots unless forced
-    if (!force && snapshot.timestamp <= this.lastAppliedTimestamp) return false;
+    // Check signature to avoid redundant re-renders
+    const signature = this.generateSignature(snapshot);
+    if (!force && signature === this.lastAppliedSignature) {
+      return false;
+    }
 
     this.isApplyingRemote = true;
-    this.lastAppliedTimestamp = snapshot.timestamp;
+    this.lastAppliedSignature = signature;
+    if (snapshot.revision && snapshot.revision > this.currentRevision) {
+      this.currentRevision = snapshot.revision;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('smart_grocery_revision', this.currentRevision.toString());
+      }
+    }
+
     this.updateState({ isSyncing: true });
 
     try {
       const { cartItems, budgets, transactions, sessionLocation, sessionDate } = snapshot.data;
 
-      // 1. Sync Cart Items (full replace to match exact cart on the other device)
+      // 1. Sync Cart Items (Full replace to match the sender device 100%)
       if (Array.isArray(cartItems)) {
         await db.transaction('rw', db.cartItems, async () => {
           await db.cartItems.clear();
@@ -317,7 +336,7 @@ class SyncService {
         await db.transactions.bulkPut(transactions);
       }
 
-      // 4. Sync Location & Date
+      // 4. Sync Location & Date in Store
       if (sessionLocation) {
         useStore.getState().setSessionLocation(sessionLocation);
       }
@@ -343,10 +362,9 @@ class SyncService {
       this.updateState({ isSyncing: false });
       return false;
     } finally {
-      // Re-enable local mutations after Dexie finishes
       setTimeout(() => {
         this.isApplyingRemote = false;
-      }, 80);
+      }, 100);
     }
   }
 
@@ -354,7 +372,7 @@ class SyncService {
    * Triggers a debounced broadcast of current local state to all other devices & tabs
    */
   public notifyChange(): void {
-    if (this.isApplyingRemote) return; // Ignore mutations caused by applying remote snapshot
+    if (this.isApplyingRemote) return; // Do not broadcast mutations caused by receiving a remote snapshot
 
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
@@ -362,7 +380,7 @@ class SyncService {
 
     this.debounceTimer = setTimeout(() => {
       this.broadcastSnapshot();
-    }, 350);
+    }, 250);
   }
 
   /**
@@ -374,7 +392,7 @@ class SyncService {
     try {
       this.updateState({ isSyncing: true });
       const snapshot = await this.takeSnapshot();
-      this.lastAppliedTimestamp = snapshot.timestamp;
+      this.lastAppliedSignature = this.generateSignature(snapshot);
 
       // 1. Post to Local BroadcastChannel (instant multi-tab)
       if (this.broadcastChannel) {
@@ -385,7 +403,7 @@ class SyncService {
         }
       }
 
-      // 2. Post to Cloud Realtime Relay (official ntfy.sh JSON publishing format)
+      // 2. Post to Cloud Realtime Relay (official ntfy.sh JSON format)
       if (typeof window !== 'undefined' && navigator.onLine) {
         fetch(RELAY_BASE_URL, {
           method: 'POST',
@@ -428,7 +446,10 @@ class SyncService {
   public async generateShareUrl(): Promise<string> {
     const snapshot = await this.takeSnapshot();
     const encoded = encodeURIComponent(JSON.stringify(snapshot));
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://smartgroceryandpricetaker.vercel.app';
+    const baseUrl =
+      typeof window !== 'undefined'
+        ? window.location.origin
+        : 'https://smartgroceryandpricetaker.vercel.app';
     return `${baseUrl}/?sync_snapshot=${encoded}`;
   }
 }

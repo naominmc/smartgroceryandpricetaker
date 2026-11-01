@@ -1,3 +1,4 @@
+import { syncService } from './syncService';
 import { db } from '../db/database';
 import type {
   Product,
@@ -188,6 +189,7 @@ export const groceryService = {
     };
 
     await db.cartItems.put(newItem);
+    syncService.notifyChange();
     return newItem;
   },
 
@@ -218,6 +220,7 @@ export const groceryService = {
     }
 
     await db.cartItems.put(updated);
+    syncService.notifyChange();
   },
 
   /**
@@ -225,6 +228,7 @@ export const groceryService = {
    */
   async deleteCartItem(id: string): Promise<void> {
     await db.cartItems.delete(id);
+    syncService.notifyChange();
   },
 
   /**
@@ -238,6 +242,7 @@ export const groceryService = {
       status: item.status === 'completed' ? 'active' : 'completed',
       updatedAt: new Date().toISOString(),
     });
+    syncService.notifyChange();
   },
 
   /**
@@ -252,6 +257,7 @@ export const groceryService = {
       quantity: newQty,
       updatedAt: new Date().toISOString(),
     });
+    syncService.notifyChange();
   },
 
   /**
@@ -259,6 +265,7 @@ export const groceryService = {
    */
   async clearCart(): Promise<void> {
     await db.cartItems.clear();
+    syncService.notifyChange();
   },
 
   /**
@@ -298,7 +305,7 @@ export const groceryService = {
       };
       await db.budgets.put(budget);
     }
-
+    syncService.notifyChange();
     return budget;
   },
 
@@ -357,7 +364,7 @@ export const groceryService = {
       await db.transactions.put(transaction);
       await db.cartItems.clear();
     });
-
+    syncService.notifyChange();
     return transaction;
   },
 
