@@ -256,7 +256,7 @@ export const ShoppingPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 pb-24">
+    <div className="space-y-4 pb-36">
       {/* PWA Installation Prompt if applicable */}
       <PWAInstallBanner />
 
@@ -656,6 +656,33 @@ export const ShoppingPage: React.FC = () => {
         onConfirm={handleConfirmCheckout}
         onCancel={() => setIsCheckoutDialogOpen(false)}
       />
+
+      {/* Floating Sticky Quick Action Dock (Always within Thumb Reach on Mobile - No Scrolling Needed!) */}
+      <div className="fixed bottom-[74px] left-0 right-0 z-30 flex justify-center pointer-events-none px-4">
+        <div className="w-full max-w-[430px] flex items-center justify-between gap-2.5 pointer-events-auto">
+          {/* Quick Scan Barcode Floating Button */}
+          <button
+            type="button"
+            onClick={openScanner}
+            className="flex-1 flex items-center justify-center gap-1.5 py-3 px-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-600 hover:to-amber-800 active:scale-95 text-white font-extrabold text-xs shadow-lg shadow-amber-500/30 transition-all border border-amber-300/30 backdrop-blur-md min-h-[46px] cursor-pointer"
+            title="Scan Barcode Supermarket Tanpa Perlu Scroll"
+          >
+            <Scan className="w-4 h-4 text-white" />
+            <span>Scan Barcode</span>
+          </button>
+
+          {/* Quick Add Item Manual Floating Button */}
+          <button
+            type="button"
+            onClick={() => openAddItemSheet(null)}
+            className="flex-1 flex items-center justify-center gap-1.5 py-3 px-3.5 rounded-2xl bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 active:scale-95 text-white font-extrabold text-xs shadow-lg shadow-blue-500/30 transition-all border border-blue-400/30 backdrop-blur-md min-h-[46px] cursor-pointer"
+            title="Tambah Barang Belanja Tanpa Perlu Scroll"
+          >
+            <Plus className="w-4 h-4 stroke-[3] text-white" />
+            <span>Tambah Barang</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
