@@ -17,6 +17,7 @@ import {
   TrendingDown,
   Scan,
   CreditCard,
+  ChevronRight,
 } from 'lucide-react';
 import { db } from '../db/database';
 import { groceryService } from '../services/groceryService';
