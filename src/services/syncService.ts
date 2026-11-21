@@ -1,3 +1,4 @@
+import { firestore, doc, setDoc, onSnapshot } from './firebase';
 import { db } from '../db/database';
 import { useStore } from '../store/useStore';
 import type { CartItem, Budget, PurchaseTransaction } from '../types';
@@ -110,6 +111,25 @@ class SyncService {
       } catch (e) {
         console.warn('BroadcastChannel error:', e);
       }
+    }
+
+        // 1b. Firebase Firestore Realtime WebSocket Listener (instant sync)
+    try {
+      const syncDocRef = doc(firestore, 'sync', SINGLE_USER);
+      onSnapshot(syncDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const remoteData = docSnap.data();
+          if (remoteData && remoteData.snapshot && remoteData.snapshot.user === SINGLE_USER) {
+            if (remoteData.snapshot.deviceId !== this.deviceId) {
+              this.applySnapshot(remoteData.snapshot, 'remote');
+            }
+          }
+        }
+      }, (err) => {
+        console.warn('Firestore snapshot listener note:', err);
+      });
+    } catch (e) {
+      console.warn('Could not initialize Firestore listener:', e);
     }
 
     // 2. Check for snapshot in URL query string (for 1-tap QR scan or link pairing)
@@ -351,6 +371,19 @@ class SyncService {
         } catch (e) {
           // ignore
         }
+      }
+
+            // 1b. Post to Firebase Cloud Firestore for instant millisecond push
+      try {
+        const syncDocRef = doc(firestore, 'sync', SINGLE_USER);
+        setDoc(syncDocRef, {
+          snapshot,
+          updatedAt: Date.now(),
+        }).catch((err) => {
+          console.warn('Firestore setDoc note:', err);
+        });
+      } catch (e) {
+        console.warn('Firestore setDoc error:', e);
       }
 
       // 2. Post to central cloud store
