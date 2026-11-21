@@ -27,6 +27,8 @@ import { AddItemSheet } from '../components/AddItemSheet';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
 import { PWAInstallBanner } from '../components/PWAInstallBanner';
+import { LocationPickerModal } from '../components/LocationPickerModal';
+import { syncService } from '../services/syncService';
 import { calculateCartTotals, evaluateBudgetSafety } from '../utils/calculations';
 import { formatRupiah } from '../utils/currency';
 import { formatPeriodLabel, getCurrentMonthPeriod } from '../utils/priceComparison';
@@ -51,6 +53,7 @@ export const ShoppingPage: React.FC = () => {
   const [currentPeriod] = useState(getCurrentMonthPeriod());
   const [budgetLimit, setBudgetLimit] = useState(1200000);
   const [isEditingBudget, setIsEditingBudget] = useState(false);
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [newBudgetInput, setNewBudgetInput] = useState('');
   const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
   const [checkoutSuccessMessage, setCheckoutSuccessMessage] = useState<string | null>(null);
@@ -308,32 +311,32 @@ export const ShoppingPage: React.FC = () => {
         </div>
       )}
 
-      {/* Sesi Belanja: Lokasi & Tanggal Supermarket (Fitur Lokasi) */}
-      <div className="bg-card dark:bg-slate-800 rounded-2xl p-2.5 border border-border dark:border-slate-700 shadow-soft flex items-center gap-2">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <div className="p-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/80 text-primary dark:text-blue-400 flex-shrink-0">
+      {/* Sesi Belanja: Lokasi & Tanggal Supermarket (Model Bioskop JABODETABEK) */}
+      <div className="bg-card dark:bg-slate-800 rounded-2xl p-2.5 border border-border dark:border-slate-700 shadow-soft flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={() => setIsLocationModalOpen(true)}
+          className="flex items-center gap-2.5 flex-1 min-w-0 text-left hover:opacity-90 active:scale-[0.99] transition-all cursor-pointer group"
+          title="Klik untuk memilih supermarket (Jabodetabek)"
+        >
+          <div className="p-2 rounded-xl bg-teal-50 dark:bg-teal-950/80 text-[#0f766e] dark:text-teal-400 flex-shrink-0 group-hover:bg-teal-100 dark:group-hover:bg-teal-900/50 transition-colors shadow-2xs">
             <MapPin className="w-4 h-4" />
           </div>
-          <input
-            type="text"
-            list="locationSuggestions"
-            value={sessionLocation}
-            onChange={(e) => setSessionLocation(e.target.value)}
-            placeholder="Ketik / pilih lokasi supermarket..."
-            className="w-full text-xs font-bold text-text-main dark:text-slate-100 bg-transparent focus:outline-none placeholder-gray-400 dark:placeholder-slate-500 truncate"
-          />
-          <datalist id="locationSuggestions">
-            <option value="Lotte Mart Grocery - Puri Indah" />
-            <option value="Superindo - Puri Indah" />
-            <option value="Hypermart - Puri Mall" />
-            <option value="Grand Lucky Superstore" />
-            <option value="Farmers Market" />
-            <option value="Indomaret Fresh" />
-            <option value="Alfamidi Super" />
-            <option value="Hero Supermarket" />
-            <option value="Papaya Fresh Gallery" />
-          </datalist>
-        </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className="text-[10px] font-extrabold text-[#0f766e] dark:text-teal-400 tracking-wider bg-teal-50 dark:bg-teal-950/80 border border-teal-200/60 dark:border-teal-800/60 px-1.5 py-0.2 rounded-md">
+                JABODETABEK
+              </span>
+              <span className="text-[10px] text-text-secondary dark:text-slate-400 font-medium">
+                Pilih Lokasi
+              </span>
+            </div>
+            <div className="text-xs font-extrabold text-text-main dark:text-slate-100 truncate flex items-center gap-1">
+              <span>{sessionLocation || 'Pilih Supermarket...'}</span>
+              <ChevronRight className="w-3.5 h-3.5 text-gray-400 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors flex-shrink-0" />
+            </div>
+          </div>
+        </button>
 
         <div className="flex items-center gap-1.5 pl-2.5 border-l border-gray-200 dark:border-slate-700 flex-shrink-0">
           <Calendar className="w-3.5 h-3.5 text-gray-400 dark:text-slate-400" />
@@ -590,6 +593,16 @@ export const ShoppingPage: React.FC = () => {
       )}
 
       {/* Add / Edit Item Bottom Sheet */}
+      <LocationPickerModal
+        isOpen={isLocationModalOpen}
+        currentLocation={sessionLocation}
+        onSelectLocation={(loc) => {
+          setSessionLocation(loc);
+          syncService.notifyChange();
+        }}
+        onClose={() => setIsLocationModalOpen(false)}
+      />
+
       <AddItemSheet
         isOpen={isAddItemSheetOpen}
         onClose={closeAddItemSheet}
