@@ -350,7 +350,9 @@ export const ShoppingPage: React.FC = () => {
         </div>
       </div>
 
-      {/* F-05 Budget Safety Card */}
+      {/* Sticky Floating Container: Budget Safety Card & Quick Checkout Bar (Pas di scroll ga hilang) */}
+      <div className="sticky top-0 z-20 space-y-2.5 pt-1 pb-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md -mx-4 px-4 shadow-xs border-b border-gray-100/80 dark:border-slate-800/80 transition-all">
+        {/* F-05 Budget Safety Card */}
       <BudgetSafetyCard
         budgetStatus={budgetStatus}
         itemCount={cartItems.length}
@@ -394,8 +396,8 @@ export const ShoppingPage: React.FC = () => {
           </div>
         </div>
       )}
+      </div>
 
-      
       {/* Rekomendasi Barang dari Riwayat Pembelian (Beli Lagi 1-Klik) */}
       {recommendations.length > 0 && (
         <div className="bg-gradient-to-r from-amber-50/70 via-orange-50/40 to-blue-50/50 dark:from-slate-800 dark:to-slate-850 p-3.5 rounded-card border border-amber-200/70 dark:border-slate-700 shadow-soft space-y-2.5 animate-fade-in">
