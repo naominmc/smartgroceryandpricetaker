@@ -87,12 +87,24 @@ export const HistoryPage: React.FC = () => {
   const nowMonth = String(now.getMonth() + 1).padStart(2, '0');
   const nowYear = now.getFullYear().toString();
 
+  const [isThisWeekFilter, setIsThisWeekFilter] = useState(false);
+
+  // Start and end of current week (Senin s/d Minggu)
+  const dayOfWeek = (now.getDay() + 6) % 7; // 0 = Senin, 6 = Minggu
+  const startOfWeek = useMemo(() => {
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek, 0, 0, 0);
+  }, [now.getFullYear(), now.getMonth(), now.getDate(), dayOfWeek]);
+  const endOfWeek = useMemo(() => {
+    return new Date(startOfWeek.getTime() + 7 * 24 * 60 * 60 * 1000 - 1);
+  }, [startOfWeek]);
+
   const isTodaySelected =
-    selectedDay === nowDay && selectedMonth === nowMonth && selectedYear === nowYear;
+    !isThisWeekFilter && selectedDay === nowDay && selectedMonth === nowMonth && selectedYear === nowYear;
   const isThisMonthSelected =
-    selectedDay === 'all' && selectedMonth === nowMonth && selectedYear === nowYear;
+    !isThisWeekFilter && selectedDay === 'all' && selectedMonth === nowMonth && selectedYear === nowYear;
 
   const handleResetDateFilter = () => {
+    setIsThisWeekFilter(false);
     setSelectedDay('all');
     setSelectedMonth('all');
     setSelectedYear('all');
@@ -104,6 +116,7 @@ export const HistoryPage: React.FC = () => {
   const handleCalendarPick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     if (!val) return;
+    setIsThisWeekFilter(false);
     const [y, m, d] = val.split('-');
     if (y && m && d) {
       setSelectedYear(y);
@@ -118,21 +131,26 @@ export const HistoryPage: React.FC = () => {
       const txDate = new Date(tx.purchasedAt);
       const hasValidDate = !isNaN(txDate.getTime());
 
-      const txYear = hasValidDate
-        ? txDate.getFullYear().toString()
-        : tx.period
-        ? tx.period.split('-')[0]
-        : '';
-      const txMonth = hasValidDate
-        ? String(txDate.getMonth() + 1).padStart(2, '0')
-        : tx.period
-        ? tx.period.split('-')[1]
-        : '';
-      const txDay = hasValidDate ? String(txDate.getDate()) : '';
+      if (isThisWeekFilter) {
+        if (!hasValidDate) return false;
+        if (txDate < startOfWeek || txDate > endOfWeek) return false;
+      } else {
+        const txYear = hasValidDate
+          ? txDate.getFullYear().toString()
+          : tx.period
+          ? tx.period.split('-')[0]
+          : '';
+        const txMonth = hasValidDate
+          ? String(txDate.getMonth() + 1).padStart(2, '0')
+          : tx.period
+          ? tx.period.split('-')[1]
+          : '';
+        const txDay = hasValidDate ? String(txDate.getDate()) : '';
 
-      if (selectedYear !== 'all' && txYear !== selectedYear) return false;
-      if (selectedMonth !== 'all' && txMonth !== selectedMonth) return false;
-      if (selectedDay !== 'all' && txDay !== selectedDay) return false;
+        if (selectedYear !== 'all' && txYear !== selectedYear) return false;
+        if (selectedMonth !== 'all' && txMonth !== selectedMonth) return false;
+        if (selectedDay !== 'all' && txDay !== selectedDay) return false;
+      }
 
       if (!searchQuery.trim()) return true;
 
@@ -147,7 +165,7 @@ export const HistoryPage: React.FC = () => {
         (tx.paymentMethod && tx.paymentMethod.toLowerCase().includes(query))
       );
     });
-  }, [sortedTransactions, selectedYear, selectedMonth, selectedDay, searchQuery]);
+  }, [sortedTransactions, selectedYear, selectedMonth, selectedDay, searchQuery, isThisWeekFilter, startOfWeek, endOfWeek]);
 
   // Calculate summary metrics for current selection
   const periodTotalSpending = filteredTransactions.reduce((acc, tx) => acc + tx.finalTotal, 0);
@@ -155,6 +173,9 @@ export const HistoryPage: React.FC = () => {
 
   // Period label for summary
   const summaryLabel = useMemo(() => {
+    if (isThisWeekFilter) {
+      return `Minggu Ini (${startOfWeek.getDate()} - ${endOfWeek.getDate()} ${MONTH_OPTIONS[now.getMonth()].label})`;
+    }
     if (selectedDay !== 'all' && selectedMonth !== 'all' && selectedYear !== 'all') {
       const monthObj = MONTH_OPTIONS.find((m) => m.value === selectedMonth);
       return `${parseInt(selectedDay, 10)} ${monthObj?.label || selectedMonth} ${selectedYear}`;
@@ -174,7 +195,7 @@ export const HistoryPage: React.FC = () => {
       return formatPeriodLabel(distinctPeriods[0]);
     }
     return 'Seluruh Periode';
-  }, [selectedDay, selectedMonth, selectedYear, distinctPeriods]);
+  }, [isThisWeekFilter, startOfWeek, endOfWeek, selectedDay, selectedMonth, selectedYear, distinctPeriods]);
 
   // Month-over-month comparison when month and year are selected
   const hasMonthYearSelected = selectedMonth !== 'all' && selectedYear !== 'all';
@@ -380,7 +401,7 @@ export const HistoryPage: React.FC = () => {
             />
 
             {/* Reset button if any filter is active */}
-            {(selectedDay !== 'all' || selectedMonth !== 'all' || selectedYear !== 'all') && (
+            {(isThisWeekFilter || selectedDay !== 'all' || selectedMonth !== 'all' || selectedYear !== 'all') && (
               <button
                 type="button"
                 onClick={handleResetDateFilter}
@@ -400,7 +421,10 @@ export const HistoryPage: React.FC = () => {
           <div className="relative">
             <select
               value={selectedDay}
-              onChange={(e) => setSelectedDay(e.target.value)}
+              onChange={(e) => {
+                setIsThisWeekFilter(false);
+                setSelectedDay(e.target.value);
+              }}
               className="w-full appearance-none pl-2 pr-5 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10.5px] sm:text-xs font-semibold text-text-main dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary min-h-[38px] cursor-pointer truncate"
             >
               <option value="all">Seluruh Tanggal</option>
@@ -417,7 +441,10 @@ export const HistoryPage: React.FC = () => {
           <div className="relative">
             <select
               value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
+              onChange={(e) => {
+                setIsThisWeekFilter(false);
+                setSelectedMonth(e.target.value);
+              }}
               className="w-full appearance-none pl-2 pr-5 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10.5px] sm:text-xs font-semibold text-text-main dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary min-h-[38px] cursor-pointer truncate"
             >
               <option value="all">Seluruh Bulan</option>
@@ -434,7 +461,10 @@ export const HistoryPage: React.FC = () => {
           <div className="relative">
             <select
               value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
+              onChange={(e) => {
+                setIsThisWeekFilter(false);
+                setSelectedYear(e.target.value);
+              }}
               className="w-full appearance-none pl-2 pr-5 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10.5px] sm:text-xs font-semibold text-text-main dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary min-h-[38px] cursor-pointer truncate"
             >
               <option value="all">Seluruh Tahun</option>
@@ -456,6 +486,7 @@ export const HistoryPage: React.FC = () => {
           <button
             type="button"
             onClick={() => {
+              setIsThisWeekFilter(false);
               const now = new Date();
               setSelectedYear(now.getFullYear().toString());
               setSelectedMonth(String(now.getMonth() + 1).padStart(2, '0'));
@@ -472,6 +503,23 @@ export const HistoryPage: React.FC = () => {
           <button
             type="button"
             onClick={() => {
+              setIsThisWeekFilter(true);
+              setSelectedDay('all');
+              setSelectedMonth('all');
+              setSelectedYear('all');
+            }}
+            className={`px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-colors whitespace-nowrap cursor-pointer ${
+              isThisWeekFilter
+                ? 'bg-primary text-white border-primary shadow-xs'
+                : 'bg-gray-100 dark:bg-slate-700/80 text-text-secondary dark:text-slate-300 border-gray-200 dark:border-slate-600 hover:bg-gray-200'
+            }`}
+          >
+            Minggu Ini
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setIsThisWeekFilter(false);
               const now = new Date();
               setSelectedYear(now.getFullYear().toString());
               setSelectedMonth(String(now.getMonth() + 1).padStart(2, '0'));
@@ -489,7 +537,7 @@ export const HistoryPage: React.FC = () => {
             type="button"
             onClick={handleResetDateFilter}
             className={`px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-colors whitespace-nowrap cursor-pointer ${
-              selectedDay === 'all' && selectedMonth === 'all' && selectedYear === 'all'
+              !isThisWeekFilter && selectedDay === 'all' && selectedMonth === 'all' && selectedYear === 'all'
                 ? 'bg-primary text-white border-primary shadow-xs'
                 : 'bg-gray-100 dark:bg-slate-700/80 text-text-secondary dark:text-slate-300 border-gray-200 dark:border-slate-600 hover:bg-gray-200'
             }`}

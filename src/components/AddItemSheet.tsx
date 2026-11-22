@@ -10,7 +10,7 @@ import type { ProductCategory, CartItem } from '../types';
 import { PRODUCT_CATEGORIES, STANDARD_UNITS } from '../types';
 import { DiscountEditor } from './DiscountEditor';
 import { calculateItemSubtotals } from '../utils/calculations';
-import { formatRupiah } from '../utils/currency';
+import { formatRupiah, getActiveCurrency } from '../utils/currency';
 import { useStore } from '../store/useStore';
 
 const SEARCH_HISTORY_KEY = 'smart_grocery_product_search_history';
@@ -553,11 +553,11 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
           {/* Harga Satuan */}
           <div>
             <label className="block text-xs font-bold text-text-main dark:text-slate-200 mb-1">
-              Harga Satuan (Rp) <span className="text-danger">*</span>
+              Harga Satuan ({getActiveCurrency().symbol}) <span className="text-danger">*</span>
             </label>
             <div className="relative">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-sm text-gray-400">
-                Rp
+                {getActiveCurrency().symbol}
               </span>
               <Controller
                 name="unitPrice"

@@ -107,8 +107,14 @@ export const AccountProfileModal: React.FC<AccountProfileModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       calculateStorage();
+      setFullName(userProfile.fullName);
+      setUsername(userProfile.username);
+      setBio(userProfile.bio);
+      setEmail(userProfile.email);
+      setCurrency(userProfile.currency || 'ID Rupiah Indonesia (Rp - IDR)');
+      setCurrentPasswordDisplay(userProfile.passwordMasked || 'naomi12345');
     }
-  }, [isOpen]);
+  }, [isOpen, userProfile]);
 
   const handleClearCacheAndStorage = async () => {
     try {

@@ -19,7 +19,7 @@ import {
 } from '../data/supermarketCatalog';
 import type { SupermarketCatalogItem, ProductCategory } from '../types';
 import { PRODUCT_CATEGORIES } from '../types';
-import { formatRupiah } from '../utils/currency';
+import { formatRupiah, getActiveCurrency } from '../utils/currency';
 
 interface ScannedProductItem extends SupermarketCatalogItem {
   isCustom?: boolean;
@@ -389,7 +389,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 <span className="text-[10px] text-gray-500 dark:text-slate-400 block">Harga Satuan:</span>
                 {detectedItem.isCustom ? (
                   <div className="flex items-center gap-1 justify-end mt-0.5">
-                    <span className="text-xs font-bold text-primary dark:text-blue-400">Rp</span>
+                    <span className="text-xs font-bold text-primary dark:text-blue-400">{getActiveCurrency().symbol}</span>
                     <input
                       type="text"
                       value={customPrice}

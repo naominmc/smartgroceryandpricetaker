@@ -43,10 +43,13 @@ export const PaymentMethodSelectorModal: React.FC<PaymentMethodSelectorModalProp
         </div>
 
         {/* List of Payment Accounts */}
-        <div className="space-y-2.5 py-4">
+        <div className="space-y-2 py-3 max-h-[58vh] overflow-y-auto pr-1">
           {PAYMENT_ACCOUNTS.map((acc) => {
             const isSelected = selectedPaymentMethod === acc.name;
             const isBCA = acc.id === 'bca';
+            const isVisa = acc.id === 'visa';
+            const isMastercard = acc.id === 'mastercard';
+            const isAlipay = acc.id === 'alipay';
 
             return (
               <button
@@ -56,7 +59,7 @@ export const PaymentMethodSelectorModal: React.FC<PaymentMethodSelectorModalProp
                   setSelectedPaymentMethod(acc.name);
                   onClose();
                 }}
-                className={`w-full flex items-center justify-between p-3.5 rounded-2xl border text-left transition-all min-h-[52px] ${
+                className={`w-full flex items-center justify-between p-3 rounded-2xl border text-left transition-all min-h-[50px] cursor-pointer ${
                   isSelected
                     ? 'border-blue-500 bg-blue-50/70 dark:bg-blue-950/50 shadow-sm ring-2 ring-blue-100 dark:ring-blue-900'
                     : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 hover:bg-gray-50 dark:hover:bg-slate-750'
@@ -64,9 +67,15 @@ export const PaymentMethodSelectorModal: React.FC<PaymentMethodSelectorModalProp
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-xs shadow-sm ${
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-sm flex-shrink-0 ${
                       isBCA
                         ? 'bg-[#005EAA]'
+                        : isVisa
+                        ? 'bg-[#1A1F71]'
+                        : isMastercard
+                        ? 'bg-[#EB001B]'
+                        : isAlipay
+                        ? 'bg-[#1677FF]'
                         : acc.type === 'cash'
                         ? 'bg-emerald-600'
                         : acc.type === 'ewallet'
@@ -74,15 +83,37 @@ export const PaymentMethodSelectorModal: React.FC<PaymentMethodSelectorModalProp
                         : 'bg-indigo-600'
                     }`}
                   >
-                    {isBCA ? 'BCA' : acc.type === 'cash' ? '💵' : acc.type === 'ewallet' ? 'QR' : 'BANK'}
+                    {isBCA
+                      ? 'BCA'
+                      : isVisa
+                      ? 'VISA'
+                      : isMastercard
+                      ? 'MC'
+                      : isAlipay
+                      ? '支'
+                      : acc.type === 'cash'
+                      ? '💵'
+                      : acc.type === 'ewallet'
+                      ? 'QR'
+                      : 'BANK'}
                   </div>
 
                   <div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <h4 className="font-bold text-xs text-text-main dark:text-slate-100">{acc.name}</h4>
                       {isBCA && (
                         <span className="text-[9px] font-extrabold bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 px-1.5 py-0.2 rounded-full">
                           Utama
+                        </span>
+                      )}
+                      {(isVisa || isMastercard) && (
+                        <span className="text-[9px] font-bold bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 px-1.5 py-0.2 rounded-full">
+                          Debit/Kredit
+                        </span>
+                      )}
+                      {isAlipay && (
+                        <span className="text-[9px] font-bold bg-sky-50 dark:bg-sky-950/70 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 px-1.5 py-0.2 rounded-full">
+                          Global Pay
                         </span>
                       )}
                     </div>
@@ -112,7 +143,7 @@ export const PaymentMethodSelectorModal: React.FC<PaymentMethodSelectorModalProp
         <button
           type="button"
           onClick={onClose}
-          className="w-full bg-primary hover:bg-primary-hover active:scale-95 text-white font-bold py-2.5 rounded-xl text-xs min-h-[44px]"
+          className="w-full bg-primary hover:bg-primary-hover active:scale-95 text-white font-bold py-2.5 rounded-xl text-xs min-h-[44px] cursor-pointer"
         >
           Konfirmasi Pilihan
         </button>

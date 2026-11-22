@@ -145,7 +145,7 @@ export interface SupermarketCatalogItem {
 export interface PaymentAccount {
   id: string;
   name: string;
-  type: 'bank' | 'ewallet' | 'cash';
+  type: 'bank' | 'ewallet' | 'cash' | 'card';
   accountNumber?: string;
   color: string;
   badge: string;

@@ -41,6 +41,30 @@ export const PAYMENT_ACCOUNTS: PaymentAccount[] = [
     color: '#003D79',
     badge: '🟡 Mandiri',
   },
+  {
+    id: 'visa',
+    name: 'Visa Card',
+    type: 'card',
+    accountNumber: '•••• •••• •••• 4242',
+    color: '#1A1F71',
+    badge: '💳 Visa',
+  },
+  {
+    id: 'mastercard',
+    name: 'Mastercard',
+    type: 'card',
+    accountNumber: '•••• •••• •••• 5412',
+    color: '#EB001B',
+    badge: '💳 Mastercard',
+  },
+  {
+    id: 'alipay',
+    name: 'Alipay (支付宝)',
+    type: 'ewallet',
+    accountNumber: 'International / QR Pay',
+    color: '#1677FF',
+    badge: '🌐 Alipay',
+  },
 ];
 
 export const DEFAULT_PAYMENT_ACCOUNT = PAYMENT_ACCOUNTS[0]; // Bank BCA

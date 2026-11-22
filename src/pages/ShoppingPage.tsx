@@ -363,10 +363,24 @@ export const ShoppingPage: React.FC = () => {
                 JABODETABEK
               </span>
             </div>
-            <div className="text-xs font-extrabold text-text-main dark:text-slate-100 truncate flex items-center gap-1">
-              <span>{sessionLocation || 'Pilih Supermarket...'}</span>
-              <ChevronRight className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 flex-shrink-0" />
-            </div>
+            {sessionLocation && sessionLocation.includes('-') ? (
+              <div className="min-w-0 flex items-start justify-between gap-1">
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-extrabold text-text-main dark:text-slate-100 leading-tight truncate">
+                    {sessionLocation.split('-')[0].trim()}
+                  </div>
+                  <div className="text-[10.5px] font-bold text-teal-700 dark:text-teal-400 leading-tight truncate">
+                    - {sessionLocation.split('-').slice(1).join('-').trim()}
+                  </div>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 flex-shrink-0 mt-0.5" />
+              </div>
+            ) : (
+              <div className="text-xs font-extrabold text-text-main dark:text-slate-100 truncate flex items-center gap-1">
+                <span>{sessionLocation || 'Pilih Supermarket...'}</span>
+                <ChevronRight className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 flex-shrink-0" />
+              </div>
+            )}
           </div>
         </button>
 
@@ -379,14 +393,14 @@ export const ShoppingPage: React.FC = () => {
               } catch {}
             }
           }}
-          className="flex items-center gap-1.5 pl-3 pr-2 py-1.5 bg-gray-50 dark:bg-slate-750 rounded-xl border border-gray-200/80 dark:border-slate-700 flex-shrink-0 ml-auto cursor-pointer"
+          className="flex items-center gap-1 px-2.5 py-1.5 bg-gray-50 dark:bg-slate-750 rounded-xl border border-gray-200/80 dark:border-slate-700 flex-shrink-0 ml-auto cursor-pointer justify-end"
         >
-          <Calendar className="w-3.5 h-3.5 text-primary dark:text-blue-400 pointer-events-none" />
+          <Calendar className="w-3.5 h-3.5 text-primary dark:text-blue-400 pointer-events-none flex-shrink-0" />
           <input
             type="date"
             value={sessionDate}
             onChange={(e) => setSessionDate(e.target.value)}
-            className="text-xs font-semibold text-text-secondary dark:text-slate-300 bg-transparent focus:outline-none cursor-pointer"
+            className="w-[84px] text-xs font-semibold text-text-secondary dark:text-slate-300 bg-transparent focus:outline-none cursor-pointer p-0 text-right [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
           />
         </div>
       </div>

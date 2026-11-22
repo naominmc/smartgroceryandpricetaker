@@ -6,11 +6,9 @@ import {
   Eye,
   EyeOff,
   User,
-  ArrowRight,
   CheckCircle2,
   Sun,
   Moon,
-  CreditCard,
   ShoppingBag,
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
@@ -24,16 +22,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     userProfile,
     themeMode,
     toggleThemeMode,
-    selectedPaymentMethod,
     updateUserProfile,
   } = useStore();
 
   const [activeAuthTab, setActiveAuthTab] = useState<'signin' | 'signup'>('signin');
-  const [emailInput, setEmailInput] = useState(userProfile.email || 'naomi@mutiarabangsa.sch.id');
-  const [passwordInput, setPasswordInput] = useState('••••••••••••');
+  const [emailInput, setEmailInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [fullNameInput, setFullNameInput] = useState(userProfile.fullName || 'naomi miracle');
-  const [usernameInput, setUsernameInput] = useState(userProfile.username || 'naomiiracle');
+  const [fullNameInput, setFullNameInput] = useState('');
+  const [usernameInput, setUsernameInput] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -47,25 +44,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     }, 2800);
   };
 
-  const handleQuickDeviceLogin = () => {
-    setIsLoading(true);
-    showToast(`Masuk sebagai ${userProfile.fullName}...`);
-    setTimeout(() => {
-      updateUserProfile({
-        loginTime: new Date().toLocaleDateString('id-ID', {
-          day: 'numeric',
-          month: 'short',
-          year: 'numeric',
-        }) + ', ' + new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB',
-      });
-      setIsLoading(false);
-      onLogin();
-    }, 450);
-  };
-
   const handleGoogleLogin = () => {
     setIsLoading(true);
-    showToast('Menghubungkan akun Google naomi miracle...');
+    showToast('Menghubungkan akun Google...');
     setTimeout(() => {
       updateUserProfile({
         isGoogleLinked: true,
@@ -212,76 +193,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               }`}
             >
               Daftar Akun
-            </button>
-          </div>
-
-          {/* 1-Click Saved Device Account Card (Model Akun Di Perangkat Ini) */}
-          <div className="bg-gradient-to-br from-blue-50/80 to-indigo-50/60 dark:from-slate-800/90 dark:to-blue-950/40 rounded-card p-3.5 border border-blue-200/80 dark:border-blue-900/50 shadow-soft space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold tracking-wider text-blue-700 dark:text-blue-300 uppercase">
-                Akun di Perangkat Ini
-              </span>
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-800 dark:text-blue-300 bg-white dark:bg-blue-900/80 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-700 shadow-2xs">
-                <svg className="w-2.5 h-2.5" viewBox="0 0 24 24">
-                  <path
-                    fill="#4285F4"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                  />
-                </svg>
-                <span>Google</span>
-              </span>
-            </div>
-
-            <div className="flex items-center gap-3 bg-white dark:bg-slate-800/80 p-2.5 rounded-xl border border-blue-100 dark:border-slate-700">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-sky-400 text-white flex items-center justify-center font-black text-sm shadow-sm flex-shrink-0 relative overflow-hidden">
-                {userProfile.avatarUrl ? (
-                  <img src={userProfile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                ) : (
-                  <span>{(userProfile.fullName || 'naomi miracle')[0].toUpperCase()}</span>
-                )}
-                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-800" />
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <h4 className="font-extrabold text-xs text-gray-900 dark:text-slate-100 leading-tight">
-                  {userProfile.fullName || 'naomi miracle'}
-                </h4>
-                <p className="text-[11px] text-gray-500 dark:text-slate-400 truncate">
-                  {userProfile.email || 'naomi@mutiarabangsa.sch.id'}
-                </p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="text-[9px] font-bold text-primary dark:text-blue-300">
-                    @{userProfile.username || 'naomiiracle'}
-                  </span>
-                  <span className="text-[9px] text-gray-400">•</span>
-                  <span className="text-[9px] text-gray-600 dark:text-slate-400 flex items-center gap-0.5">
-                    <CreditCard className="w-2.5 h-2.5 text-blue-600" />
-                    <span>{selectedPaymentMethod}</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleQuickDeviceLogin}
-              disabled={isLoading}
-              className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-98 text-white font-bold text-xs shadow-soft transition-all flex items-center justify-center gap-2 cursor-pointer min-h-[40px]"
-            >
-              <span>Masuk sebagai {userProfile.fullName || 'naomi miracle'}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
 

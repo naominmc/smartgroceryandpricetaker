@@ -19,7 +19,7 @@ import { PaymentMethodSelectorModal } from '../components/PaymentMethodSelectorM
 import type { BudgetStatus } from '../types';
 import { PRODUCT_CATEGORIES } from '../types';
 import { calculateCartTotals, evaluateBudgetSafety } from '../utils/calculations';
-import { formatRupiah } from '../utils/currency';
+import { formatRupiah, getActiveCurrency } from '../utils/currency';
 import { formatPeriodLabel, getCurrentMonthPeriod } from '../utils/priceComparison';
 
 export const BudgetPage: React.FC = () => {
@@ -139,7 +139,7 @@ export const BudgetPage: React.FC = () => {
         <form onSubmit={handleSaveBudget} className="space-y-3">
           <div className="relative">
             <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-sm text-gray-400 dark:text-slate-500">
-              Rp
+              {getActiveCurrency().symbol}
             </span>
             <input
               type="number"
