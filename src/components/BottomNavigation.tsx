@@ -22,10 +22,10 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 z-40 flex justify-center pointer-events-none"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom, 12px)' }}
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 8px)' }}
       aria-label="Navigasi Utama"
     >
-      <div className="w-full max-w-[430px] px-4 pb-2 pointer-events-auto">
+      <div className="w-full max-w-[430px] px-4 pb-1 pointer-events-auto">
         <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl shadow-float dark:shadow-dark-float border border-border dark:border-slate-800 px-3 py-1.5 flex items-center justify-around transition-colors">
           {navItems.map((item) => {
             const Icon = item.icon;

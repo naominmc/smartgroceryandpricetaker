@@ -243,7 +243,7 @@ export const HistoryPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 pb-24">
+    <div className="space-y-4 pb-3">
       {/* Header */}
       <div className="flex items-center justify-between pt-1">
         <div>
@@ -415,7 +415,7 @@ export const HistoryPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 3 Selectors: Tanggal, Bulan, Tahun */}
+        {/* 3 Selectors: Tanggal, Bulan, Tahun (Indikator Transparan / Bening, Bukan Pilihan di Dropdown) */}
         <div className="grid grid-cols-3 gap-1.5">
           {/* Tanggal Selector */}
           <div className="relative">
@@ -425,11 +425,17 @@ export const HistoryPage: React.FC = () => {
                 setIsThisWeekFilter(false);
                 setSelectedDay(e.target.value);
               }}
-              className="w-full appearance-none pl-2 pr-5 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10.5px] sm:text-xs font-semibold text-text-main dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary min-h-[38px] cursor-pointer truncate"
+              className={`w-full appearance-none pl-2.5 pr-6 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] sm:text-xs outline-none focus:ring-2 focus:ring-primary min-h-[38px] cursor-pointer truncate transition-all ${
+                selectedDay === 'all'
+                  ? 'text-gray-400/80 dark:text-slate-500 font-normal'
+                  : 'text-primary dark:text-blue-400 font-extrabold bg-blue-50/60 dark:bg-blue-950/50 border-primary/40'
+              }`}
             >
-              <option value="all">Tanggal</option>
+              <option value="all" disabled hidden>
+                Tanggal
+              </option>
               {DAY_OPTIONS.map((day) => (
-                <option key={day} value={day}>
+                <option key={day} value={day} className="text-gray-900 dark:text-slate-100 font-medium">
                   {day}
                 </option>
               ))}
@@ -445,11 +451,17 @@ export const HistoryPage: React.FC = () => {
                 setIsThisWeekFilter(false);
                 setSelectedMonth(e.target.value);
               }}
-              className="w-full appearance-none pl-2 pr-5 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10.5px] sm:text-xs font-semibold text-text-main dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary min-h-[38px] cursor-pointer truncate"
+              className={`w-full appearance-none pl-2.5 pr-6 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] sm:text-xs outline-none focus:ring-2 focus:ring-primary min-h-[38px] cursor-pointer truncate transition-all ${
+                selectedMonth === 'all'
+                  ? 'text-gray-400/80 dark:text-slate-500 font-normal'
+                  : 'text-primary dark:text-blue-400 font-extrabold bg-blue-50/60 dark:bg-blue-950/50 border-primary/40'
+              }`}
             >
-              <option value="all">Bulan</option>
+              <option value="all" disabled hidden>
+                Bulan
+              </option>
               {MONTH_OPTIONS.map((m) => (
-                <option key={m.value} value={m.value}>
+                <option key={m.value} value={m.value} className="text-gray-900 dark:text-slate-100 font-medium">
                   {m.label}
                 </option>
               ))}
@@ -465,11 +477,17 @@ export const HistoryPage: React.FC = () => {
                 setIsThisWeekFilter(false);
                 setSelectedYear(e.target.value);
               }}
-              className="w-full appearance-none pl-2 pr-5 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10.5px] sm:text-xs font-semibold text-text-main dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary min-h-[38px] cursor-pointer truncate"
+              className={`w-full appearance-none pl-2.5 pr-6 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] sm:text-xs outline-none focus:ring-2 focus:ring-primary min-h-[38px] cursor-pointer truncate transition-all ${
+                selectedYear === 'all'
+                  ? 'text-gray-400/80 dark:text-slate-500 font-normal'
+                  : 'text-primary dark:text-blue-400 font-extrabold bg-blue-50/60 dark:bg-blue-950/50 border-primary/40'
+              }`}
             >
-              <option value="all">Tahun</option>
+              <option value="all" disabled hidden>
+                Tahun
+              </option>
               {availableYears.map((yr) => (
-                <option key={yr} value={yr}>
+                <option key={yr} value={yr} className="text-gray-900 dark:text-slate-100 font-medium">
                   {yr}
                 </option>
               ))}

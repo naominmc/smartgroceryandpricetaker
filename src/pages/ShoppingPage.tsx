@@ -314,7 +314,7 @@ export const ShoppingPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 pb-40">
+    <div className="space-y-4 pb-3">
       {/* PWA Installation Prompt if applicable */}
       <PWAInstallBanner />
 

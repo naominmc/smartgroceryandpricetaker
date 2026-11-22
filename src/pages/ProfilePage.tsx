@@ -187,7 +187,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
   };
 
   return (
-    <div className="space-y-4 pb-40">
+    <div className="space-y-4 pb-3">
       {/* Top Header */}
       <div className="flex items-center justify-between pt-1">
         <div>
