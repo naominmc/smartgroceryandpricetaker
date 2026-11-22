@@ -234,7 +234,7 @@ export const HistoryPage: React.FC = () => {
           </h1>
         </div>
 
-        {/* Backup & Restore Controls */}
+        {/* Backup Controls */}
         <div className="flex items-center gap-1.5">
           <button
             type="button"
@@ -245,22 +245,6 @@ export const HistoryPage: React.FC = () => {
             <Download className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Cadangkan</span>
           </button>
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="p-2 text-text-secondary dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1 transition-colors min-h-[40px]"
-            title="Impor Backup JSON"
-          >
-            <Upload className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Pulihkan</span>
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json"
-            onChange={handleImportFile}
-            className="hidden"
-          />
         </div>
       </div>
 

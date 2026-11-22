@@ -5,13 +5,25 @@ import { db } from '../db/database';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { X, ShoppingBag, Sparkles } from 'lucide-react';
+import { X, ShoppingBag, Sparkles, Clock, Trash2, History } from 'lucide-react';
 import type { ProductCategory, CartItem } from '../types';
 import { PRODUCT_CATEGORIES, STANDARD_UNITS } from '../types';
 import { DiscountEditor } from './DiscountEditor';
 import { calculateItemSubtotals } from '../utils/calculations';
 import { formatRupiah } from '../utils/currency';
 import { useStore } from '../store/useStore';
+
+const SEARCH_HISTORY_KEY = 'smart_grocery_product_search_history';
+
+const DEFAULT_SEARCH_HISTORY = [
+  'Beras Pandan Wangi 5kg',
+  'Minyak Goreng 2L',
+  'Beras Rojalele',
+  'Telur Ayam Negeri 1kg',
+  'Susu UHT Full Cream 1L',
+  'Mie Instan Kuah Soto (5 bungkus)',
+  'Sabun Mandi Cair 450ml',
+];
 
 const itemSchema = z.object({
   name: z.string().min(1, 'Nama produk wajib diisi'),
@@ -57,6 +69,20 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customUnit, setCustomUnit] = useState(false);
 
+  // Search History for Product Name
+  const [searchHistory, setSearchHistory] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(SEARCH_HISTORY_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+      return DEFAULT_SEARCH_HISTORY;
+    } catch {
+      return DEFAULT_SEARCH_HISTORY;
+    }
+  });
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -77,9 +103,40 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
     },
   });
 
+  const watchedName = watch('name') || '';
   const watchedQty = watch('quantity') || 0;
   const watchedPrice = Number(watch('unitPrice')) || 0;
   const watchedDiscounts = watch('discounts') || [];
+
+  // Filtered search history based on current typed name
+  const filteredHistory = useMemo(() => {
+    if (!watchedName.trim()) return searchHistory;
+    return searchHistory.filter((item) =>
+      item.toLowerCase().includes(watchedName.toLowerCase().trim())
+    );
+  }, [searchHistory, watchedName]);
+
+  // Clear all search history
+  const handleClearAllHistory = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSearchHistory([]);
+    try {
+      localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify([]));
+    } catch {}
+    setIsHistoryOpen(false);
+  };
+
+  // Delete single history item
+  const handleDeleteHistoryItem = (e: React.MouseEvent, itemToDelete: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const updated = searchHistory.filter((item) => item !== itemToDelete);
+    setSearchHistory(updated);
+    try {
+      localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updated));
+    } catch {}
+  };
 
   // Realtime calculation preview
   const liveCalc = calculateItemSubtotals(watchedQty, watchedPrice, watchedDiscounts);
@@ -170,6 +227,20 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
     }
     try {
       setIsSubmitting(true);
+
+      // Save product name to local search history
+      const trimmedName = data.name.trim();
+      if (trimmedName) {
+        const updated = [
+          trimmedName,
+          ...searchHistory.filter((item) => item.toLowerCase() !== trimmedName.toLowerCase()),
+        ].slice(0, 15);
+        setSearchHistory(updated);
+        try {
+          localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updated));
+        } catch {}
+      }
+
       await onSave({
         name: data.name,
         category: data.category as ProductCategory,
@@ -223,14 +294,14 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
 
         {/* Sheet Form Scrollable Area */}
         <form onSubmit={handleSubmit(onSubmit)} className="overflow-y-auto px-5 py-4 space-y-4 flex-1">
-          {/* Quick Scanner Shortcut */}
+          {/* Quick Scanner Shortcut (Single line text, compact and space-efficient) */}
           {!editingItem && (
-            <div className="bg-gradient-to-r from-blue-50 to-amber-50 dark:from-slate-800 dark:to-slate-800/80 p-3 rounded-2xl border border-blue-200/70 dark:border-slate-700 flex items-center justify-between gap-2">
-              <div>
-                <span className="text-xs font-bold text-gray-800 dark:text-slate-200 block">
+            <div className="bg-gradient-to-r from-blue-50 to-amber-50 dark:from-slate-800 dark:to-slate-800/80 px-3 py-2 rounded-2xl border border-blue-200/70 dark:border-slate-700 flex items-center justify-between gap-2 shadow-2xs">
+              <div className="min-w-0 flex-1">
+                <span className="text-[11.5px] font-extrabold text-gray-800 dark:text-slate-100 block leading-tight truncate">
                   Malas Ketik Harga Manual?
                 </span>
-                <span className="text-[10px] text-gray-500 dark:text-slate-400">
+                <span className="text-[10px] text-gray-500 dark:text-slate-400 whitespace-nowrap truncate block">
                   Scan barcode kemasan untuk isi otomatis
                 </span>
               </div>
@@ -240,17 +311,17 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
                   onClose();
                   useStore.getState().openScanner();
                 }}
-                className="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow-sm transition-all whitespace-nowrap min-h-[36px]"
+                className="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold text-[11px] px-2.5 py-1.5 rounded-xl shadow-xs transition-all whitespace-nowrap flex-shrink-0 flex items-center gap-1 min-h-[32px] cursor-pointer"
               >
-                Scan Barcode 📷
+                <span>Scan Barcode</span>
+                <span>📷</span>
               </button>
             </div>
           )}
 
-          
-          {/* Rekomendasi dari Riwayat Pembelian (Quick Auto-Fill) */}
+          {/* Rekomendasi dari Riwayat Pembelian (2 Kolom Kebawah) */}
           {recommendations.length > 0 && (
-            <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-slate-800 p-3 rounded-2xl border border-amber-200/80 dark:border-amber-900/50 space-y-2">
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-slate-800 p-2.5 rounded-2xl border border-amber-200/80 dark:border-amber-900/50 space-y-1.5">
               <div className="flex items-center justify-between text-xs font-bold text-amber-900 dark:text-amber-200">
                 <span className="flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
@@ -260,8 +331,8 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
                   Klik untuk isi otomatis
                 </span>
               </div>
-              <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-                {recommendations.slice(0, 8).map((rec) => (
+              <div className="grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pr-0.5 no-scrollbar">
+                {recommendations.slice(0, 12).map((rec) => (
                   <button
                     key={rec.name}
                     type="button"
@@ -272,27 +343,123 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
                       setValue('unitPrice', rec.lastUnitPrice);
                       setValue('discounts', rec.discounts || []);
                     }}
-                    className="flex-shrink-0 text-[11px] font-semibold bg-white dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-slate-800 dark:text-slate-100 px-2.5 py-1.5 rounded-xl border border-amber-200 dark:border-slate-700 shadow-2xs transition-all active:scale-95 flex items-center gap-1 min-h-[32px]"
+                    className="w-full text-left text-[11px] font-semibold bg-white dark:bg-slate-800 hover:bg-amber-100/80 dark:hover:bg-amber-900/60 text-slate-800 dark:text-slate-100 p-2 rounded-xl border border-amber-200/80 dark:border-slate-700 shadow-2xs transition-all active:scale-95 flex flex-col justify-between min-h-[44px] cursor-pointer"
                   >
-                    <span>{rec.name}</span>
-                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">({formatRupiah(rec.lastUnitPrice)})</span>
+                    <span className="truncate w-full font-bold text-slate-800 dark:text-slate-100 leading-tight">
+                      {rec.name}
+                    </span>
+                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-black mt-0.5">
+                      {formatRupiah(rec.lastUnitPrice)}
+                    </span>
                   </button>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Nama Produk */}
-          <div>
-            <label className="block text-xs font-bold text-text-main dark:text-slate-200 mb-1">
-              Nama Produk <span className="text-danger">*</span>
-            </label>
-            <input
-              type="text"
-              placeholder="Contoh: Beras Ramos 5kg, Telur Ayam"
-              {...register('name')}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm min-h-[44px]"
-            />
+          {/* Nama Produk dengan Riwayat Pencarian & Hapus Semua */}
+          <div className="relative">
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-bold text-text-main dark:text-slate-200">
+                Nama Produk <span className="text-danger">*</span>
+              </label>
+
+              {searchHistory.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleClearAllHistory}
+                  className="text-[10px] font-bold text-danger dark:text-rose-400 hover:text-red-700 flex items-center gap-0.5 hover:underline cursor-pointer"
+                  title="Hapus semua riwayat nama produk"
+                >
+                  <Trash2 className="w-2.5 h-2.5" />
+                  <span>Hapus Riwayat</span>
+                </button>
+              )}
+            </div>
+
+            <div className="relative">
+              <input
+                type="text"
+                autoComplete="off"
+                spellCheck={false}
+                placeholder="Contoh: Beras Ramos 5kg, Telur Ayam"
+                {...register('name')}
+                onFocus={() => setIsHistoryOpen(true)}
+                onBlur={() => {
+                  setTimeout(() => setIsHistoryOpen(false), 250);
+                }}
+                className="w-full pl-3.5 pr-8 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm min-h-[44px]"
+              />
+
+              {watchedName && (
+                <button
+                  type="button"
+                  onClick={() => setValue('name', '')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 p-1 text-xs"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* Custom Search History Dropdown */}
+            {isHistoryOpen && filteredHistory.length > 0 && (
+              <div className="absolute left-0 right-0 top-full mt-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-xl z-30 overflow-hidden animate-slide-up">
+                <div className="px-3 py-2 bg-gray-50 dark:bg-slate-750 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-text-secondary dark:text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                    <History className="w-3 h-3 text-primary dark:text-blue-400" />
+                    <span>Riwayat Pencarian</span>
+                  </span>
+                  <button
+                    type="button"
+                    onMouseDown={handleClearAllHistory}
+                    className="text-[10.5px] font-bold text-danger dark:text-rose-400 hover:text-red-700 flex items-center gap-1 transition-colors cursor-pointer px-1.5 py-0.5 rounded-lg hover:bg-red-50 dark:hover:bg-rose-950/50"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    <span>Hapus Semua</span>
+                  </button>
+                </div>
+
+                <div className="max-h-44 overflow-y-auto no-scrollbar divide-y divide-gray-50 dark:divide-slate-700/50">
+                  {filteredHistory.map((item) => (
+                    <div
+                      key={item}
+                      onMouseDown={() => {
+                        setValue('name', item);
+                        setIsHistoryOpen(false);
+                        const rec = recommendations.find(
+                          (r) => r.name.toLowerCase() === item.toLowerCase()
+                        );
+                        if (rec) {
+                          setValue('category', rec.category);
+                          setValue('unit', rec.unit);
+                          setValue('unitPrice', rec.lastUnitPrice);
+                          if (rec.discounts) setValue('discounts', rec.discounts);
+                        }
+                      }}
+                      className="flex items-center justify-between px-3 py-2 hover:bg-blue-50/60 dark:hover:bg-slate-700/70 transition-colors cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <Clock className="w-3.5 h-3.5 text-gray-400 dark:text-slate-500 group-hover:text-primary transition-colors flex-shrink-0" />
+                        <span className="text-xs font-semibold text-text-main dark:text-slate-100 truncate">
+                          {item}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onMouseDown={(e) => handleDeleteHistoryItem(e, item)}
+                        className="p-1 text-gray-400 hover:text-danger dark:hover:text-rose-400 transition-colors rounded-lg ml-2"
+                        title="Hapus dari riwayat"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {errors.name && (
               <p className="text-xs text-danger mt-1 font-medium">{errors.name.message}</p>
             )}
@@ -303,7 +470,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
             <label className="block text-xs font-bold text-text-main dark:text-slate-200 mb-1">Kategori</label>
             <select
               {...register('category')}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm min-h-[44px] bg-white dark:bg-slate-800 text-text-main dark:text-slate-100"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm min-h-[44px] bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 cursor-pointer"
             >
               {PRODUCT_CATEGORIES.map((cat) => (
                 <option key={cat} value={cat}>
@@ -370,7 +537,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
                       setValue('unit', e.target.value);
                     }
                   }}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm min-h-[44px] bg-white dark:bg-slate-800 text-text-main dark:text-slate-100"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm min-h-[44px] bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 cursor-pointer"
                 >
                   {STANDARD_UNITS.filter((u) => u !== 'custom').map((unit) => (
                     <option key={unit} value={unit}>
@@ -477,7 +644,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-primary hover:bg-primary-hover active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl shadow-float transition-all disabled:opacity-50 min-h-[48px] flex items-center justify-center text-sm"
+              className="w-full bg-primary hover:bg-primary-hover active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl shadow-float transition-all disabled:opacity-50 min-h-[48px] flex items-center justify-center text-sm cursor-pointer"
             >
               {isSubmitting
                 ? 'Menyimpan...'
