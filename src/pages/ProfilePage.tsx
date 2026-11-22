@@ -11,10 +11,8 @@ import {
   Edit3,
   Globe,
   LogOut,
-  RefreshCw,
   Check,
   Save,
-  RotateCcw,
   ShieldCheck,
   HardDrive,
   Trash2,
@@ -64,6 +62,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
   const [isPwaInstalled, setIsPwaInstalled] = useState(pwaService.isStandalone());
   const [isPwaDismissed, setIsPwaDismissed] = useState(pwaService.isDismissed());
   const [showIOSModal, setShowIOSModal] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Toast feedback message
   const [successToast, setSuccessToast] = useState<string | null>(null);
@@ -740,54 +739,63 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
         </div>
       </div>
 
-      {/* Action Buttons: Kembali ke Halaman Login, Ganti Akun, Keluar (Tanpa tombol Tutup di bawah) */}
-      <div className="space-y-2 pt-1">
+      {/* 1 Bar Panjang Keluar Akun */}
+      <div className="pt-1">
         <button
           type="button"
-          onClick={() => {
-            if (onLogout) {
-              onLogout();
-            } else {
-              showToast('Kembali ke Halaman Login...');
-            }
-          }}
-          className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-98 text-white font-bold text-xs shadow-soft flex items-center justify-center gap-2 transition-all min-h-[42px] cursor-pointer"
+          onClick={() => setShowLogoutConfirm(true)}
+          className="w-full py-3 px-4 rounded-xl border border-red-200 dark:border-rose-900/60 bg-red-50/70 dark:bg-rose-950/40 text-danger dark:text-rose-400 hover:bg-red-100 dark:hover:bg-rose-900/60 active:scale-98 font-bold text-xs shadow-soft flex items-center justify-center gap-2 transition-all min-h-[44px] cursor-pointer"
         >
-          <RotateCcw className="w-3.5 h-3.5" />
-          <span>Kembali ke Halaman Login</span>
+          <LogOut className="w-4 h-4" />
+          <span>Keluar dari Akun</span>
         </button>
-
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              showToast('Mode ganti akun diaktifkan. Silakan perbarui data profil.');
-              setIsEditing(true);
-              setIsEditingProfile(true);
-            }}
-            className="py-2.5 px-3 rounded-xl border border-blue-300 dark:border-blue-800 bg-blue-50/60 dark:bg-blue-950/40 text-primary dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60 font-bold text-xs flex items-center justify-center gap-1.5 transition-all min-h-[42px] cursor-pointer"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Ganti Akun</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              if (onLogout) {
-                onLogout();
-              } else {
-                showToast('Keluar dari sesi akun.');
-              }
-            }}
-            className="py-2.5 px-3 rounded-xl border border-red-200 dark:border-rose-900/60 bg-red-50/50 dark:bg-rose-950/30 text-danger dark:text-rose-400 hover:bg-red-100 dark:hover:bg-rose-900/50 font-bold text-xs flex items-center justify-center gap-1.5 transition-all min-h-[42px] cursor-pointer"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Keluar</span>
-          </button>
-        </div>
       </div>
       </>
+      )}
+
+      {/* Modal Konfirmasi Peringatan Keluar */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+          <div className="w-full max-w-[340px] bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-4.5 shadow-modal animate-slide-up space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-rose-950/80 text-danger dark:text-rose-400 flex items-center justify-center flex-shrink-0">
+                <LogOut className="w-5 h-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-extrabold text-sm text-text-main dark:text-slate-100">
+                  Konfirmasi Keluar
+                </h3>
+                <p className="text-xs text-text-secondary dark:text-slate-400 mt-0.5">
+                  Yakin mau keluar? Anda akan dialihkan kembali ke halaman login utama.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setShowLogoutConfirm(false)}
+                className="py-2.5 px-3 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-750 font-bold text-xs flex items-center justify-center transition-all cursor-pointer min-h-[40px]"
+              >
+                Batal
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLogoutConfirm(false);
+                  if (onLogout) {
+                    onLogout();
+                  }
+                }}
+                className="py-2.5 px-3 rounded-xl bg-danger hover:bg-red-700 active:scale-98 text-white font-extrabold text-xs shadow-soft flex items-center justify-center gap-1.5 transition-all cursor-pointer min-h-[40px]"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Ya, Keluar</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* iOS Instructions Modal */}
