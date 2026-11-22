@@ -18,8 +18,11 @@ import {
   ShieldCheck,
   HardDrive,
   Trash2,
+  Smartphone,
+  X,
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
+import { pwaService } from '../utils/pwa';
 
 interface ProfilePageProps {
   onLogout?: () => void;
@@ -55,6 +58,11 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
     percent: '0.1',
   });
   const [isClearingCache, setIsClearingCache] = useState(false);
+
+  // PWA states
+  const [isPwaInstalled, setIsPwaInstalled] = useState(pwaService.isStandalone());
+  const [isPwaDismissed, setIsPwaDismissed] = useState(pwaService.isDismissed());
+  const [showIOSModal, setShowIOSModal] = useState(false);
 
   // Toast feedback message
   const [successToast, setSuccessToast] = useState<string | null>(null);
@@ -128,6 +136,40 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
       setSuccessToast(null);
     }, 3000);
   };
+
+  const handleInstallPWA = async () => {
+    const outcome = await pwaService.install();
+    if (outcome === 'installed') {
+      setIsPwaInstalled(true);
+      showToast('Aplikasi sudah terpasang di perangkat Anda! 🎉');
+    } else if (outcome === 'accepted') {
+      setIsPwaInstalled(true);
+      showToast('PWA berhasil dipasang ke layar utama! 📱');
+    } else if (outcome === 'ios') {
+      setShowIOSModal(true);
+    } else {
+      showToast('Buka menu browser Anda lalu pilih "Tambahkan ke Layar Utama" / "Install App" 💡');
+    }
+  };
+
+  const handleRestorePWABanner = () => {
+    pwaService.setDismissed(false);
+    setIsPwaDismissed(false);
+    showToast('Notifikasi PWA di beranda belanja diaktifkan kembali! ✨');
+  };
+
+  useEffect(() => {
+    const handleDismissChange = () => {
+      setIsPwaDismissed(pwaService.isDismissed());
+      setIsPwaInstalled(pwaService.isStandalone());
+    };
+    window.addEventListener('pwa-dismiss-changed', handleDismissChange);
+    window.addEventListener('pwa-installed', handleDismissChange);
+    return () => {
+      window.removeEventListener('pwa-dismiss-changed', handleDismissChange);
+      window.removeEventListener('pwa-installed', handleDismissChange);
+    };
+  }, []);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -407,6 +449,58 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
         </select>
       </div>
 
+      {/* Card: PERANGKAT & APLIKASI (Pasang PWA - Tepat Di Bawah Mata Uang Belanja Sesuai Foto User) */}
+      <div className="bg-card dark:bg-slate-800/90 rounded-2xl p-3.5 border border-border dark:border-slate-700 shadow-soft space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-black tracking-wider text-text-secondary dark:text-slate-400 uppercase flex items-center gap-1.5">
+            <span>📱</span>
+            <span>Perangkat &amp; Aplikasi</span>
+          </span>
+          {isPwaInstalled && (
+            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200/60 dark:border-emerald-800/60 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <Check className="w-3 h-3 text-emerald-500" />
+              <span>Terpasang</span>
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between gap-3 pt-0.5">
+          <div className="min-w-0 flex-1">
+            <h4 className="text-xs sm:text-sm font-bold text-text-main dark:text-slate-100 leading-tight">
+              Pasang Aplikasi (PWA)
+            </h4>
+            <p className="text-[10.5px] text-text-secondary dark:text-slate-400 mt-0.5 leading-snug">
+              Akses cepat tanpa browser di Komputer &amp; HP
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleInstallPWA}
+            className="px-3.5 py-1.5 rounded-full bg-[#bd4f6c] hover:bg-[#a8445e] active:scale-95 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer flex-shrink-0 min-h-[36px]"
+            title="Pasang Aplikasi PWA"
+          >
+            <Smartphone className="w-3.5 h-3.5" />
+            <span>Pasang App</span>
+          </button>
+        </div>
+
+        {isPwaDismissed && (
+          <div className="pt-2 border-t border-gray-100 dark:border-slate-700/80 flex items-center justify-between text-[10.5px]">
+            <span className="text-text-secondary dark:text-slate-400">
+              Banner di beranda belanja sedang disembunyikan
+            </span>
+            <button
+              type="button"
+              onClick={handleRestorePWABanner}
+              className="text-primary dark:text-blue-400 font-bold hover:underline cursor-pointer"
+            >
+              Aktifkan Kembali
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Card 3: KATA SANDI AKUN */}
       <div className="bg-card dark:bg-slate-800/90 rounded-2xl p-3.5 border border-border dark:border-slate-700 shadow-soft space-y-2.5">
         <div className="flex items-center justify-between">
@@ -629,6 +723,45 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
           </button>
         </div>
       </div>
+
+      {/* iOS Instructions Modal */}
+      {showIOSModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-[360px] bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5 shadow-modal animate-slide-up">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold text-sm text-text-main dark:text-slate-100">
+                Pasang di iPhone / iPad
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowIOSModal(false)}
+                className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <ol className="space-y-2 text-xs text-text-secondary dark:text-slate-300 mb-4 list-decimal list-inside">
+              <li>
+                Ketuk tombol <strong className="text-primary dark:text-blue-400">Share</strong> (ikon kotak panah atas) di Safari.
+              </li>
+              <li>
+                Gulir ke bawah dan pilih{' '}
+                <strong className="text-text-main dark:text-slate-100">Tambahkan ke Layar Utama (Add to Home Screen)</strong>.
+              </li>
+              <li>
+                Ketuk <strong className="text-primary dark:text-blue-400">Tambah (Add)</strong> di pojok kanan atas.
+              </li>
+            </ol>
+            <button
+              type="button"
+              onClick={() => setShowIOSModal(false)}
+              className="w-full bg-primary hover:bg-primary-hover active:scale-98 text-white font-bold py-2.5 rounded-xl text-xs min-h-[42px] cursor-pointer"
+            >
+              Mengerti
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
