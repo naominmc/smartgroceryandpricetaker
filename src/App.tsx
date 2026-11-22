@@ -9,6 +9,7 @@ import { BudgetPage } from './pages/BudgetPage';
 import { PaymentMethodSelectorModal } from './components/PaymentMethodSelectorModal';
 import { BarcodeScannerModal } from './components/BarcodeScannerModal';
 import { SyncModal } from './components/SyncModal';
+import { AccountProfileModal } from './components/AccountProfileModal';
 import { syncService } from './services/syncService';
 import { groceryService } from './services/groceryService';
 import type { ProductCategory } from './types';
@@ -18,6 +19,7 @@ export const App: React.FC = () => {
   const {
     activeTab,
     username,
+    userProfile,
     selectedPaymentMethod,
     isScannerOpen,
     closeScanner,
@@ -28,6 +30,7 @@ export const App: React.FC = () => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // Load cart items count for navigation badge
   const cartItems = useLiveQuery(() => db.cartItems.toArray()) || [];
@@ -102,35 +105,43 @@ export const App: React.FC = () => {
           <div className="absolute left-1/3 -bottom-4 w-20 h-20 bg-amber-400/15 rounded-full blur-lg pointer-events-none" />
 
           <div className="relative z-10 flex items-center justify-between gap-2">
-            {/* User Profile Info */}
+            {/* User Profile Info (Klik untuk Buka Menu Akun & Profil Instagram Style) */}
             <button
               type="button"
-              onClick={() => setIsSyncModalOpen(true)}
+              onClick={() => setIsProfileModalOpen(true)}
               className="flex items-center gap-2 text-left group hover:opacity-95 active:scale-95 transition-all cursor-pointer"
-              title="Kelola Sinkronisasi Realtime dan Snapshot Perangkat (naomiiracle)"
+              title="Menu Akun & Profil (naomiiracle)"
             >
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-300 to-pink-400 p-0.5 shadow-md flex-shrink-0 relative">
-                <div className="w-full h-full bg-white/90 dark:bg-slate-900 rounded-[14px] flex items-center justify-center font-extrabold text-blue-700 dark:text-blue-400 text-base">
-                  N
-                </div>
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-300 via-pink-400 to-indigo-500 p-0.5 shadow-md flex-shrink-0 relative">
+                {userProfile.avatarUrl ? (
+                  <img
+                    src={userProfile.avatarUrl}
+                    alt={userProfile.username}
+                    className="w-full h-full object-cover rounded-[14px]"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-white/90 dark:bg-slate-900 rounded-[14px] flex items-center justify-center font-extrabold text-blue-700 dark:text-blue-400 text-base">
+                    {userProfile.fullName ? userProfile.fullName.charAt(0).toUpperCase() : 'N'}
+                  </div>
+                )}
                 <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900 animate-pulse" />
               </div>
 
               <div>
                 <div className="flex items-center gap-1.5">
                   <h2 className="font-extrabold text-sm tracking-tight text-white leading-none">
-                    {username}
+                    {userProfile.username || username}
                   </h2>
                   <Sparkles className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
                 </div>
                 <div className="flex items-center gap-1 mt-0.5">
-                  <span className="text-[10px] text-blue-100 dark:text-blue-200 font-medium">
-                    Single User
+                  <span className="text-[10px] text-blue-100 dark:text-blue-200 font-medium truncate max-w-[110px]">
+                    {userProfile.fullName || 'naomi miracle'}
                   </span>
                   <span className="text-white/40">•</span>
                   <span className="text-[10px] text-emerald-300 font-bold flex items-center gap-0.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping inline-block" />
-                    Realtime
+                    Online
                   </span>
                 </div>
               </div>
@@ -190,7 +201,7 @@ export const App: React.FC = () => {
         {/* Floating Bottom Navigation */}
         <BottomNavigation cartItemCount={cartItems.length} />
 
-        {/* Modals: Barcode Scanner & Payment Method Selector */}
+        {/* Modals: Barcode Scanner, Payment Method Selector, Sync, & Account Profile */}
         <BarcodeScannerModal
           isOpen={isScannerOpen}
           onClose={closeScanner}
@@ -205,6 +216,12 @@ export const App: React.FC = () => {
         <SyncModal
           isOpen={isSyncModalOpen}
           onClose={() => setIsSyncModalOpen(false)}
+        />
+
+        <AccountProfileModal
+          isOpen={isProfileModalOpen}
+          onClose={() => setIsProfileModalOpen(false)}
+          onOpenSyncModal={() => setIsSyncModalOpen(true)}
         />
       </main>
     </div>

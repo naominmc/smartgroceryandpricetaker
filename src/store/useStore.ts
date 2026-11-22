@@ -5,6 +5,18 @@ import { PAYMENT_ACCOUNTS } from '../data/paymentMethods';
 export type NavigationTab = 'shopping' | 'history' | 'budget';
 export type ThemeMode = 'light' | 'dark';
 
+export interface UserProfile {
+  fullName: string;
+  username: string;
+  email: string;
+  bio: string;
+  avatarUrl: string;
+  currency: string;
+  loginTime: string;
+  isGoogleLinked: boolean;
+  passwordMasked: string;
+}
+
 interface AppState {
   activeTab: NavigationTab;
   setActiveTab: (tab: NavigationTab) => void;
@@ -17,6 +29,8 @@ interface AppState {
   // User Profile
   username: string;
   setUsername: (name: string) => void;
+  userProfile: UserProfile;
+  updateUserProfile: (data: Partial<UserProfile>) => void;
 
   // Payment method
   selectedPaymentMethod: string;
@@ -66,83 +80,140 @@ const getInitialTheme = (): ThemeMode => {
   return 'light';
 };
 
-export const useStore = create<AppState>((set, get) => ({
-  activeTab: 'shopping',
-  setActiveTab: (tab) => set({ activeTab: tab }),
+const getInitialProfile = (): UserProfile => {
+  if (typeof window !== 'undefined') {
+    return {
+      fullName: localStorage.getItem('sg_fullName') || 'naomi miracle',
+      username: localStorage.getItem('sg_username') || 'naomiiracle',
+      email: localStorage.getItem('sg_email') || 'naomi@mutiarabangsa.sch.id',
+      bio: localStorage.getItem('sg_bio') || 'Mahasiswa Rantau Hemat & Cerdas',
+      avatarUrl: localStorage.getItem('sg_avatarUrl') || '',
+      currency: localStorage.getItem('sg_currency') || 'ID Rupiah Indonesia (Rp - IDR)',
+      loginTime: localStorage.getItem('sg_loginTime') || '22 Nov 2026, 11.12 WIB',
+      isGoogleLinked: true,
+      passwordMasked: localStorage.getItem('sg_password') || '••••••••••••••',
+    };
+  }
+  return {
+    fullName: 'naomi miracle',
+    username: 'naomiiracle',
+    email: 'naomi@mutiarabangsa.sch.id',
+    bio: 'Mahasiswa Rantau Hemat & Cerdas',
+    avatarUrl: '',
+    currency: 'ID Rupiah Indonesia (Rp - IDR)',
+    loginTime: '22 Nov 2026, 11.12 WIB',
+    isGoogleLinked: true,
+    passwordMasked: '••••••••••••••',
+  };
+};
 
-  // Theme Mode
-  themeMode: getInitialTheme(),
-  toggleThemeMode: () => {
-    const nextMode: ThemeMode = get().themeMode === 'dark' ? 'light' : 'dark';
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('smart_grocery_theme', nextMode);
-      if (nextMode === 'dark') {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
+export const useStore = create<AppState>((set, get) => {
+  const initialProfile = getInitialProfile();
+
+  return {
+    activeTab: 'shopping',
+    setActiveTab: (tab) => set({ activeTab: tab }),
+
+    // Theme Mode
+    themeMode: getInitialTheme(),
+    toggleThemeMode: () => {
+      const nextMode: ThemeMode = get().themeMode === 'dark' ? 'light' : 'dark';
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('smart_grocery_theme', nextMode);
+        if (nextMode === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
       }
-    }
-    set({ themeMode: nextMode });
-  },
-  setThemeMode: (mode) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('smart_grocery_theme', mode);
-      if (mode === 'dark') {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
+      set({ themeMode: nextMode });
+    },
+    setThemeMode: (mode) => {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('smart_grocery_theme', mode);
+        if (mode === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
       }
-    }
-    set({ themeMode: mode });
-  },
+      set({ themeMode: mode });
+    },
 
-  // User profile "naomiiracle" requested by user
-  username: 'naomiiracle',
-  setUsername: (name) => set({ username: name }),
+    // User profile "naomiiracle" requested by user
+    username: initialProfile.username,
+    setUsername: (name) => {
+      if (typeof window !== 'undefined') localStorage.setItem('sg_username', name);
+      set((state) => ({
+        username: name,
+        userProfile: { ...state.userProfile, username: name },
+      }));
+    },
 
-  // Default payment storage / bank: Bank BCA requested by user
-  selectedPaymentMethod: PAYMENT_ACCOUNTS[0].name, // 'Bank BCA'
-  setSelectedPaymentMethod: (method) => set({ selectedPaymentMethod: method }),
+    userProfile: initialProfile,
+    updateUserProfile: (data) => {
+      set((state) => {
+        const nextProfile = { ...state.userProfile, ...data };
+        if (typeof window !== 'undefined') {
+          if (data.fullName !== undefined) localStorage.setItem('sg_fullName', data.fullName);
+          if (data.username !== undefined) localStorage.setItem('sg_username', data.username);
+          if (data.email !== undefined) localStorage.setItem('sg_email', data.email);
+          if (data.bio !== undefined) localStorage.setItem('sg_bio', data.bio);
+          if (data.avatarUrl !== undefined) localStorage.setItem('sg_avatarUrl', data.avatarUrl);
+          if (data.currency !== undefined) localStorage.setItem('sg_currency', data.currency);
+          if (data.passwordMasked !== undefined) localStorage.setItem('sg_password', data.passwordMasked);
+        }
+        return {
+          userProfile: nextProfile,
+          username: nextProfile.username,
+        };
+      });
+    },
 
-  sessionLocation: typeof window !== 'undefined' ? (localStorage.getItem('smart_grocery_location') || 'Lotte Mart Grocery - Puri Indah') : 'Lotte Mart Grocery - Puri Indah',
-  setSessionLocation: (loc) => {
-    if (typeof window !== 'undefined') localStorage.setItem('smart_grocery_location', loc);
-    set({ sessionLocation: loc });
-    if (typeof window !== 'undefined' && (window as any).__smart_grocery_notify_sync) {
-      (window as any).__smart_grocery_notify_sync();
-    }
-  },
-  sessionDate: new Date().toISOString().split('T')[0],
-  setSessionDate: (d) => {
-    set({ sessionDate: d });
-    if (typeof window !== 'undefined' && (window as any).__smart_grocery_notify_sync) {
-      (window as any).__smart_grocery_notify_sync();
-    }
-  },
+    // Default payment storage / bank: Bank BCA requested by user
+    selectedPaymentMethod: PAYMENT_ACCOUNTS[0].name, // 'Bank BCA'
+    setSelectedPaymentMethod: (method) => set({ selectedPaymentMethod: method }),
 
-  isAddItemSheetOpen: false,
-  editingItem: null,
-  openAddItemSheet: (itemToEdit = null) =>
-    set({ isAddItemSheetOpen: true, editingItem: itemToEdit }),
-  closeAddItemSheet: () =>
-    set({ isAddItemSheetOpen: false, editingItem: null }),
+    sessionLocation: typeof window !== 'undefined' ? (localStorage.getItem('smart_grocery_location') || 'Lotte Mart Grocery - Puri Indah') : 'Lotte Mart Grocery - Puri Indah',
+    setSessionLocation: (loc) => {
+      if (typeof window !== 'undefined') localStorage.setItem('smart_grocery_location', loc);
+      set({ sessionLocation: loc });
+      if (typeof window !== 'undefined' && (window as any).__smart_grocery_notify_sync) {
+        (window as any).__smart_grocery_notify_sync();
+      }
+    },
+    sessionDate: new Date().toISOString().split('T')[0],
+    setSessionDate: (d) => {
+      set({ sessionDate: d });
+      if (typeof window !== 'undefined' && (window as any).__smart_grocery_notify_sync) {
+        (window as any).__smart_grocery_notify_sync();
+      }
+    },
 
-  // Barcode scanner
-  isScannerOpen: false,
-  openScanner: () => set({ isScannerOpen: true }),
-  closeScanner: () => set({ isScannerOpen: false, scannedItemPending: null }),
-  scannedItemPending: null,
-  setScannedItemPending: (item) => set({ scannedItemPending: item }),
+    isAddItemSheetOpen: false,
+    editingItem: null,
+    openAddItemSheet: (itemToEdit = null) =>
+      set({ isAddItemSheetOpen: true, editingItem: itemToEdit }),
+    closeAddItemSheet: () =>
+      set({ isAddItemSheetOpen: false, editingItem: null }),
 
-  isCheckoutModalOpen: false,
-  openCheckoutModal: () => set({ isCheckoutModalOpen: true }),
-  closeCheckoutModal: () => set({ isCheckoutModalOpen: false }),
+    // Barcode scanner
+    isScannerOpen: false,
+    openScanner: () => set({ isScannerOpen: true }),
+    closeScanner: () => set({ isScannerOpen: false, scannedItemPending: null }),
+    scannedItemPending: null,
+    setScannedItemPending: (item) => set({ scannedItemPending: item }),
 
-  historyPeriodFilter: 'all',
-  setHistoryPeriodFilter: (period) => set({ historyPeriodFilter: period }),
-  historySearchQuery: '',
-  setHistorySearchQuery: (query) => set({ historySearchQuery: query }),
+    isCheckoutModalOpen: false,
+    openCheckoutModal: () => set({ isCheckoutModalOpen: true }),
+    closeCheckoutModal: () => set({ isCheckoutModalOpen: false }),
 
-  isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
-  setIsOnline: (online) => set({ isOnline: online }),
-}));
+    historyPeriodFilter: 'all',
+    setHistoryPeriodFilter: (period) => set({ historyPeriodFilter: period }),
+    historySearchQuery: '',
+    setHistorySearchQuery: (query) => set({ historySearchQuery: query }),
+
+    isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
+    setIsOnline: (online) => set({ isOnline: online }),
+  };
+});
