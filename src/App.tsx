@@ -104,11 +104,18 @@ export const App: React.FC = () => {
           <div className="absolute left-1/3 -bottom-4 w-20 h-20 bg-amber-400/15 rounded-full blur-lg pointer-events-none" />
 
           <div className="relative z-10 flex items-center justify-between gap-2">
-            {/* App Logo & App Name (Menggantikan profil yang digeser ke pojok kanan bawah) */}
+            {/* App Logo Maskot Capybara & App Name + Tagline Unik */}
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-indigo-600 p-0.5 shadow-md flex-shrink-0 relative">
-                <div className="w-full h-full bg-white/95 dark:bg-slate-900 rounded-[14px] flex items-center justify-center text-primary dark:text-blue-400">
-                  <ShoppingCart className="w-5 h-5 stroke-[2.5]" />
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-300 via-orange-400 to-indigo-500 p-0.5 shadow-md flex-shrink-0 relative group">
+                <div className="w-full h-full bg-white/95 dark:bg-slate-900 rounded-[14px] overflow-hidden flex items-center justify-center">
+                  <img
+                    src="/capybara_logo.png"
+                    alt="Capybara Smart Grocery"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = '/capybara_mascot.svg';
+                    }}
+                  />
                 </div>
                 <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-amber-400 rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center shadow-xs">
                   <Sparkles className="w-2 h-2 text-white fill-white" />
@@ -116,11 +123,12 @@ export const App: React.FC = () => {
               </div>
 
               <div>
-                <h1 className="font-black text-sm tracking-tight text-white leading-tight">
-                  Smart Grocery
+                <h1 className="font-black text-sm tracking-tight text-white leading-tight flex items-center gap-1">
+                  <span>Smart Grocery</span>
                 </h1>
-                <p className="text-[10px] text-blue-100/90 font-medium tracking-tight">
-                  Budget Safety Tracker
+                <p className="text-[10.5px] text-amber-200 font-extrabold tracking-tight flex items-center gap-1 drop-shadow-xs">
+                  <span>Belanja Santai, Anti Boncos!</span>
+                  <span>🍊</span>
                 </p>
               </div>
             </div>

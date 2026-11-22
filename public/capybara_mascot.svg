@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <!-- Background Circle Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="50%" stop-color="#2563EB" />
+      <stop offset="100%" stop-color="#4F46E5" />
+    </linearGradient>
+    <!-- Capybara Fur Gradient -->
+    <linearGradient id="furGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#C28859" />
+      <stop offset="100%" stop-color="#9A6136" />
+    </linearGradient>
+    <!-- Muzzle / Snout Gradient -->
+    <linearGradient id="muzzleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#E5BE9B" />
+      <stop offset="100%" stop-color="#D4A77E" />
+    </linearGradient>
+    <!-- Orange / Citrus on Head -->
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDBA74" />
+      <stop offset="100%" stop-color="#EA580C" />
+    </linearGradient>
+    <!-- Shopping Cart Shiny Wire Gradient -->
+    <linearGradient id="cartGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E2E8F0" />
+      <stop offset="100%" stop-color="#94A3B8" />
+    </linearGradient>
+    <!-- Shadow filter -->
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#0F172A" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <!-- Background Badge / Circle -->
+  <rect width="100" height="100" rx="28" fill="url(#bgGrad)" />
+
+  <!-- Sparkles -->
+  <path d="M 20 18 Q 23 23 28 23 Q 23 23 20 28 Q 17 23 12 23 Q 17 23 20 18 Z" fill="#FDE047" opacity="0.9" />
+  <circle cx="82" cy="22" r="2.5" fill="#FEF08A" opacity="0.8" />
+  <circle cx="16" cy="74" r="2" fill="#BAE6FD" opacity="0.7" />
+
+  <!-- Capybara Group with Shadow -->
+  <g filter="url(#softShadow)">
+    <!-- Ears -->
+    <ellipse cx="36" cy="24" rx="4.5" ry="3.5" fill="#824E26" transform="rotate(-15 36 24)" />
+    <ellipse cx="64" cy="24" rx="4.5" ry="3.5" fill="#824E26" transform="rotate(15 64 24)" />
+    <ellipse cx="36" cy="24" rx="2.5" ry="2" fill="#E5BE9B" transform="rotate(-15 36 24)" />
+    <ellipse cx="64" cy="24" rx="2.5" ry="2" fill="#E5BE9B" transform="rotate(15 64 24)" />
+
+    <!-- Capybara Head -->
+    <rect x="32" y="22" width="36" height="34" rx="14" fill="url(#furGrad)" />
+
+    <!-- Chill Capybara Eyes (Relaxed Curved Closed Eyes: ˘ ˘) -->
+    <path d="M 37 32 Q 41 35 44 32" stroke="#2B180D" stroke-width="2" stroke-linecap="round" fill="none" />
+    <path d="M 56 32 Q 59 35 63 32" stroke="#2B180D" stroke-width="2" stroke-linecap="round" fill="none" />
+
+    <!-- Cute Blush Cheeks -->
+    <ellipse cx="36" cy="38" rx="3.5" ry="2" fill="#F472B6" opacity="0.45" />
+    <ellipse cx="64" cy="38" rx="3.5" ry="2" fill="#F472B6" opacity="0.45" />
+
+    <!-- Big Soft Snout / Muzzle -->
+    <rect x="40" y="36" width="20" height="18" rx="8" fill="url(#muzzleGrad)" />
+
+    <!-- Capybara Nose (Two cute vertical dark ovals) -->
+    <ellipse cx="47" cy="41" rx="1.5" ry="2.2" fill="#3E200F" />
+    <ellipse cx="53" cy="41" rx="1.5" ry="2.2" fill="#3E200F" />
+
+    <!-- Gentle Calm Smile -->
+    <path d="M 47 48 Q 50 51 53 48" stroke="#3E200F" stroke-width="1.6" stroke-linecap="round" fill="none" />
+
+    <!-- Signature Yuzu / Orange on Head -->
+    <circle cx="50" cy="18" r="6" fill="url(#orangeGrad)" />
+    <ellipse cx="50" cy="12.5" rx="1.2" ry="1" fill="#15803D" />
+    <path d="M 50 12 Q 54 9 55 12" stroke="#16A34A" stroke-width="1.5" stroke-linecap="round" fill="none" />
+
+    <!-- Capybara Paws holding the Cart Handle -->
+    <ellipse cx="33" cy="58" rx="4.5" ry="3.5" fill="#824E26" />
+    <ellipse cx="67" cy="58" rx="4.5" ry="3.5" fill="#824E26" />
+  </g>
+
+  <!-- Supermarket Shopping Cart (Foreground) -->
+  <g filter="url(#softShadow)">
+    <!-- Groceries inside Cart -->
+    <!-- Green Apple -->
+    <circle cx="43" cy="62" r="5" fill="#22C55E" />
+    <path d="M 43 57 Q 45 55 46 56" stroke="#15803D" stroke-width="1.2" fill="none" />
+    <!-- Fresh Orange -->
+    <circle cx="57" cy="63" r="5.5" fill="#FB923C" />
+    <!-- Baguette / Bread -->
+    <rect x="49" y="52" width="5.5" height="14" rx="2.5" fill="#FBBF24" transform="rotate(20 52 59)" />
+    <!-- Little Carrot -->
+    <path d="M 36 62 L 40 56 L 42 63 Z" fill="#F97316" />
+
+    <!-- Shopping Cart Basket Wireframe -->
+    <path d="M 24 58 L 76 58 L 70 76 L 30 76 Z" fill="rgba(255, 255, 255, 0.25)" stroke="#FFFFFF" stroke-width="2.5" stroke-linejoin="round" />
+    <!-- Horizontal & Vertical Grid Lines -->
+    <line x1="26" y1="64" x2="74" y2="64" stroke="#FFFFFF" stroke-width="1.2" opacity="0.8" />
+    <line x1="28" y1="70" x2="72" y2="70" stroke="#FFFFFF" stroke-width="1.2" opacity="0.8" />
+    <line x1="40" y1="58" x2="40" y2="76" stroke="#FFFFFF" stroke-width="1.2" opacity="0.8" />
+    <line x1="50" y1="58" x2="50" y2="76" stroke="#FFFFFF" stroke-width="1.2" opacity="0.8" />
+    <line x1="60" y1="58" x2="60" y2="76" stroke="#FFFFFF" stroke-width="1.2" opacity="0.8" />
+
+    <!-- Shopping Cart Handle -->
+    <line x1="20" y1="58" x2="26" y2="58" stroke="#F8FAFC" stroke-width="3" stroke-linecap="round" />
+
+    <!-- Cart Base Chassis -->
+    <path d="M 32 76 L 32 82 L 68 82 L 68 76" stroke="#CBD5E1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+
+    <!-- Cart Wheels -->
+    <circle cx="34" cy="85" r="4" fill="#0F172A" />
+    <circle cx="34" cy="85" r="1.8" fill="#E2E8F0" />
+    <circle cx="66" cy="85" r="4" fill="#0F172A" />
+    <circle cx="66" cy="85" r="1.8" fill="#E2E8F0" />
+  </g>
+</svg>
