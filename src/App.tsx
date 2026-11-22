@@ -126,9 +126,8 @@ export const App: React.FC = () => {
                 <h1 className="font-black text-sm tracking-tight text-white leading-tight flex items-center gap-1">
                   <span>Smart Grocery</span>
                 </h1>
-                <p className="text-[10.5px] text-amber-200 font-extrabold tracking-tight flex items-center gap-1 drop-shadow-xs">
-                  <span>Belanja Santai, Anti Boncos!</span>
-                  <span>🍊</span>
+                <p className="text-[10.5px] text-amber-200 font-extrabold tracking-tight drop-shadow-xs">
+                  Belanja Santai, Anti Boncos!
                 </p>
               </div>
             </div>
