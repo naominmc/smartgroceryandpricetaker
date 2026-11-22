@@ -107,6 +107,8 @@ export interface PurchaseTransaction {
   finalTotal: number;
   budgetLimitSnapshot: number;
   paymentMethod?: string; // e.g. 'Bank BCA', 'Tunai', etc.
+  isDeleted?: boolean;
+  deletedAt?: string; // ISO
 }
 
 export type BudgetStatusLevel = 'safe' | 'warning' | 'danger' | 'exceeded';

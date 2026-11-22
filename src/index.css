@@ -27,10 +27,14 @@ html, body {
   background-color: #E5E7EB; /* Desktop neutral gray frame */
   margin: 0;
   padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  overscroll-behavior: none;
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  touch-action: manipulation;
+  touch-action: pan-y;
   transition: background-color 0.25s ease, color 0.25s ease;
 }
 
@@ -70,6 +74,15 @@ html.dark body {
 
 .animate-fade-in {
   animation: fadeIn 0.15s ease-out forwards;
+}
+
+@keyframes spinOutline {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-spin-outline {
+  animation: spinOutline 0.85s linear infinite;
 }
 
 /* Custom sleek scrollbar for mobile */

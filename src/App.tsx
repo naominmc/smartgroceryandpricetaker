@@ -40,6 +40,55 @@ export const App: React.FC = () => {
   });
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleTriggerRefresh = () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    soundService.pop();
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 1200);
+  };
+
+  // Pull-to-refresh on mobile scroll container
+  useEffect(() => {
+    const container = document.getElementById('app-scroll-container');
+    if (!container) return;
+
+    let startY = 0;
+    let isTracking = false;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (container.scrollTop <= 2) {
+        startY = e.touches[0].clientY;
+        isTracking = true;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isTracking || container.scrollTop > 2) return;
+      const currentY = e.touches[0].clientY;
+      if (currentY - startY > 65) {
+        isTracking = false;
+        handleTriggerRefresh();
+      }
+    };
+
+    const handleTouchEnd = () => {
+      isTracking = false;
+    };
+
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: true });
+    container.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isRefreshing]);
 
   // Load cart items count for navigation badge
   const cartItems = useLiveQuery(() => db.cartItems.toArray()) || [];
@@ -135,7 +184,7 @@ export const App: React.FC = () => {
 
   return (
     <div
-      className={`min-h-screen relative flex justify-center items-start sm:py-6 bg-cover bg-center bg-no-repeat transition-colors duration-300 ${
+      className={`min-h-[100dvh] h-[100dvh] w-full overflow-hidden relative flex justify-center items-center sm:py-6 bg-cover bg-center bg-no-repeat transition-colors duration-300 ${
         isDark ? 'bg-slate-950 text-slate-100' : 'bg-gray-100 text-gray-900'
       }`}
       style={{
@@ -144,8 +193,8 @@ export const App: React.FC = () => {
           : `linear-gradient(135deg, rgba(238, 242, 255, 0.92) 0%, rgba(240, 253, 250, 0.88) 100%), url('/supermarket_bg.jpg')`,
       }}
     >
-      {/* Mobile Smartphone Viewport Frame (Max width 430px) */}
-      <main className="w-full max-w-[430px] h-[100dvh] max-h-[100dvh] sm:h-[calc(100vh-3rem)] sm:max-h-[920px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl text-text-main dark:text-dark-text flex flex-col relative shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] dark:shadow-dark-float sm:rounded-[36px] overflow-hidden border border-white/60 dark:border-slate-800 transition-colors duration-200">
+      {/* Mobile Smartphone Viewport Frame (Fixed full screen on mobile, 430px frame on laptop/desktop) */}
+      <main className="w-full h-full sm:max-w-[430px] sm:h-[calc(100vh-3rem)] sm:max-h-[920px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl text-text-main dark:text-dark-text flex flex-col fixed inset-0 sm:relative sm:inset-auto shadow-none sm:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] dark:sm:shadow-dark-float rounded-none sm:rounded-[36px] overflow-hidden border-0 sm:border border-white/60 dark:border-slate-800 transition-colors duration-200">
         
         {/* Top Header with App Logo & Name, Theme Mode Toggle, Sound Toggle, Scan, & Bank BCA */}
         <header className="flex-shrink-0 px-4 pt-3.5 pb-2.5 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 dark:from-slate-900 dark:via-blue-950 dark:to-indigo-950 text-white shadow-md relative overflow-hidden border-b dark:border-slate-800">
@@ -154,9 +203,17 @@ export const App: React.FC = () => {
           <div className="absolute left-1/3 -bottom-4 w-20 h-20 bg-amber-400/15 rounded-full blur-lg pointer-events-none" />
 
           <div className="relative z-10 flex items-center justify-between gap-1.5 sm:gap-2">
-            {/* App Logo Maskot Capybara (Kotak tanpa icon plus) & App Name */}
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-amber-300 via-orange-400 to-indigo-500 p-0.5 shadow-md flex-shrink-0 relative group">
+            {/* App Logo Maskot Capybara (Kotak outline muter saat refresh / load) & App Name */}
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div
+                onClick={handleTriggerRefresh}
+                className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl p-0.5 shadow-md flex-shrink-0 relative group cursor-pointer overflow-hidden transition-all duration-300 ${
+                  isRefreshing
+                    ? 'bg-gradient-to-tr from-amber-400 via-rose-500 via-indigo-500 to-emerald-400 animate-spin-outline'
+                    : 'bg-gradient-to-br from-amber-300 via-orange-400 to-indigo-500'
+                }`}
+                title="Tarik ke bawah atau klik logo untuk refresh"
+              >
                 <div className="w-full h-full bg-white/95 dark:bg-slate-900 rounded-[14px] overflow-hidden flex items-center justify-center">
                   <img
                     src="/capybara_logo.png"
@@ -170,12 +227,9 @@ export const App: React.FC = () => {
               </div>
 
               <div className="min-w-0">
-                <h1 className="font-black text-xs sm:text-sm tracking-tight text-white leading-tight flex items-center gap-1 whitespace-nowrap">
+                <h1 className="font-black text-sm sm:text-base tracking-tight text-white leading-none flex items-center gap-1 whitespace-nowrap">
                   <span>Smart Grocery</span>
                 </h1>
-                <p className="text-[9.5px] sm:text-[10.5px] text-amber-200 font-extrabold tracking-tight drop-shadow-xs whitespace-nowrap">
-                  Belanja Santai, Anti Boncos!
-                </p>
               </div>
             </div>
 

@@ -17,8 +17,12 @@ import {
   HardDrive,
   Trash2,
   Smartphone,
+  RotateCcw,
   X,
 } from 'lucide-react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../db/database';
+import { formatRupiah } from '../utils/currency';
 import { useStore } from '../store/useStore';
 import { pwaService } from '../utils/pwa';
 
@@ -28,6 +32,10 @@ interface ProfilePageProps {
 
 export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
   const { userProfile, updateUserProfile, isEditingProfile, setIsEditingProfile } = useStore();
+
+  // Recycle Bin / Recently Deleted query
+  const deletedTransactions =
+    useLiveQuery(() => db.transactions.filter((t) => Boolean(t.isDeleted)).toArray()) || [];
 
   const [isEditing, setIsEditing] = useState(false);
   const [fullName, setFullName] = useState(userProfile.fullName);
@@ -656,6 +664,115 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
             >
               Aktifkan Kembali
             </button>
+          </div>
+        )}
+      </div>
+
+      {/* Card: BARU SAJA DIHAPUS (RECYCLE BIN 30 HARI - SETELAH PWA) */}
+      <div className="bg-card dark:bg-slate-800/90 rounded-2xl p-3.5 border border-border dark:border-slate-700 shadow-soft space-y-2.5">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-black tracking-wider text-text-secondary dark:text-slate-400 uppercase flex items-center gap-1.5">
+            <Trash2 className="w-3.5 h-3.5 text-danger dark:text-rose-400" />
+            <span>Baru Saja Dihapus (Recycle Bin)</span>
+          </span>
+
+          <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-red-50 dark:bg-rose-950/70 border border-red-200/60 dark:border-rose-900/60 px-2 py-0.5 rounded-full flex items-center gap-1">
+            <span>{deletedTransactions.length} Struk</span>
+          </span>
+        </div>
+
+        <p className="text-[10.5px] text-text-secondary dark:text-slate-400 leading-snug">
+          Struk yang dihapus tersimpan di sini selama <strong>30 hari</strong> sebelum terhapus permanen. Anda dapat memulihkannya kembali ke Riwayat kapan saja.
+        </p>
+
+        {deletedTransactions.length === 0 ? (
+          <div className="bg-gray-50/80 dark:bg-slate-900/60 rounded-xl p-3 text-center border border-dashed border-gray-200 dark:border-slate-750">
+            <p className="text-xs font-semibold text-text-secondary dark:text-slate-400">
+              Tidak ada struk di tempat sampah 🍃
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2 pt-1">
+            {deletedTransactions.map((tx) => {
+              const txDate = new Date(tx.purchasedAt);
+              const dateStr = txDate.toLocaleDateString('id-ID', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+              });
+              const daysRemaining = tx.deletedAt
+                ? Math.max(1, 30 - Math.floor((Date.now() - new Date(tx.deletedAt).getTime()) / (1000 * 60 * 60 * 24)))
+                : 30;
+
+              return (
+                <div
+                  key={tx.id}
+                  className="bg-white dark:bg-slate-900/90 rounded-xl p-2.5 border border-gray-200 dark:border-slate-700/80 shadow-2xs flex flex-col gap-2"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-text-main dark:text-slate-200">
+                        <span>{dateStr}</span>
+                        <span className="text-gray-400">•</span>
+                        <span className="text-primary dark:text-blue-400 truncate">
+                          {((tx.location && tx.location.trim()) ? tx.location.trim() : 'LOTTE MART GROCERY').toUpperCase()}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-text-secondary dark:text-slate-400 mt-0.5">
+                        {tx.items?.length || 0} barang • {formatRupiah(tx.finalTotal)}
+                      </p>
+                    </div>
+
+                    <span className="text-[9.5px] font-extrabold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/70 border border-amber-200 dark:border-amber-900 px-1.5 py-0.5 rounded-md whitespace-nowrap">
+                      Sisa {daysRemaining} hari
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 pt-1 border-t border-gray-100 dark:border-slate-800">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await db.transactions.update(tx.id, {
+                          isDeleted: false,
+                          deletedAt: undefined,
+                        });
+                        showToast('Struk berhasil dipulihkan ke Riwayat! 🎉');
+                      }}
+                      className="flex-1 py-1 px-2 rounded-lg bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-primary dark:text-blue-300 font-bold text-[11px] flex items-center justify-center gap-1 transition-all cursor-pointer border border-blue-200 dark:border-blue-900/60 min-h-[30px]"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>Pulihkan</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await db.transactions.delete(tx.id);
+                        showToast('Struk telah dihapus permanen.');
+                      }}
+                      className="py-1 px-2.5 rounded-lg text-danger dark:text-rose-400 hover:bg-red-50 dark:hover:bg-rose-950/60 font-bold text-[11px] flex items-center justify-center gap-1 transition-all cursor-pointer border border-red-200 dark:border-rose-900/60 min-h-[30px]"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      <span>Hapus Permanen</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+
+            {deletedTransactions.length > 1 && (
+              <button
+                type="button"
+                onClick={async () => {
+                  const ids = deletedTransactions.map((t) => t.id);
+                  await Promise.all(ids.map((id) => db.transactions.delete(id)));
+                  showToast('Semua struk di tempat sampah telah dikosongkan.');
+                }}
+                className="w-full text-center text-[10.5px] font-bold text-danger dark:text-rose-400 hover:underline pt-1 cursor-pointer block"
+              >
+                Kosongkan Semua Sampah
+              </button>
+            )}
           </div>
         )}
       </div>

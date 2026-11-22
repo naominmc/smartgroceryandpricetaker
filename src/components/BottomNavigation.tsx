@@ -34,7 +34,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
       className="fixed bottom-0 left-0 right-0 z-40 flex justify-center pointer-events-none"
       aria-label="Navigasi Utama"
     >
-      <div className="w-full max-w-[430px] pointer-events-auto relative">
+      <div className="w-full sm:max-w-[430px] pointer-events-auto relative">
         {/* Warning Toast if User Tries to Change Section While Editing Profile */}
         {blockedToast && (
           <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-amber-500 text-slate-950 font-black text-[11px] px-3.5 py-1.5 rounded-full shadow-lg whitespace-nowrap animate-bounce flex items-center gap-1.5 z-50">
@@ -43,7 +43,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           </div>
         )}
 
-        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md sm:rounded-t-2xl shadow-float dark:shadow-dark-float border-t border-border dark:border-slate-800 px-2.5 pt-1.5 pb-[max(env(safe-area-inset-bottom),6px)] flex items-center justify-around transition-colors">
+        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-none sm:rounded-t-2xl shadow-float dark:shadow-dark-float border-t border-border dark:border-slate-800 px-2.5 pt-1.5 pb-[max(env(safe-area-inset-bottom),8px)] flex items-center justify-around transition-colors">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;

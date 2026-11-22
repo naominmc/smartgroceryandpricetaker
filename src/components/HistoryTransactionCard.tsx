@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Calendar, ChevronDown, ChevronUp, CheckCircle2 } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronUp, CheckCircle2, Trash2 } from 'lucide-react';
 import type { PurchaseTransaction } from '../types';
 import { formatRupiah } from '../utils/currency';
+import { db } from '../db/database';
 
 interface HistoryTransactionCardProps {
   transaction: PurchaseTransaction;
@@ -9,6 +10,7 @@ interface HistoryTransactionCardProps {
 
 export const HistoryTransactionCard: React.FC<HistoryTransactionCardProps> = ({ transaction }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const txDate = new Date(transaction.purchasedAt);
   const dateFormatted = txDate.toLocaleDateString('id-ID', {
@@ -52,15 +54,26 @@ export const HistoryTransactionCard: React.FC<HistoryTransactionCardProps> = ({ 
           </div>
         </div>
 
-        <div className="text-right">
-          <span className="text-base font-extrabold text-primary dark:text-blue-400 block">
-            {formatRupiah(transaction.finalTotal)}
-          </span>
-          {transaction.discountTotal > 0 && (
-            <span className="text-[10px] font-bold text-success dark:text-emerald-400 block">
-              Hemat {formatRupiah(transaction.discountTotal)}
+        <div className="flex items-start gap-1.5 flex-shrink-0">
+          <div className="text-right">
+            <span className="text-base font-extrabold text-primary dark:text-blue-400 block">
+              {formatRupiah(transaction.finalTotal)}
             </span>
-          )}
+            {transaction.discountTotal > 0 && (
+              <span className="text-[10px] font-bold text-success dark:text-emerald-400 block">
+                Hemat {formatRupiah(transaction.discountTotal)}
+              </span>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowDeleteModal(true)}
+            className="p-1 rounded-lg text-gray-400 hover:text-danger hover:bg-red-50 dark:hover:bg-rose-950/60 transition-colors cursor-pointer mt-0.5"
+            title="Hapus Struk ke Sampah (Recycle Bin)"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
 
@@ -143,6 +156,52 @@ export const HistoryTransactionCard: React.FC<HistoryTransactionCardProps> = ({ 
             <div className="flex justify-between text-primary dark:text-blue-400 font-bold text-sm pt-1 border-t border-blue-200/50 dark:border-blue-800/40">
               <span>Total Akhir Dibayar:</span>
               <span>{formatRupiah(transaction.finalTotal)}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Konfirmasi Peringatan Hapus Struk ke Sampah (Recycle Bin 30 Hari) */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in text-left">
+          <div className="w-full max-w-[340px] bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-4.5 shadow-modal animate-slide-up space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-rose-950/80 text-danger dark:text-rose-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-extrabold text-sm text-text-main dark:text-slate-100">
+                  Hapus Struk Transaksi?
+                </h3>
+                <p className="text-xs text-text-secondary dark:text-slate-400 mt-1 leading-relaxed">
+                  Struk akan dipindahkan ke <strong>Sampah (Recycle Bin)</strong> selama <strong>30 hari</strong> dan dapat dipulihkan kapan saja melalui menu <strong>Profil &gt; Baru Saja Dihapus</strong>.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 pt-1.5">
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                className="py-2.5 px-3 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-750 font-bold text-xs flex items-center justify-center transition-all cursor-pointer min-h-[40px]"
+              >
+                Batal
+              </button>
+
+              <button
+                type="button"
+                onClick={async () => {
+                  setShowDeleteModal(false);
+                  await db.transactions.update(transaction.id, {
+                    isDeleted: true,
+                    deletedAt: new Date().toISOString(),
+                  });
+                }}
+                className="py-2.5 px-3 rounded-xl bg-danger hover:bg-red-700 active:scale-98 text-white font-extrabold text-xs shadow-soft flex items-center justify-center gap-1.5 transition-all cursor-pointer min-h-[40px]"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Pindahkan ke Sampah</span>
+              </button>
             </div>
           </div>
         </div>

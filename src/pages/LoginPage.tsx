@@ -17,6 +17,40 @@ interface LoginPageProps {
   onLogin: () => void;
 }
 
+interface RegisteredAccount {
+  fullName: string;
+  username: string;
+  email: string;
+  password: string;
+}
+
+const getRegisteredAccounts = (): RegisteredAccount[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem('sg_registered_users');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {}
+
+  // Initial seeded account: Naomi
+  const defaultAcc: RegisteredAccount = {
+    fullName: localStorage.getItem('sg_fullName') || 'naomi miracle',
+    username: (localStorage.getItem('sg_username') || 'naomiiracle').replace(/^@/, ''),
+    email: (localStorage.getItem('sg_email') || 'naomi@mutiarabangsa.sch.id').toLowerCase(),
+    password: localStorage.getItem('sg_password') || 'naomi12345',
+  };
+  localStorage.setItem('sg_registered_users', JSON.stringify([defaultAcc]));
+  return [defaultAcc];
+};
+
+const saveRegisteredAccounts = (accs: RegisteredAccount[]) => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('sg_registered_users', JSON.stringify(accs));
+  }
+};
+
 export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const {
     userProfile,
@@ -63,55 +97,158 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
   const handleSubmitForm = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!emailInput.trim()) {
-      showToast('Harap masukkan alamat email.');
-      return;
-    }
-    if (!passwordInput.trim()) {
-      showToast('Harap masukkan kata sandi akun.');
-      return;
-    }
 
-    setIsLoading(true);
+    const accounts = getRegisteredAccounts();
+
     if (activeAuthTab === 'signup') {
-      updateUserProfile({
-        fullName: fullNameInput.trim() || 'naomi miracle',
-        username: usernameInput.trim() || 'naomiiracle',
-        email: emailInput.trim(),
-        passwordMasked: passwordInput.trim(),
-      });
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('sg_password', passwordInput.trim());
-      }
-      showToast('Akun berhasil didaftarkan! Masuk ke aplikasi...');
-    } else {
-      const savedPw = typeof window !== 'undefined' ? localStorage.getItem('sg_password') : null;
-      const validPw =
-        savedPw && savedPw !== '••••••••••••••'
-          ? savedPw
-          : userProfile.passwordMasked && userProfile.passwordMasked !== '••••••••••••••'
-          ? userProfile.passwordMasked
-          : 'naomi12345';
-
-      if (passwordInput.trim() !== validPw) {
-        setIsLoading(false);
-        showToast('Kata sandi salah. Silakan coba lagi.');
+      // Validate full name
+      const cleanFullName = fullNameInput.trim();
+      if (!cleanFullName || cleanFullName.length < 3) {
+        showToast('⚠️ Nama lengkap harus diisi (minimal 3 karakter).');
         return;
       }
-      showToast('Otentikasi berhasil! Menyiapkan dashboard...');
-    }
 
-    setTimeout(() => {
+      // Validate email format
+      const cleanEmail = emailInput.trim().toLowerCase();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!cleanEmail || !emailRegex.test(cleanEmail)) {
+        showToast('⚠️ Format alamat email tidak valid (contoh: nama@domain.com).');
+        return;
+      }
+
+      // Validate username
+      const cleanUsername = usernameInput.trim().replace(/^@/, '').toLowerCase();
+      if (!cleanUsername || cleanUsername.length < 3) {
+        showToast('⚠️ Username minimal 3 karakter.');
+        return;
+      }
+
+      // Check if email or username already registered
+      const emailExists = accounts.some((acc) => acc.email.toLowerCase() === cleanEmail);
+      if (emailExists) {
+        showToast('⚠️ Email sudah terdaftar! Silakan langsung Sign In (Masuk).');
+        return;
+      }
+
+      const usernameExists = accounts.some((acc) => acc.username.toLowerCase() === cleanUsername);
+      if (usernameExists) {
+        showToast('⚠️ Username sudah dipakai! Silakan pilih username lain.');
+        return;
+      }
+
+      // Validate password
+      if (!passwordInput.trim() || passwordInput.trim().length < 6) {
+        showToast('⚠️ Kata sandi akun minimal 6 karakter.');
+        return;
+      }
+
+      setIsLoading(true);
+
+      const newAccount: RegisteredAccount = {
+        fullName: cleanFullName,
+        username: cleanUsername,
+        email: cleanEmail,
+        password: passwordInput.trim(),
+      };
+
+      accounts.push(newAccount);
+      saveRegisteredAccounts(accounts);
+
       updateUserProfile({
-        loginTime: new Date().toLocaleDateString('id-ID', {
-          day: 'numeric',
-          month: 'short',
-          year: 'numeric',
-        }) + ', ' + new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB',
+        fullName: newAccount.fullName,
+        username: newAccount.username,
+        email: newAccount.email,
+        passwordMasked: newAccount.password,
       });
-      setIsLoading(false);
-      onLogin();
-    }, 450);
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('sg_password', newAccount.password);
+        localStorage.setItem('sg_fullName', newAccount.fullName);
+        localStorage.setItem('sg_username', newAccount.username);
+        localStorage.setItem('sg_email', newAccount.email);
+      }
+
+      showToast('Pendaftaran akun berhasil! Masuk ke aplikasi... 🎉');
+
+      setTimeout(() => {
+        updateUserProfile({
+          loginTime:
+            new Date().toLocaleDateString('id-ID', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+            }) +
+            ', ' +
+            new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) +
+            ' WIB',
+        });
+        setIsLoading(false);
+        onLogin();
+      }, 450);
+    } else {
+      // SIGN IN (MASUK) - Harus akun yang sudah terdaftar
+      const inputQuery = emailInput.trim().toLowerCase();
+      if (!inputQuery) {
+        showToast('⚠️ Masukkan email atau username akun Anda.');
+        return;
+      }
+      if (!passwordInput.trim()) {
+        showToast('⚠️ Harap masukkan kata sandi akun.');
+        return;
+      }
+
+      setIsLoading(true);
+
+      const matchedAccount = accounts.find(
+        (acc) =>
+          acc.email.toLowerCase() === inputQuery ||
+          acc.username.toLowerCase() === inputQuery.replace(/^@/, '')
+      );
+
+      if (!matchedAccount) {
+        setIsLoading(false);
+        showToast('⚠️ Akun belum terdaftar! Silakan lakukan Sign Up (Daftar Akun) terlebih dahulu.');
+        return;
+      }
+
+      if (passwordInput.trim() !== matchedAccount.password) {
+        setIsLoading(false);
+        showToast('⚠️ Kata sandi salah! Silakan coba lagi.');
+        return;
+      }
+
+      updateUserProfile({
+        fullName: matchedAccount.fullName,
+        username: matchedAccount.username,
+        email: matchedAccount.email,
+        passwordMasked: matchedAccount.password,
+      });
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('sg_password', matchedAccount.password);
+        localStorage.setItem('sg_fullName', matchedAccount.fullName);
+        localStorage.setItem('sg_username', matchedAccount.username);
+        localStorage.setItem('sg_email', matchedAccount.email);
+      }
+
+      showToast(`Masuk berhasil! Selamat datang, ${matchedAccount.fullName} 👋`);
+
+      setTimeout(() => {
+        updateUserProfile({
+          loginTime:
+            new Date().toLocaleDateString('id-ID', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+            }) +
+            ', ' +
+            new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) +
+            ' WIB',
+        });
+        setIsLoading(false);
+        onLogin();
+      }, 450);
+    }
   };
 
   return (
@@ -287,12 +424,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
             <div>
               <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
-                Email Pengguna
+                {activeAuthTab === 'signin' ? 'Email atau Username' : 'Email Pengguna'}
               </label>
               <div className="relative">
                 <input
-                  type="email"
-                  placeholder="nama@email.com"
+                  type={activeAuthTab === 'signin' ? 'text' : 'email'}
+                  placeholder={
+                    activeAuthTab === 'signin'
+                      ? 'contoh: naomi@mutiarabangsa.sch.id atau @naomiiracle'
+                      : 'nama@email.com'
+                  }
                   value={emailInput}
                   onChange={(e) => setEmailInput(e.target.value)}
                   className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-gray-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary min-h-[42px]"

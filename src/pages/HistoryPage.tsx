@@ -49,8 +49,11 @@ export const HistoryPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dateInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch transactions from Dexie
-  const transactions = useLiveQuery(() => db.transactions.toArray()) || [];
+  // Fetch transactions from Dexie (exclude deleted / recycle bin items)
+  const allTransactions = useLiveQuery(() => db.transactions.toArray()) || [];
+  const transactions = useMemo(() => {
+    return allTransactions.filter((tx) => !tx.isDeleted);
+  }, [allTransactions]);
 
   // Sort descending by purchasedAt
   const sortedTransactions = useMemo(() => {
