@@ -164,13 +164,13 @@ export const HistoryTransactionCard: React.FC<HistoryTransactionCardProps> = ({ 
       {/* Modal Konfirmasi Peringatan Hapus Struk ke Sampah (Recycle Bin 30 Hari) */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in text-left">
-          <div className="w-full max-w-[340px] bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-4.5 shadow-modal animate-slide-up space-y-3">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-rose-950/80 text-danger dark:text-rose-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+          <div className="w-full max-w-[350px] bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-modal animate-slide-up space-y-4">
+            <div className="flex items-start gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-red-100 dark:bg-rose-950/80 text-danger dark:text-rose-400 flex items-center justify-center flex-shrink-0 mt-0.5">
                 <Trash2 className="w-5 h-5" />
               </div>
               <div className="min-w-0 flex-1">
-                <h3 className="font-extrabold text-sm text-text-main dark:text-slate-100">
+                <h3 className="font-extrabold text-sm sm:text-base text-text-main dark:text-slate-100">
                   Hapus Struk Transaksi?
                 </h3>
                 <p className="text-xs text-text-secondary dark:text-slate-400 mt-1 leading-relaxed">
@@ -179,11 +179,11 @@ export const HistoryTransactionCard: React.FC<HistoryTransactionCardProps> = ({ 
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 pt-1.5">
+            <div className="grid grid-cols-2 gap-2.5 pt-1">
               <button
                 type="button"
                 onClick={() => setShowDeleteModal(false)}
-                className="py-2.5 px-3 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-750 font-bold text-xs flex items-center justify-center transition-all cursor-pointer min-h-[40px]"
+                className="py-2.5 px-3 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-750 font-bold text-xs flex items-center justify-center transition-all cursor-pointer min-h-[42px]"
               >
                 Batal
               </button>
@@ -197,7 +197,7 @@ export const HistoryTransactionCard: React.FC<HistoryTransactionCardProps> = ({ 
                     deletedAt: new Date().toISOString(),
                   });
                 }}
-                className="py-2.5 px-3 rounded-xl bg-danger hover:bg-red-700 active:scale-98 text-white font-extrabold text-xs shadow-soft flex items-center justify-center gap-1.5 transition-all cursor-pointer min-h-[40px]"
+                className="py-2.5 px-3 rounded-xl bg-danger hover:bg-red-700 active:scale-98 text-white font-extrabold text-xs shadow-soft flex items-center justify-center gap-1.5 transition-all cursor-pointer min-h-[42px]"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Pindahkan ke Sampah</span>
