@@ -632,3 +632,4 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
     </div>
   );
 };
+

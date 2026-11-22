@@ -377,25 +377,25 @@ export const ShoppingPage: React.FC = () => {
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 mb-0.5">
-              <span className="text-[10px] font-extrabold text-[#0f766e] dark:text-teal-400 tracking-wider bg-teal-50 dark:bg-teal-950/80 border border-teal-200/60 dark:border-teal-800/60 px-1.5 py-0.2 rounded-md">
-                {selectedCity}
+              <span className="text-[10px] font-extrabold text-[#0f766e] dark:text-teal-400 tracking-wider bg-teal-50 dark:bg-teal-950/80 border border-teal-200/60 dark:border-teal-800/60 px-1.5 py-0.2 rounded-md uppercase">
+                {selectedCity.toUpperCase()}
               </span>
             </div>
             {sessionLocation && sessionLocation.includes('-') ? (
               <div className="min-w-0 flex items-start justify-between gap-1">
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 uppercase">
                   <div className="text-xs font-extrabold text-text-main dark:text-slate-100 leading-tight truncate">
-                    {sessionLocation.split('-')[0].trim()}
+                    {sessionLocation.split('-')[0].trim().toUpperCase()}
                   </div>
                   <div className="text-xs font-extrabold text-text-main dark:text-slate-100 leading-tight truncate">
-                    - {sessionLocation.split('-').slice(1).join('-').trim()}
+                    - {sessionLocation.split('-').slice(1).join('-').trim().toUpperCase()}
                   </div>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 flex-shrink-0 mt-0.5" />
               </div>
             ) : (
-              <div className="text-xs font-extrabold text-text-main dark:text-slate-100 truncate flex items-center gap-1">
-                <span>{sessionLocation || 'Pilih Supermarket...'}</span>
+              <div className="text-xs font-extrabold text-text-main dark:text-slate-100 truncate flex items-center gap-1 uppercase">
+                <span>{(sessionLocation || 'Pilih Supermarket...').toUpperCase()}</span>
                 <ChevronRight className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 flex-shrink-0" />
               </div>
             )}

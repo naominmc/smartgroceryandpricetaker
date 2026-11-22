@@ -10,36 +10,47 @@ interface HistoryTransactionCardProps {
 export const HistoryTransactionCard: React.FC<HistoryTransactionCardProps> = ({ transaction }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const formattedDate = new Date(transaction.purchasedAt).toLocaleDateString('id-ID', {
+  const txDate = new Date(transaction.purchasedAt);
+  const dateFormatted = txDate.toLocaleDateString('id-ID', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
+  });
+  const timeFormatted = `pukul ${txDate.toLocaleTimeString('id-ID', {
     hour: '2-digit',
     minute: '2-digit',
-  });
+  }).replace(':', '.')}`;
 
   return (
     <div className="bg-card dark:bg-slate-800/90 rounded-card p-4 border border-border dark:border-slate-700 shadow-soft transition-all duration-200">
       {/* Top Header */}
       <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-950/80 text-success dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
+        <div className="flex items-start gap-2 min-w-0 flex-1">
+          <div className="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-950/80 text-success dark:text-emerald-400 flex items-center justify-center flex-shrink-0 mt-0.5">
             <CheckCircle2 className="w-5 h-5" />
           </div>
-          <div>
-            <div className="flex items-center gap-1.5 text-[11px] text-text-secondary dark:text-slate-400 font-medium">
-              <Calendar className="w-3.5 h-3.5" />
-              <span>{formattedDate}</span>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start gap-1.5 text-[11px] text-text-secondary dark:text-slate-400 font-medium flex-wrap">
+              <div className="flex items-start gap-1 flex-shrink-0">
+                <Calendar className="w-3.5 h-3.5 mt-0.5 text-gray-400 dark:text-slate-500 flex-shrink-0" />
+                <div className="flex flex-col leading-tight">
+                  <span className="font-semibold text-text-main dark:text-slate-200 whitespace-nowrap">{dateFormatted}</span>
+                  <span className="text-[10.5px] text-text-secondary dark:text-slate-400 whitespace-nowrap">{timeFormatted}</span>
+                </div>
+              </div>
+
               {transaction.location && (
-                <>
-                  <span>•</span>
-                  <span className="text-primary dark:text-blue-400 font-semibold">{transaction.location}</span>
-                </>
+                <div className="flex items-start gap-1 min-w-0">
+                  <span className="text-gray-300 dark:text-slate-600 font-bold">•</span>
+                  <span className="text-primary dark:text-blue-400 font-bold uppercase tracking-tight text-[11px] leading-tight break-words">
+                    {transaction.location.toUpperCase()}
+                  </span>
+                </div>
               )}
             </div>
-            <span className="text-xs font-semibold text-text-main dark:text-slate-100">
+            <div className="text-xs font-semibold text-text-main dark:text-slate-100 mt-1">
               {transaction.items.length} jenis barang dibeli
-            </span>
+            </div>
           </div>
         </div>
 

@@ -427,7 +427,7 @@ export const HistoryPage: React.FC = () => {
               }}
               className="w-full appearance-none pl-2 pr-5 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10.5px] sm:text-xs font-semibold text-text-main dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary min-h-[38px] cursor-pointer truncate"
             >
-              <option value="all">Seluruh Tanggal</option>
+              <option value="all">Tanggal</option>
               {DAY_OPTIONS.map((day) => (
                 <option key={day} value={day}>
                   {day}
@@ -447,7 +447,7 @@ export const HistoryPage: React.FC = () => {
               }}
               className="w-full appearance-none pl-2 pr-5 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10.5px] sm:text-xs font-semibold text-text-main dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary min-h-[38px] cursor-pointer truncate"
             >
-              <option value="all">Seluruh Bulan</option>
+              <option value="all">Bulan</option>
               {MONTH_OPTIONS.map((m) => (
                 <option key={m.value} value={m.value}>
                   {m.label}
@@ -467,7 +467,7 @@ export const HistoryPage: React.FC = () => {
               }}
               className="w-full appearance-none pl-2 pr-5 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10.5px] sm:text-xs font-semibold text-text-main dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary min-h-[38px] cursor-pointer truncate"
             >
-              <option value="all">Seluruh Tahun</option>
+              <option value="all">Tahun</option>
               {availableYears.map((yr) => (
                 <option key={yr} value={yr}>
                   {yr}

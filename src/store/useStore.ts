@@ -188,10 +188,11 @@ export const useStore = create<AppState>((set, get) => {
     selectedPaymentMethod: PAYMENT_ACCOUNTS[0].name, // 'Bank BCA'
     setSelectedPaymentMethod: (method) => set({ selectedPaymentMethod: method }),
 
-    sessionLocation: typeof window !== 'undefined' ? (localStorage.getItem('smart_grocery_location') || 'Lotte Mart Grocery - Puri Indah') : 'Lotte Mart Grocery - Puri Indah',
+    sessionLocation: typeof window !== 'undefined' ? (localStorage.getItem('smart_grocery_location') || 'LOTTE MART GROCERY - PURI INDAH').toUpperCase() : 'LOTTE MART GROCERY - PURI INDAH',
     setSessionLocation: (loc) => {
-      if (typeof window !== 'undefined') localStorage.setItem('smart_grocery_location', loc);
-      set({ sessionLocation: loc });
+      const upperLoc = (loc || '').toUpperCase();
+      if (typeof window !== 'undefined') localStorage.setItem('smart_grocery_location', upperLoc);
+      set({ sessionLocation: upperLoc });
       if (typeof window !== 'undefined' && (window as any).__smart_grocery_notify_sync) {
         (window as any).__smart_grocery_notify_sync();
       }

@@ -316,7 +316,7 @@ export const groceryService = {
   async completeCheckout(
     currentBudgetLimit: number,
     paymentMethod: string = 'Bank BCA',
-    location: string = 'Lotte Mart Grocery - Puri Indah',
+    location: string = 'LOTTE MART GROCERY - PURI INDAH',
     sessionDate?: string
   ): Promise<PurchaseTransaction> {
     const cartItems = await db.cartItems.toArray();
@@ -350,7 +350,7 @@ export const groceryService = {
       id: `tx-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
       period: currentPeriod,
       purchasedAt: sessionDate ? new Date(sessionDate).toISOString() : new Date().toISOString(),
-      location,
+      location: (location || 'LOTTE MART GROCERY - PURI INDAH').toUpperCase(),
       items: itemSnapshots,
       grossTotal: totals.grossTotal,
       discountTotal: totals.discountTotal,
