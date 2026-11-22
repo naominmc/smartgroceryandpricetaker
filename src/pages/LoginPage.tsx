@@ -7,7 +7,6 @@ import {
   EyeOff,
   User,
   ArrowRight,
-  ShieldCheck,
   CheckCircle2,
   Sun,
   Moon,
@@ -117,13 +116,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     }, 450);
   };
 
-  const handleGuestLogin = () => {
-    showToast('Masuk dalam Mode Tamu / Demo Offline...');
-    setTimeout(() => {
-      onLogin();
-    }, 300);
-  };
-
   return (
     <div
       className={`min-h-screen relative flex justify-center items-start sm:py-6 bg-cover bg-center bg-no-repeat transition-colors duration-300 ${
@@ -191,17 +183,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         <div className="flex-1 px-5 py-4 overflow-y-auto space-y-4">
           
           {/* Hero Welcome Banner */}
-          <div className="text-center pt-1 pb-1 space-y-1.5">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/60 text-amber-700 dark:text-amber-300 text-[11px] font-bold shadow-2xs">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-              <span>Amankan Saldo &amp; Belanja Hemat Terkendali</span>
-            </div>
+          <div className="text-center pt-1 pb-1">
             <h2 className="text-lg font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">
               Selamat Datang di Smart Grocery!
             </h2>
-            <p className="text-xs text-text-secondary dark:text-slate-400">
-              Pengendali anggaran belanja bulanan mahasiswa dengan Budget Safety Cap.
-            </p>
           </div>
 
           {/* Segmented Tabs: Masuk / Daftar Akun */}
@@ -451,25 +436,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               </span>
             </button>
           </form>
-
-          {/* Guest / Demo Option */}
-          <div className="text-center pt-2">
-            <button
-              type="button"
-              onClick={handleGuestLogin}
-              className="text-xs text-text-secondary dark:text-slate-400 font-bold hover:text-primary dark:hover:text-blue-300 underline decoration-dotted transition-colors cursor-pointer"
-            >
-              Lanjutkan sebagai Mode Tamu / Demo Offline &gt;
-            </button>
-          </div>
-
-          {/* Bottom Security Note */}
-          <div className="pt-2 text-center text-[10px] text-gray-400 dark:text-slate-500 flex items-center justify-center gap-1">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-            <span>Data tersimpan aman di browser (IndexedDB Dexie) &amp; Cloud Sync</span>
-          </div>
         </div>
       </main>
     </div>
   );
 };
+
