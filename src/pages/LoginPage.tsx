@@ -10,6 +10,8 @@ import {
   Sun,
   Moon,
   ShoppingBag,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 
@@ -56,6 +58,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     userProfile,
     themeMode,
     toggleThemeMode,
+    isSoundEnabled,
+    toggleSound,
     updateUserProfile,
   } = useStore();
 
@@ -273,10 +277,25 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       {/* Main Viewport Container (Smartphone Max Width 430px) */}
       <main className="w-full max-w-[430px] min-h-[100dvh] sm:min-h-[auto] sm:max-h-[920px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl text-text-main dark:text-dark-text flex flex-col relative shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] dark:shadow-dark-float sm:rounded-[36px] overflow-hidden border border-white/60 dark:border-slate-800 transition-colors duration-200">
         
-        {/* Top Header Bar dengan Logo di Atas Tengah Tanpa Text Apa-apa */}
-        <header className="px-5 pt-5 pb-4 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 dark:from-slate-900 dark:via-blue-950 dark:to-indigo-950 text-white shadow-md relative overflow-hidden flex items-center justify-center border-b dark:border-slate-800">
+        {/* Top Header Bar dengan Fitur Suara di Kiri, Logo di Tengah, dan Tema di Kanan */}
+        <header className="px-5 pt-4 pb-3.5 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 dark:from-slate-900 dark:via-blue-950 dark:to-indigo-950 text-white shadow-md relative overflow-hidden flex items-center justify-center border-b dark:border-slate-800">
+          {/* Fitur Suara di Sebelah Kiri */}
+          <button
+            type="button"
+            onClick={toggleSound}
+            className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 text-white font-bold p-2 rounded-xl backdrop-blur-sm transition-all shadow-sm min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer"
+            title={isSoundEnabled ? 'Matikan Suara Efek' : 'Aktifkan Suara Efek'}
+            aria-label={isSoundEnabled ? 'Suara Aktif' : 'Suara Bisu'}
+          >
+            {isSoundEnabled ? (
+              <Volume2 className="w-4 h-4 text-emerald-300" />
+            ) : (
+              <VolumeX className="w-4 h-4 text-slate-300 opacity-60" />
+            )}
+          </button>
+
           {/* Logo Maskot Capybara di Atas Tengah Tanpa Text */}
-          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-amber-300 via-orange-400 to-indigo-500 p-0.5 shadow-lg flex-shrink-0 relative group">
+          <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-amber-300 via-orange-400 to-indigo-500 p-0.5 shadow-lg flex-shrink-0 relative group">
             <div className="w-full h-full bg-white/95 dark:bg-slate-900 rounded-[14px] overflow-hidden flex items-center justify-center">
               <img
                 src="/capybara_logo.png"
@@ -301,165 +320,173 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           </button>
         </header>
 
-        {/* Scrollable Form Body */}
-        <div className="flex-1 px-5 py-4 overflow-y-auto space-y-4 flex flex-col justify-between">
-          <div className="space-y-4">
-            {/* Hero Welcome Banner (Welcome diganti tulisan Smart Grocery) */}
-            <div className="text-center pt-2 pb-1 space-y-1">
-              <h2 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-slate-100 tracking-tight">
-                Smart Grocery
+        {/* Scrollable Form Body - UI Lebih Padat & Rapi */}
+        <div className="flex-1 px-5 py-3.5 overflow-y-auto space-y-3 flex flex-col justify-between">
+          <div className="space-y-3">
+            {/* Hero Welcome Banner */}
+            <div className="text-center pt-0.5 pb-0.5 space-y-0.5">
+              <h2 className="text-2xl font-black text-gray-900 dark:text-slate-100 tracking-tight">
+                {activeAuthTab === 'signin' ? 'Smart Grocery' : 'Create your account'}
               </h2>
               <p className="text-xs text-text-secondary dark:text-slate-400 font-medium">
                 {activeAuthTab === 'signin'
                   ? 'Sign in to continue your progress'
-                  : 'Sign up to create your account'}
+                  : 'Join the Smart Grocery shopping community'}
               </p>
             </div>
 
-            {/* Segmented Tabs: Masuk / Daftar Akun */}
-            <div className="flex bg-gray-100 dark:bg-slate-800 p-1 rounded-2xl border border-gray-200 dark:border-slate-700">
-              <button
-                type="button"
-                onClick={() => setActiveAuthTab('signin')}
-                className={`flex-1 py-2 rounded-xl font-bold text-xs transition-all cursor-pointer ${
-                  activeAuthTab === 'signin'
-                    ? 'bg-primary text-white shadow-soft'
-                    : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200'
-                }`}
-              >
-                Masuk
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveAuthTab('signup')}
-                className={`flex-1 py-2 rounded-xl font-bold text-xs transition-all cursor-pointer ${
-                  activeAuthTab === 'signup'
-                    ? 'bg-primary text-white shadow-soft'
-                    : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200'
-                }`}
-              >
-                Daftar Akun
-              </button>
-            </div>
-
             {/* Email / Password Form */}
-            <form onSubmit={handleSubmitForm} className="space-y-3.5">
-              {activeAuthTab === 'signup' && (
-                <div className="space-y-3 animate-slide-up">
+            <form onSubmit={handleSubmitForm} className="space-y-2.5">
+              {activeAuthTab === 'signup' ? (
+                /* Mode Daftar Akun (Contoh layout: Full Name, Email, Password & Username menggantikan Class) */
+                <div className="space-y-2.5 animate-slide-up">
                   <div>
-                    <label className="block text-[11px] font-bold text-gray-700 dark:text-slate-300 mb-1 tracking-wider uppercase">
-                      Nama Lengkap
+                    <label className="block text-[11px] font-bold text-gray-700 dark:text-slate-300 mb-0.5 tracking-wider uppercase">
+                      Full Name
                     </label>
                     <div className="relative">
                       <input
                         type="text"
-                        placeholder="Naomi Miracle"
+                        placeholder="John Doe"
                         value={fullNameInput}
                         onChange={(e) => setFullNameInput(e.target.value)}
-                        className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-gray-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary min-h-[42px]"
+                        className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-gray-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary min-h-[40px]"
+                        required
                       />
                       <User className="w-4 h-4 text-gray-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-gray-700 dark:text-slate-300 mb-1 tracking-wider uppercase">
-                      Username
+                    <label className="block text-[11px] font-bold text-gray-700 dark:text-slate-300 mb-0.5 tracking-wider uppercase">
+                      Email
                     </label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">@</span>
+                      <input
+                        type="email"
+                        placeholder="email@mutiarabangsa.sch.id"
+                        value={emailInput}
+                        onChange={(e) => setEmailInput(e.target.value)}
+                        className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-gray-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary min-h-[40px]"
+                        required
+                      />
+                      <Mail className="w-4 h-4 text-gray-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                    </div>
+                  </div>
+
+                  {/* Password & Username (Menggantikan kolom Class seperti di contoh) */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 dark:text-slate-300 mb-0.5 tracking-wider uppercase">
+                        Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="••••••••"
+                          value={passwordInput}
+                          onChange={(e) => setPasswordInput(e.target.value)}
+                          className="w-full pl-8 pr-7 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-gray-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary min-h-[40px]"
+                          required
+                        />
+                        <Lock className="w-3.5 h-3.5 text-gray-400 dark:text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300"
+                        >
+                          {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 dark:text-slate-300 mb-0.5 tracking-wider uppercase">
+                        Username
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">@</span>
+                        <input
+                          type="text"
+                          placeholder="naomiiracle"
+                          value={usernameInput}
+                          onChange={(e) => setUsernameInput(e.target.value)}
+                          className="w-full pl-7 pr-2.5 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-gray-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary min-h-[40px]"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Mode Masuk (Sign In) */
+                <div className="space-y-2.5">
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-700 dark:text-slate-300 mb-0.5 tracking-wider uppercase">
+                      EMAIL ADDRESS / USERNAME
+                    </label>
+                    <div className="relative">
                       <input
                         type="text"
-                        placeholder="naomiiracle"
-                        value={usernameInput}
-                        onChange={(e) => setUsernameInput(e.target.value)}
-                        className="w-full pl-8 pr-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-gray-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary min-h-[42px]"
+                        placeholder="you@mutiarabangsa.sch.id atau @username"
+                        value={emailInput}
+                        onChange={(e) => setEmailInput(e.target.value)}
+                        className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-gray-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary min-h-[40px]"
+                        required
                       />
+                      <Mail className="w-4 h-4 text-gray-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
                     </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-0.5">
+                      <label className="block text-[11px] font-bold text-gray-700 dark:text-slate-300 tracking-wider uppercase">
+                        PASSWORD
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => showToast('Gunakan akun naomi miracle atau mode demo.')}
+                        className="text-[11px] text-text-secondary hover:text-primary dark:text-slate-400 dark:hover:text-blue-400 font-medium cursor-pointer"
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        value={passwordInput}
+                        onChange={(e) => setPasswordInput(e.target.value)}
+                        className="w-full pl-9 pr-10 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-gray-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary min-h-[40px]"
+                        required
+                      />
+                      <Lock className="w-4 h-4 text-gray-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs pt-0.5">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                        className="rounded text-primary focus:ring-primary"
+                      />
+                      <span className="text-gray-600 dark:text-slate-400 text-[11px] font-medium">Ingat Saya</span>
+                    </label>
                   </div>
                 </div>
               )}
 
-              <div>
-                <label className="block text-[11px] font-bold text-gray-700 dark:text-slate-300 mb-1 tracking-wider uppercase">
-                  {activeAuthTab === 'signin' ? 'Email Address / Username' : 'Email Address'}
-                </label>
-                <div className="relative">
-                  <input
-                    type={activeAuthTab === 'signin' ? 'text' : 'email'}
-                    placeholder={
-                      activeAuthTab === 'signin'
-                        ? 'you@mutiarabangsa.sch.id atau @username'
-                        : 'you@mutiarabangsa.sch.id'
-                    }
-                    value={emailInput}
-                    onChange={(e) => setEmailInput(e.target.value)}
-                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-gray-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary min-h-[42px]"
-                    required
-                  />
-                  <Mail className="w-4 h-4 text-gray-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-[11px] font-bold text-gray-700 dark:text-slate-300 tracking-wider uppercase">
-                    Password
-                  </label>
-                  {activeAuthTab === 'signin' && (
-                    <button
-                      type="button"
-                      onClick={() => showToast('Gunakan akun naomi miracle atau mode demo.')}
-                      className="text-[11px] text-text-secondary hover:text-primary dark:text-slate-400 dark:hover:text-blue-400 font-medium cursor-pointer"
-                    >
-                      Forgot password?
-                    </button>
-                  )}
-                </div>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    value={passwordInput}
-                    onChange={(e) => setPasswordInput(e.target.value)}
-                    className="w-full pl-9 pr-10 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-gray-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary min-h-[42px]"
-                    required
-                  />
-                  <Lock className="w-4 h-4 text-gray-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between text-xs pt-0.5">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="rounded text-primary focus:ring-primary"
-                  />
-                  <span className="text-gray-600 dark:text-slate-400 text-[11px] font-medium">Ingat Saya</span>
-                </label>
-
-                {activeAuthTab === 'signup' && (
-                  <button
-                    type="button"
-                    onClick={() => setActiveAuthTab('signin')}
-                    className="text-[11px] text-primary dark:text-blue-400 font-bold hover:underline"
-                  >
-                    Sudah punya akun? Masuk
-                  </button>
-                )}
-              </div>
-
-              {/* Teks Penyesuaian: Belum punya akun? Buat akun baru */}
-              <div className="text-center text-xs text-text-secondary dark:text-slate-400 pt-1">
+              {/* Teks Penyesuaian: Belum punya akun? Buat sekarang! (Tanpa create now) */}
+              <div className="text-center text-xs text-text-secondary dark:text-slate-400 pt-0.5">
                 {activeAuthTab === 'signin' ? (
                   <span>
                     Belum punya akun?{' '}
@@ -468,7 +495,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                       onClick={() => setActiveAuthTab('signup')}
                       className="font-bold text-primary dark:text-blue-400 hover:underline cursor-pointer"
                     >
-                      Buat akun baru (Create one)
+                      Buat sekarang!
                     </button>
                   </span>
                 ) : (
@@ -479,7 +506,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                       onClick={() => setActiveAuthTab('signin')}
                       className="font-bold text-primary dark:text-blue-400 hover:underline cursor-pointer"
                     >
-                      Masuk sekarang (Sign in)
+                      Masuk sekarang!
                     </button>
                   </span>
                 )}
@@ -488,7 +515,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600 via-primary to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-98 text-white font-extrabold text-xs sm:text-sm shadow-soft transition-all flex items-center justify-center gap-2 min-h-[44px] cursor-pointer"
+                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 via-primary to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-98 text-white font-extrabold text-xs sm:text-sm shadow-soft transition-all flex items-center justify-center gap-2 min-h-[42px] cursor-pointer"
               >
                 <ShoppingBag className="w-4 h-4" />
                 <span>
@@ -496,13 +523,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                     ? 'Memproses...'
                     : activeAuthTab === 'signin'
                     ? 'Sign In →'
-                    : 'Sign Up →'}
+                    : 'Register →'}
                 </span>
               </button>
             </form>
 
             {/* Form Divider OR */}
-            <div className="flex items-center gap-3 pt-1">
+            <div className="flex items-center gap-3 pt-0.5">
               <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700" />
               <span className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">
                 OR
@@ -515,7 +542,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               type="button"
               onClick={handleGoogleLogin}
               disabled={isLoading}
-              className="w-full py-2.5 px-3 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-750 text-gray-800 dark:text-slate-100 font-bold text-xs shadow-2xs transition-all flex items-center justify-center gap-2.5 cursor-pointer min-h-[42px]"
+              className="w-full py-2 px-3 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-750 text-gray-800 dark:text-slate-100 font-bold text-xs shadow-2xs transition-all flex items-center justify-center gap-2.5 cursor-pointer min-h-[40px]"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path
@@ -539,13 +566,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             </button>
           </div>
 
-          {/* Footer Branding & Version */}
-          <footer className="pt-6 pb-2 text-center text-xs text-gray-400 dark:text-slate-500 space-y-0.5 mt-auto">
+          {/* Footer Branding (App version dihapus) */}
+          <footer className="pt-3 pb-2 text-center text-xs text-gray-400 dark:text-slate-500 mt-auto">
             <p className="font-semibold text-text-secondary dark:text-slate-400 text-xs">
               Smart Grocery by Naomi Miracle
-            </p>
-            <p className="text-[10px] font-mono text-gray-400 dark:text-slate-500">
-              v2.1.04 | Patched Nov 22, 2026
             </p>
           </footer>
         </div>
