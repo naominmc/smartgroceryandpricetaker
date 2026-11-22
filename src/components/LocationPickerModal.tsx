@@ -726,7 +726,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
                       {isSelected && (
                         <span className="inline-flex items-center gap-1 bg-teal-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">
                           <Check className="w-3 h-3 stroke-[3]" />
-                          <span>Terpilih (Naik ke Atas)</span>
+                          <span>Terpilih</span>
                         </span>
                       )}
                     </div>
