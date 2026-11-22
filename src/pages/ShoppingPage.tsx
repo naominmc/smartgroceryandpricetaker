@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import confetti from 'canvas-confetti';
 import {
@@ -311,10 +311,10 @@ export const ShoppingPage: React.FC = () => {
 
         {/* Network & Offline Status Indicator */}
         <div
-          className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
+          className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors ${
             isOnline
               ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
-              : 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+              : 'bg-red-50 dark:bg-rose-950/70 text-red-600 dark:text-rose-400 border-red-200 dark:border-rose-800'
           }`}
         >
           {isOnline ? (
@@ -324,8 +324,8 @@ export const ShoppingPage: React.FC = () => {
             </>
           ) : (
             <>
-              <WifiOff className="w-3 h-3 text-amber-700 dark:text-amber-400" />
-              <span>Offline (Tersimpan Lokal)</span>
+              <WifiOff className="w-3 h-3 text-red-600 dark:text-rose-400" />
+              <span>Offline</span>
             </>
           )}
         </div>
@@ -362,9 +362,6 @@ export const ShoppingPage: React.FC = () => {
               <span className="text-[10px] font-extrabold text-[#0f766e] dark:text-teal-400 tracking-wider bg-teal-50 dark:bg-teal-950/80 border border-teal-200/60 dark:border-teal-800/60 px-1.5 py-0.2 rounded-md">
                 JABODETABEK
               </span>
-              <span className="text-[10px] text-teal-700 dark:text-teal-400 font-bold underline decoration-dotted">
-                Ganti Toko / Cari via GPS &gt;
-              </span>
             </div>
             <div className="text-xs font-extrabold text-text-main dark:text-slate-100 truncate flex items-center gap-1">
               <span>{sessionLocation || 'Pilih Supermarket...'}</span>
@@ -373,8 +370,8 @@ export const ShoppingPage: React.FC = () => {
           </div>
         </button>
 
-        <div className="flex items-center gap-1.5 pl-2.5 border-l border-gray-200 dark:border-slate-700 flex-shrink-0">
-          <Calendar className="w-3.5 h-3.5 text-gray-400 dark:text-slate-400" />
+        <div className="flex items-center gap-1.5 pl-3 pr-2 py-1.5 bg-gray-50 dark:bg-slate-750 rounded-xl border border-gray-200/80 dark:border-slate-700 flex-shrink-0 ml-auto">
+          <Calendar className="w-3.5 h-3.5 text-primary dark:text-blue-400" />
           <input
             type="date"
             value={sessionDate}
