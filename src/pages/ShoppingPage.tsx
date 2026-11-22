@@ -18,6 +18,10 @@ import {
   Scan,
   CreditCard,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  ShieldCheck,
+  AlertOctagon,
 } from 'lucide-react';
 import { db } from '../db/database';
 import { groceryService } from '../services/groceryService';
@@ -61,6 +65,36 @@ export const ShoppingPage: React.FC = () => {
   const [checkoutErrorMessage, setCheckoutErrorMessage] = useState<string | null>(null);
   const [itemToDelete, setItemToDelete] = useState<CartItem | null>(null);
   const [isClearCartConfirmOpen, setIsClearCartConfirmOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isManualExpanded, setIsManualExpanded] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const container = document.getElementById('app-scroll-container');
+      const scrollTop = container ? container.scrollTop : (window.scrollY || document.documentElement.scrollTop || 0);
+      if (scrollTop > 50) {
+        setIsScrolled(true);
+      } else if (scrollTop <= 15) {
+        setIsScrolled(false);
+        setIsManualExpanded(null);
+      }
+    };
+
+    const container = document.getElementById('app-scroll-container');
+    if (container) {
+      container.addEventListener('scroll', handleScroll, { passive: true });
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      if (container) {
+        container.removeEventListener('scroll', handleScroll);
+      }
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  const isMinimized = isManualExpanded !== null ? !isManualExpanded : isScrolled;
 
   const playBeep = (freq = 1200, duration = 0.08) => {
     try {
@@ -350,52 +384,143 @@ export const ShoppingPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Sticky Floating Container: Budget Safety Card & Quick Checkout Bar (Pas di scroll ga hilang) */}
-      <div className="sticky top-0 z-20 space-y-2.5 pt-1 pb-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md -mx-4 px-4 shadow-xs border-b border-gray-100/80 dark:border-slate-800/80 transition-all">
-        {/* F-05 Budget Safety Card */}
-      <BudgetSafetyCard
-        budgetStatus={budgetStatus}
-        itemCount={cartItems.length}
-        totalSavings={totals.discountTotal}
-        onEditBudget={() => setIsEditingBudget(true)}
-      />
+      {/* Sticky Floating Container: Budget Safety Card & Quick Checkout Bar */}
+      <div className="sticky top-0 z-20 space-y-2 pt-1 pb-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md -mx-4 px-4 shadow-xs border-b border-gray-100/80 dark:border-slate-800/80 transition-all duration-200">
+        {isMinimized ? (
+          /* Minimized Compact Floating Bar (~48px tinggi, tidak menutupi layar, info tetap jelas) */
+          <div className="bg-card dark:bg-slate-800 rounded-2xl p-2.5 border border-border dark:border-slate-700 shadow-soft flex items-center justify-between gap-2 animate-fade-in">
+            {/* Info Sisa Anggaran & Total Belanja */}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span
+                  className={`inline-flex items-center gap-1 text-[11px] font-extrabold ${
+                    budgetStatus.level === 'exceeded'
+                      ? 'text-danger dark:text-rose-400'
+                      : budgetStatus.level === 'warning'
+                      ? 'text-warning dark:text-amber-400'
+                      : 'text-success dark:text-emerald-400'
+                  }`}
+                >
+                  {budgetStatus.level === 'exceeded' ? (
+                    <AlertOctagon className="w-3.5 h-3.5 flex-shrink-0" />
+                  ) : (
+                    <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
+                  )}
+                  <span>
+                    {budgetStatus.level === 'exceeded'
+                      ? `+${formatRupiah(budgetStatus.excessAmount)}`
+                      : `Sisa ${formatRupiah(budgetStatus.remaining)}`}
+                  </span>
+                </span>
 
-      {/* Top Checkout Action Bar - Cepat checkout tanpa perlu scroll */}
-      {cartItems.length > 0 && (
-        <div className="bg-card dark:bg-slate-800 rounded-card p-3.5 border border-border dark:border-slate-700 shadow-soft space-y-2.5 animate-fade-in">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-[10px] text-text-secondary dark:text-slate-400 block font-medium">
-                Total Tagihan ({totals.totalQuantity} unit):
-              </span>
-              <span className="text-lg font-extrabold text-primary dark:text-blue-400">
-                {formatRupiah(totals.finalTotal)}
-              </span>
+                <span className="text-[11px] text-text-secondary dark:text-slate-400 font-semibold truncate">
+                  | Total: <strong className="text-text-main dark:text-slate-100 font-black">{formatRupiah(totals.finalTotal)}</strong>
+                  <span className="text-[10px] ml-0.5 opacity-80">({totals.totalQuantity} unit)</span>
+                </span>
+              </div>
             </div>
 
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setIsClearCartConfirmOpen(true)}
-                className="inline-flex items-center gap-1 text-[11px] font-bold text-danger dark:text-rose-400 hover:bg-red-50 dark:hover:bg-rose-950/70 px-2.5 py-2 rounded-xl transition-all min-h-[44px]"
-                title="Kosongkan Seluruh Troli"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Kosongkan</span>
-              </button>
+            {/* Aksi Cepat: Kosongkan, Checkout, dan Toggle Detail */}
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              {cartItems.length > 0 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setIsClearCartConfirmOpen(true)}
+                    className="p-1.5 text-danger dark:text-rose-400 hover:bg-red-50 dark:hover:bg-rose-950/70 rounded-xl transition-all cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center"
+                    title="Kosongkan Seluruh Troli"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
 
+                  <button
+                    type="button"
+                    onClick={() => setIsCheckoutDialogOpen(true)}
+                    className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs px-2.5 py-1.5 rounded-xl shadow-soft transition-all flex items-center gap-1 cursor-pointer min-h-[36px]"
+                    title="Checkout Sekarang"
+                  >
+                    <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                    <span>Checkout</span>
+                  </button>
+                </>
+              )}
+
+              {/* Tombol Expand / Buka Detail Lengkap */}
               <button
                 type="button"
-                onClick={() => setIsCheckoutDialogOpen(true)}
-                className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-soft transition-all min-h-[44px] flex items-center gap-1.5"
+                onClick={() => setIsManualExpanded(true)}
+                className="px-2 py-1.5 text-text-secondary dark:text-slate-400 hover:text-text-main dark:hover:text-slate-100 bg-gray-100/80 dark:bg-slate-700/80 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl transition-all flex items-center gap-0.5 text-[10px] font-bold cursor-pointer min-h-[36px]"
+                title="Buka detail lengkap anggaran"
               >
-                <Check className="w-4 h-4 stroke-[2.5]" />
-                <span>Checkout</span>
+                <span>Detail</span>
+                <ChevronDown className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
-        </div>
-      )}
+        ) : (
+          /* Full View (Tampilan Lengkap) dengan tombol Perkecil */
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[10px] font-bold text-text-secondary dark:text-slate-400 uppercase tracking-wider">
+                Ringkasan Anggaran &amp; Checkout
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsManualExpanded(false)}
+                className="flex items-center gap-1 text-[11px] font-bold text-primary dark:text-blue-400 hover:underline cursor-pointer bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-lg border border-blue-100 dark:border-blue-900"
+                title="Perkecil kartu agar tidak menutupi layar"
+              >
+                <span>Perkecil</span>
+                <ChevronUp className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* F-05 Budget Safety Card */}
+            <BudgetSafetyCard
+              budgetStatus={budgetStatus}
+              itemCount={cartItems.length}
+              totalSavings={totals.discountTotal}
+              onEditBudget={() => setIsEditingBudget(true)}
+            />
+
+            {/* Top Checkout Action Bar - Cepat checkout tanpa perlu scroll */}
+            {cartItems.length > 0 && (
+              <div className="bg-card dark:bg-slate-800 rounded-card p-3.5 border border-border dark:border-slate-700 shadow-soft space-y-2.5 animate-fade-in">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] text-text-secondary dark:text-slate-400 block font-medium">
+                      Total Tagihan ({totals.totalQuantity} unit):
+                    </span>
+                    <span className="text-lg font-extrabold text-primary dark:text-blue-400">
+                      {formatRupiah(totals.finalTotal)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setIsClearCartConfirmOpen(true)}
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-danger dark:text-rose-400 hover:bg-red-50 dark:hover:bg-rose-950/70 px-2.5 py-2 rounded-xl transition-all min-h-[44px]"
+                      title="Kosongkan Seluruh Troli"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Kosongkan</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsCheckoutDialogOpen(true)}
+                      className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-soft transition-all min-h-[44px] flex items-center gap-1.5"
+                    >
+                      <Check className="w-4 h-4 stroke-[2.5]" />
+                      <span>Checkout</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Rekomendasi Barang dari Riwayat Pembelian (Beli Lagi 1-Klik) */}

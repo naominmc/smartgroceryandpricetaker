@@ -181,7 +181,7 @@ export const App: React.FC = () => {
         </header>
 
         {/* Content Area with Safe-Area Padding */}
-        <div className="flex-1 px-4 pt-3 pb-safe overflow-y-auto overscroll-contain">
+        <div id="app-scroll-container" className="flex-1 px-4 pt-3 pb-safe overflow-y-auto overscroll-contain">
           {activeTab === 'shopping' && <ShoppingPage />}
           {activeTab === 'history' && <HistoryPage />}
           {activeTab === 'budget' && <BudgetPage />}
