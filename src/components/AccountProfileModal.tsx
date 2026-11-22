@@ -444,6 +444,9 @@ export const AccountProfileModal: React.FC<AccountProfileModalProps> = ({
               <option value="Singapore Dollar (S$ - SGD)">Singapore Dollar (S$ - SGD)</option>
               <option value="Euro (€ - EUR)">Euro (€ - EUR)</option>
               <option value="Japanese Yen (¥ - JPY)">Japanese Yen (¥ - JPY)</option>
+              <option value="Chinese Yuan / Yen Cina (¥ - CNY)">Chinese Yuan / Yen Cina (¥ - CNY)</option>
+              <option value="Saudi Riyal / Riyadh (SR - SAR)">Saudi Riyal / Riyadh (SR - SAR)</option>
+              <option value="Dirham UEA / Arab (AED - AED)">Dirham UEA / Arab (AED - AED)</option>
             </select>
           </div>
 

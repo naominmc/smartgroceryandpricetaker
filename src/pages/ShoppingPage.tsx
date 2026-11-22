@@ -32,7 +32,7 @@ import { AddItemSheet } from '../components/AddItemSheet';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
 import { PWAInstallBanner } from '../components/PWAInstallBanner';
-import { LocationPickerModal } from '../components/LocationPickerModal';
+import { LocationPickerModal, SUPERMARKET_PRESETS } from '../components/LocationPickerModal';
 import { syncService } from '../services/syncService';
 import { calculateCartTotals, evaluateBudgetSafety } from '../utils/calculations';
 import { formatRupiah } from '../utils/currency';
@@ -67,6 +67,24 @@ export const ShoppingPage: React.FC = () => {
   const [isClearCartConfirmOpen, setIsClearCartConfirmOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isManualExpanded, setIsManualExpanded] = useState<boolean | null>(null);
+
+  // Active Selected City (Default: JABODETABEK if none selected)
+  const selectedCity = useMemo(() => {
+    if (!sessionLocation) return 'JABODETABEK';
+    const match = SUPERMARKET_PRESETS.find(
+      (s) => s.name.toLowerCase() === sessionLocation.toLowerCase()
+    );
+    if (match && match.city) {
+      return match.city.toUpperCase();
+    }
+    const upper = sessionLocation.toUpperCase();
+    if (upper.includes('DEPOK') || upper.includes('MARGONDA') || upper.includes('CINERE') || upper.includes('SAWANGAN')) return 'DEPOK';
+    if (upper.includes('BOGOR') || upper.includes('SENTUL') || upper.includes('CIBINONG') || upper.includes('PAJAJARAN')) return 'BOGOR';
+    if (upper.includes('BEKASI') || upper.includes('CIKARANG') || upper.includes('SUMMARECON BEKASI') || upper.includes('GRAND METROPOLITAN')) return 'BEKASI';
+    if (upper.includes('TANGERANG') || upper.includes('BSD') || upper.includes('BINTARO') || upper.includes('ALAM SUTERA') || upper.includes('GADING SERPONG') || upper.includes('KARAWACI')) return 'TANGERANG';
+    if (upper.includes('JAKARTA') || upper.includes('PURI') || upper.includes('SCBD') || upper.includes('KEMANG') || upper.includes('KELAPA GADING') || upper.includes('BLOK M') || upper.includes('KUNINGAN') || upper.includes('SENAYAN') || upper.includes('TAMAN ANGGREK') || upper.includes('PONDOK INDAH') || upper.includes('KASABLANKA') || upper.includes('CENTRAL PARK')) return 'JAKARTA';
+    return 'JABODETABEK';
+  }, [sessionLocation]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -360,7 +378,7 @@ export const ShoppingPage: React.FC = () => {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 mb-0.5">
               <span className="text-[10px] font-extrabold text-[#0f766e] dark:text-teal-400 tracking-wider bg-teal-50 dark:bg-teal-950/80 border border-teal-200/60 dark:border-teal-800/60 px-1.5 py-0.2 rounded-md">
-                JABODETABEK
+                {selectedCity}
               </span>
             </div>
             {sessionLocation && sessionLocation.includes('-') ? (
@@ -369,7 +387,7 @@ export const ShoppingPage: React.FC = () => {
                   <div className="text-xs font-extrabold text-text-main dark:text-slate-100 leading-tight truncate">
                     {sessionLocation.split('-')[0].trim()}
                   </div>
-                  <div className="text-[10.5px] font-bold text-teal-700 dark:text-teal-400 leading-tight truncate">
+                  <div className="text-xs font-extrabold text-text-main dark:text-slate-100 leading-tight truncate">
                     - {sessionLocation.split('-').slice(1).join('-').trim()}
                   </div>
                 </div>
