@@ -120,10 +120,6 @@ export const BudgetPage: React.FC = () => {
             <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>
-
-        <p className="text-[11px] text-blue-100 dark:text-blue-200 bg-white/10 dark:bg-slate-900/40 px-2.5 py-1.5 rounded-xl">
-          💡 Rekening utama: <strong>Bank BCA (5271-8892-01)</strong> untuk pengeluaran belanja mahasiswa rantau.
-        </p>
       </div>
 
       {/* Budget Limit Config Form */}
