@@ -13,13 +13,12 @@ import { AccountProfileModal } from './components/AccountProfileModal';
 import { syncService } from './services/syncService';
 import { groceryService } from './services/groceryService';
 import type { ProductCategory } from './types';
-import { CreditCard, Sparkles, Scan, Sun, Moon } from 'lucide-react';
+import { CreditCard, Sparkles, Scan, Sun, Moon, ShoppingCart } from 'lucide-react';
 
 export const App: React.FC = () => {
   const {
     activeTab,
     username,
-    userProfile,
     selectedPaymentMethod,
     isScannerOpen,
     closeScanner,
@@ -98,54 +97,33 @@ export const App: React.FC = () => {
       {/* Mobile Smartphone Viewport Frame (Max width 430px) */}
       <main className="w-full max-w-[430px] h-[100dvh] max-h-[100dvh] sm:h-[calc(100vh-3rem)] sm:max-h-[920px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl text-text-main dark:text-dark-text flex flex-col relative shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] dark:shadow-dark-float sm:rounded-[36px] overflow-hidden border border-white/60 dark:border-slate-800 transition-colors duration-200">
         
-        {/* Top Header with User Profile: naomiiracle, Theme Mode Toggle, Scan, & Bank BCA */}
+        {/* Top Header with App Logo & Name, Theme Mode Toggle, Scan, & Bank BCA */}
         <header className="flex-shrink-0 px-4 pt-3.5 pb-2.5 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 dark:from-slate-900 dark:via-blue-950 dark:to-indigo-950 text-white shadow-md relative overflow-hidden border-b dark:border-slate-800">
           {/* Subtle Background Pattern/Glow */}
           <div className="absolute -right-6 -top-6 w-28 h-28 bg-white/10 dark:bg-blue-500/10 rounded-full blur-xl pointer-events-none" />
           <div className="absolute left-1/3 -bottom-4 w-20 h-20 bg-amber-400/15 rounded-full blur-lg pointer-events-none" />
 
           <div className="relative z-10 flex items-center justify-between gap-2">
-            {/* User Profile Info (Klik untuk Buka Menu Akun & Profil Instagram Style) */}
-            <button
-              type="button"
-              onClick={() => setIsProfileModalOpen(true)}
-              className="flex items-center gap-2 text-left group hover:opacity-95 active:scale-95 transition-all cursor-pointer"
-              title="Menu Akun & Profil (naomiiracle)"
-            >
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-300 via-pink-400 to-indigo-500 p-0.5 shadow-md flex-shrink-0 relative">
-                {userProfile.avatarUrl ? (
-                  <img
-                    src={userProfile.avatarUrl}
-                    alt={userProfile.username}
-                    className="w-full h-full object-cover rounded-[14px]"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-white/90 dark:bg-slate-900 rounded-[14px] flex items-center justify-center font-extrabold text-blue-700 dark:text-blue-400 text-base">
-                    {userProfile.fullName ? userProfile.fullName.charAt(0).toUpperCase() : 'N'}
-                  </div>
-                )}
-                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900 animate-pulse" />
+            {/* App Logo & App Name (Menggantikan profil yang digeser ke pojok kanan bawah) */}
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-indigo-600 p-0.5 shadow-md flex-shrink-0 relative">
+                <div className="w-full h-full bg-white/95 dark:bg-slate-900 rounded-[14px] flex items-center justify-center text-primary dark:text-blue-400">
+                  <ShoppingCart className="w-5 h-5 stroke-[2.5]" />
+                </div>
+                <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-amber-400 rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center shadow-xs">
+                  <Sparkles className="w-2 h-2 text-white fill-white" />
+                </span>
               </div>
 
               <div>
-                <div className="flex items-center gap-1.5">
-                  <h2 className="font-extrabold text-sm tracking-tight text-white leading-none">
-                    {userProfile.username || username}
-                  </h2>
-                  <Sparkles className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
-                </div>
-                <div className="flex items-center gap-1 mt-0.5">
-                  <span className="text-[10px] text-blue-100 dark:text-blue-200 font-medium truncate max-w-[110px]">
-                    {userProfile.fullName || 'naomi miracle'}
-                  </span>
-                  <span className="text-white/40">•</span>
-                  <span className="text-[10px] text-emerald-300 font-bold flex items-center gap-0.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping inline-block" />
-                    Online
-                  </span>
-                </div>
+                <h1 className="font-black text-sm tracking-tight text-white leading-tight">
+                  Smart Grocery
+                </h1>
+                <p className="text-[10px] text-blue-100/90 font-medium tracking-tight">
+                  Budget Safety Tracker
+                </p>
               </div>
-            </button>
+            </div>
 
             {/* Quick Action Buttons: Theme Toggle, Scan, & Bank Selector */}
             <div className="flex items-center gap-1.5">
@@ -153,7 +131,7 @@ export const App: React.FC = () => {
               <button
                 type="button"
                 onClick={toggleThemeMode}
-                className="bg-white/20 hover:bg-white/30 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 text-white font-bold p-2 rounded-xl backdrop-blur-sm transition-all shadow-sm min-h-[36px] min-w-[36px] flex items-center justify-center"
+                className="bg-white/20 hover:bg-white/30 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 text-white font-bold p-2 rounded-xl backdrop-blur-sm transition-all shadow-sm min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer"
                 title={isDark ? 'Beralih ke Light Mode' : 'Beralih ke Dark Mode'}
                 aria-label={isDark ? 'Mode Terang' : 'Mode Gelap'}
               >
@@ -164,11 +142,11 @@ export const App: React.FC = () => {
                 )}
               </button>
 
-              {/* Scan Barcode Button */}
+              {/* Scan Barcode Button (Tetap di header atas sesuai permintaan) */}
               <button
                 type="button"
                 onClick={openScanner}
-                className="bg-white/20 hover:bg-white/30 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 text-white font-bold text-[11px] px-2.5 py-1.5 rounded-xl backdrop-blur-sm transition-all flex items-center gap-1 shadow-sm min-h-[36px]"
+                className="bg-white/20 hover:bg-white/30 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 text-white font-bold text-[11px] px-2.5 py-1.5 rounded-xl backdrop-blur-sm transition-all flex items-center gap-1 shadow-sm min-h-[36px] cursor-pointer"
                 title="Scan Barcode Barang"
               >
                 <Scan className="w-3.5 h-3.5 text-amber-300" />
@@ -179,7 +157,7 @@ export const App: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsPaymentModalOpen(true)}
-                className="bg-white text-blue-800 dark:bg-blue-600 dark:text-white hover:bg-blue-50 dark:hover:bg-blue-700 active:scale-95 font-extrabold text-[11px] px-2.5 py-1.5 rounded-xl shadow-sm transition-all flex items-center gap-1 min-h-[36px]"
+                className="bg-white text-blue-800 dark:bg-blue-600 dark:text-white hover:bg-blue-50 dark:hover:bg-blue-700 active:scale-95 font-extrabold text-[11px] px-2.5 py-1.5 rounded-xl shadow-sm transition-all flex items-center gap-1 min-h-[36px] cursor-pointer"
                 title="Pilih Bank / Sumber Dana"
               >
                 <CreditCard className="w-3.5 h-3.5 text-blue-600 dark:text-blue-200" />
@@ -198,8 +176,11 @@ export const App: React.FC = () => {
           {activeTab === 'budget' && <BudgetPage />}
         </div>
 
-        {/* Floating Bottom Navigation */}
-        <BottomNavigation cartItemCount={cartItems.length} />
+        {/* Floating Bottom Navigation dengan Profil di Pojok Kanan Bawah */}
+        <BottomNavigation
+          cartItemCount={cartItems.length}
+          onOpenProfile={() => setIsProfileModalOpen(true)}
+        />
 
         {/* Modals: Barcode Scanner, Payment Method Selector, Sync, & Account Profile */}
         <BarcodeScannerModal
@@ -221,7 +202,6 @@ export const App: React.FC = () => {
         <AccountProfileModal
           isOpen={isProfileModalOpen}
           onClose={() => setIsProfileModalOpen(false)}
-          onOpenSyncModal={() => setIsSyncModalOpen(true)}
         />
       </main>
     </div>

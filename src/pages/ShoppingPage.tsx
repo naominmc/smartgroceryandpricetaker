@@ -775,32 +775,20 @@ export const ShoppingPage: React.FC = () => {
         onCancel={() => setIsCheckoutDialogOpen(false)}
       />
 
-      {/* Floating Sticky Quick Action Dock (Floating Island di atas Bottom Nav) */}
+      {/* Floating Action Button: + Tambah Barang Simpel (Tetap Floating di atas Bottom Nav) */}
       <div
         className="fixed left-0 right-0 z-30 flex justify-center pointer-events-none px-4"
         style={{ bottom: 'calc(env(safe-area-inset-bottom, 12px) + 72px)' }}
       >
-        <div className="w-full max-w-[430px] bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-1.5 rounded-2xl shadow-2xl border border-gray-200/80 dark:border-slate-700/80 flex items-center justify-between gap-2.5 pointer-events-auto">
-          {/* Quick Scan Barcode Floating Button */}
-          <button
-            type="button"
-            onClick={openScanner}
-            className="flex-1 flex items-center justify-center gap-1.5 py-3 px-3.5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-600 hover:to-amber-800 active:scale-95 text-white font-extrabold text-xs shadow-md shadow-amber-500/25 transition-all min-h-[46px] cursor-pointer"
-            title="Scan Barcode Supermarket"
-          >
-            <Scan className="w-4 h-4 text-white" />
-            <span>Scan Barcode</span>
-          </button>
-
-          {/* Quick Add Item Manual Floating Button */}
+        <div className="w-full max-w-[430px] flex justify-end pointer-events-auto pr-1">
           <button
             type="button"
             onClick={() => openAddItemSheet(null)}
-            className="flex-1 flex items-center justify-center gap-1.5 py-3 px-3.5 rounded-xl bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 active:scale-95 text-white font-extrabold text-xs shadow-md shadow-blue-500/25 transition-all min-h-[46px] cursor-pointer"
+            className="w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 active:scale-90 text-white shadow-xl shadow-blue-600/35 border-2 border-white/90 dark:border-slate-800 flex items-center justify-center transition-all cursor-pointer group"
             title="Tambah Barang Belanja"
+            aria-label="Tambah Barang"
           >
-            <Plus className="w-4 h-4 stroke-[3] text-white" />
-            <span>Tambah Barang</span>
+            <Plus className="w-7 h-7 stroke-[3] text-white transition-transform group-hover:rotate-90 group-hover:scale-110 duration-200" />
           </button>
         </div>
       </div>

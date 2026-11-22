@@ -1,14 +1,18 @@
 import React from 'react';
-import { ShoppingCart, History, Wallet } from 'lucide-react';
+import { ShoppingCart, History, Wallet, User } from 'lucide-react';
 import type { NavigationTab } from '../store/useStore';
 import { useStore } from '../store/useStore';
 
 interface BottomNavigationProps {
   cartItemCount?: number;
+  onOpenProfile?: () => void;
 }
 
-export const BottomNavigation: React.FC<BottomNavigationProps> = ({ cartItemCount = 0 }) => {
-  const { activeTab, setActiveTab } = useStore();
+export const BottomNavigation: React.FC<BottomNavigationProps> = ({
+  cartItemCount = 0,
+  onOpenProfile,
+}) => {
+  const { activeTab, setActiveTab, userProfile } = useStore();
 
   const navItems: { id: NavigationTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: 'shopping', label: 'Belanja', icon: ShoppingCart },
@@ -52,6 +56,32 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ cartItemCoun
               </button>
             );
           })}
+
+          {/* Profile Tab in Bottom Right Corner (Sejajar dengan Belanja, Riwayat, Anggaran) */}
+          <button
+            type="button"
+            onClick={() => {
+              if (onOpenProfile) {
+                onOpenProfile();
+              }
+            }}
+            className="relative flex flex-col items-center justify-center flex-1 py-1.5 px-2 rounded-xl transition-all duration-200 min-h-[48px] active:scale-95 text-text-secondary dark:text-slate-400 hover:text-text-main dark:hover:text-slate-200 font-medium cursor-pointer"
+            title="Menu Akun & Profil"
+            aria-label="Menu Akun & Profil"
+          >
+            <div className="relative">
+              {userProfile.avatarUrl ? (
+                <img
+                  src={userProfile.avatarUrl}
+                  alt={userProfile.username}
+                  className="w-5 h-5 rounded-full object-cover ring-1 ring-gray-300 dark:ring-slate-600"
+                />
+              ) : (
+                <User className="w-5 h-5" />
+              )}
+            </div>
+            <span className="text-[11px] mt-1 tracking-tight leading-none">Profil</span>
+          </button>
         </div>
       </div>
     </nav>

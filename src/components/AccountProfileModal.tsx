@@ -459,36 +459,6 @@ export const AccountProfileModal: React.FC<AccountProfileModalProps> = ({
             )}
           </div>
 
-          {/* Card 4: CLOUD SYNC & PERANGKAT (Fitur sebelumnya tetap ada & lengkap) */}
-          {onOpenSyncModal && (
-            <div className="bg-gradient-to-r from-blue-50/70 to-indigo-50/60 dark:from-slate-800/60 dark:to-blue-950/40 rounded-2xl p-3 border border-blue-100 dark:border-slate-700 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-blue-600 text-white shadow-xs">
-                  <Smartphone className="w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-text-main dark:text-slate-100">
-                    Sinkronisasi Multi-Perangkat
-                  </h4>
-                  <p className="text-[10px] text-text-secondary dark:text-slate-400">
-                    Firebase Cloud Firestore Realtime Sync
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  onOpenSyncModal();
-                }}
-                className="px-2.5 py-1.5 bg-white dark:bg-slate-700 hover:bg-blue-50 dark:hover:bg-slate-600 text-primary dark:text-blue-300 font-bold text-xs rounded-xl border border-blue-200 dark:border-slate-600 shadow-2xs transition-all cursor-pointer"
-              >
-                Buka Sync
-              </button>
-            </div>
-          )}
-
           {/* Action Buttons: Kembali ke Halaman Login, Ganti Akun, Keluar */}
           <div className="space-y-2 pt-1">
             <button
@@ -539,3 +509,4 @@ export const AccountProfileModal: React.FC<AccountProfileModalProps> = ({
     </div>
   );
 };
+
