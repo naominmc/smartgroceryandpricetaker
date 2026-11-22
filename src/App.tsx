@@ -6,6 +6,7 @@ import { BottomNavigation } from './components/BottomNavigation';
 import { ShoppingPage } from './pages/ShoppingPage';
 import { HistoryPage } from './pages/HistoryPage';
 import { BudgetPage } from './pages/BudgetPage';
+import { LoginPage } from './pages/LoginPage';
 import { PaymentMethodSelectorModal } from './components/PaymentMethodSelectorModal';
 import { BarcodeScannerModal } from './components/BarcodeScannerModal';
 import { SyncModal } from './components/SyncModal';
@@ -13,7 +14,7 @@ import { AccountProfileModal } from './components/AccountProfileModal';
 import { syncService } from './services/syncService';
 import { groceryService } from './services/groceryService';
 import type { ProductCategory } from './types';
-import { CreditCard, Sparkles, Scan, Sun, Moon, ShoppingCart } from 'lucide-react';
+import { CreditCard, Sparkles, Scan, Sun, Moon } from 'lucide-react';
 
 export const App: React.FC = () => {
   const {
@@ -27,6 +28,12 @@ export const App: React.FC = () => {
     toggleThemeMode,
   } = useStore();
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('smart_grocery_authenticated') === 'true';
+    }
+    return false;
+  });
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -81,6 +88,20 @@ export const App: React.FC = () => {
     );
   }
 
+  // Tampilkan Halaman Login / Welcome saat pertama kali membuka web atau saat logout
+  if (!isAuthenticated) {
+    return (
+      <LoginPage
+        onLogin={() => {
+          setIsAuthenticated(true);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('smart_grocery_authenticated', 'true');
+          }
+        }}
+      />
+    );
+  }
+
   const isDark = themeMode === 'dark';
 
   return (
@@ -103,10 +124,10 @@ export const App: React.FC = () => {
           <div className="absolute -right-6 -top-6 w-28 h-28 bg-white/10 dark:bg-blue-500/10 rounded-full blur-xl pointer-events-none" />
           <div className="absolute left-1/3 -bottom-4 w-20 h-20 bg-amber-400/15 rounded-full blur-lg pointer-events-none" />
 
-          <div className="relative z-10 flex items-center justify-between gap-2">
-            {/* App Logo Maskot Capybara & App Name + Tagline Unik */}
-            <div className="flex items-center gap-2.5">
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-300 via-orange-400 to-indigo-500 p-0.5 shadow-md flex-shrink-0 relative group">
+          <div className="relative z-10 flex items-center justify-between gap-1.5 sm:gap-2">
+            {/* App Logo Maskot Capybara & App Name + Tagline Unik (Selalu 1 Baris Sama Rata) */}
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-amber-300 via-orange-400 to-indigo-500 p-0.5 shadow-md flex-shrink-0 relative group">
                 <div className="w-full h-full bg-white/95 dark:bg-slate-900 rounded-[14px] overflow-hidden flex items-center justify-center">
                   <img
                     src="/capybara_logo.png"
@@ -122,30 +143,30 @@ export const App: React.FC = () => {
                 </span>
               </div>
 
-              <div>
-                <h1 className="font-black text-sm tracking-tight text-white leading-tight flex items-center gap-1">
+              <div className="min-w-0">
+                <h1 className="font-black text-xs sm:text-sm tracking-tight text-white leading-tight flex items-center gap-1 whitespace-nowrap">
                   <span>Smart Grocery</span>
                 </h1>
-                <p className="text-[10.5px] text-amber-200 font-extrabold tracking-tight drop-shadow-xs">
+                <p className="text-[9.5px] sm:text-[10.5px] text-amber-200 font-extrabold tracking-tight drop-shadow-xs whitespace-nowrap">
                   Belanja Santai, Anti Boncos!
                 </p>
               </div>
             </div>
 
             {/* Quick Action Buttons: Theme Toggle, Scan, & Bank Selector */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
               {/* Theme Mode Toggle Button (Light / Dark) */}
               <button
                 type="button"
                 onClick={toggleThemeMode}
-                className="bg-white/20 hover:bg-white/30 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 text-white font-bold p-2 rounded-xl backdrop-blur-sm transition-all shadow-sm min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer"
+                className="bg-white/20 hover:bg-white/30 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 text-white font-bold p-1.5 sm:p-2 rounded-xl backdrop-blur-sm transition-all shadow-sm min-h-[34px] min-w-[34px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center cursor-pointer"
                 title={isDark ? 'Beralih ke Light Mode' : 'Beralih ke Dark Mode'}
                 aria-label={isDark ? 'Mode Terang' : 'Mode Gelap'}
               >
                 {isDark ? (
-                  <Sun className="w-4 h-4 text-amber-300" />
+                  <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-300" />
                 ) : (
-                  <Moon className="w-4 h-4 text-blue-100" />
+                  <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-100" />
                 )}
               </button>
 
@@ -153,7 +174,7 @@ export const App: React.FC = () => {
               <button
                 type="button"
                 onClick={openScanner}
-                className="bg-white/20 hover:bg-white/30 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 text-white font-bold text-[11px] px-2.5 py-1.5 rounded-xl backdrop-blur-sm transition-all flex items-center gap-1 shadow-sm min-h-[36px] cursor-pointer"
+                className="bg-white/20 hover:bg-white/30 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 text-white font-bold text-[10.5px] sm:text-[11px] px-2 sm:px-2.5 py-1.5 rounded-xl backdrop-blur-sm transition-all flex items-center gap-1 shadow-sm min-h-[34px] sm:min-h-[36px] cursor-pointer whitespace-nowrap"
                 title="Scan Barcode Barang"
               >
                 <Scan className="w-3.5 h-3.5 text-amber-300" />
@@ -164,13 +185,11 @@ export const App: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsPaymentModalOpen(true)}
-                className="bg-white text-blue-800 dark:bg-blue-600 dark:text-white hover:bg-blue-50 dark:hover:bg-blue-700 active:scale-95 font-extrabold text-[11px] px-2.5 py-1.5 rounded-xl shadow-sm transition-all flex items-center gap-1 min-h-[36px] cursor-pointer"
+                className="bg-white text-blue-800 dark:bg-blue-600 dark:text-white hover:bg-blue-50 dark:hover:bg-blue-700 active:scale-95 font-extrabold text-[10.5px] sm:text-[11px] px-2 sm:px-2.5 py-1.5 rounded-xl shadow-sm transition-all flex items-center gap-1 min-h-[34px] sm:min-h-[36px] cursor-pointer whitespace-nowrap"
                 title="Pilih Bank / Sumber Dana"
               >
                 <CreditCard className="w-3.5 h-3.5 text-blue-600 dark:text-blue-200" />
-                <span className="truncate max-w-[80px]">
-                  {selectedPaymentMethod === 'Bank BCA' ? 'BCA' : selectedPaymentMethod}
-                </span>
+                <span>BCA</span>
               </button>
             </div>
           </div>
@@ -209,6 +228,13 @@ export const App: React.FC = () => {
         <AccountProfileModal
           isOpen={isProfileModalOpen}
           onClose={() => setIsProfileModalOpen(false)}
+          onLogout={() => {
+            setIsProfileModalOpen(false);
+            setIsAuthenticated(false);
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('smart_grocery_authenticated');
+            }
+          }}
         />
       </main>
     </div>

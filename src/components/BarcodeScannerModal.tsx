@@ -15,6 +15,7 @@ import {
   AlertCircle,
   ShieldAlert,
   Loader2,
+  Camera as CameraIcon,
 } from 'lucide-react';
 import {
   SUPERMARKET_CATALOG,
@@ -71,7 +72,11 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Separate file input refs: Gallery (no capture) & Camera (with capture="environment")
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  
   const scanTimerRef = useRef<any>(null);
   const zxingReaderRef = useRef<any>(null);
   const lastScannedCodeRef = useRef<{ code: string; timestamp: number } | null>(null);
@@ -168,7 +173,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
     } catch (err: any) {
       console.warn('Camera access denied or error:', err);
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        setCameraError('Izin akses kamera ditolak. Silakan izinkan kamera di browser atau pilih foto dari galeri.');
+        setCameraError('Izin akses kamera ditolak. Anda dapat menggunakan opsi Galeri Foto atau Ambil Gambar di bawah.');
         setPermissionState('denied');
       } else {
         setCameraError('Kamera tidak dapat diakses (' + (err.message || 'Error') + '). Gunakan galeri atau pencarian.');
@@ -278,6 +283,63 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
     }
   };
 
+  // Capture current video frame as a snapshot picture and decode barcode
+  const handleCaptureVideoFrame = async () => {
+    if (!videoRef.current || videoRef.current.readyState < 2) return;
+    try {
+      setIsDecodingPhoto(true);
+      setPhotoError(null);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = videoRef.current.videoWidth || 1280;
+      canvas.height = videoRef.current.videoHeight || 720;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+      }
+
+      let detectedBarcode: string | null = null;
+
+      // Try Native BarcodeDetector on canvas
+      if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
+        try {
+          const detector = new (window as any).BarcodeDetector({
+            formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'code_93', 'qr_code', 'itf'],
+          });
+          const barcodes = await detector.detect(canvas);
+          if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
+            detectedBarcode = barcodes[0].rawValue;
+          }
+        } catch (e) {
+          console.warn('Canvas detection error:', e);
+        }
+      }
+
+      // Try ZXing on canvas dataURL
+      if (!detectedBarcode && (window as any).ZXing) {
+        try {
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+          const codeReader = new (window as any).ZXing.BrowserMultiFormatReader();
+          const result = await codeReader.decodeFromImageUrl(dataUrl);
+          if (result && result.getText()) {
+            detectedBarcode = result.getText();
+          }
+        } catch {}
+      }
+
+      if (detectedBarcode) {
+        handleBarcodeDetected(detectedBarcode);
+      } else {
+        setPhotoError('Barcode tidak terdeteksi pada jepretan kamera. Pastikan barcode jelas dan pas di tengah kotak.');
+      }
+    } catch (err: any) {
+      console.error('Frame capture error:', err);
+      setPhotoError('Gagal memproses jepretan kamera.');
+    } finally {
+      setIsDecodingPhoto(false);
+    }
+  };
+
   // When a barcode is identified (via Camera or Photo Gallery)
   const handleBarcodeDetected = (code: string) => {
     if (!code) return;
@@ -380,8 +442,8 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
     } finally {
       setIsDecodingPhoto(false);
       URL.revokeObjectURL(objectUrl);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+      if (e.target) {
+        e.target.value = '';
       }
     }
   };
@@ -432,9 +494,19 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-md animate-fade-in">
-      {/* Hidden File Input for Photos / Gallery Access */}
+      {/* Input 1: Photo Gallery (Tanpa capture, murni buka album/galeri) */}
       <input
-        ref={fileInputRef}
+        ref={galleryInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handlePhotoUpload}
+        className="hidden"
+        aria-hidden="true"
+      />
+
+      {/* Input 2: Ambil Foto Kamera (Dengan capture="environment" untuk jepret langsung) */}
+      <input
+        ref={cameraInputRef}
         type="file"
         accept="image/*"
         capture="environment"
@@ -462,7 +534,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-white rounded-full hover:bg-gray-800 min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="p-2 text-gray-400 hover:text-white rounded-full hover:bg-gray-800 min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
             aria-label="Tutup"
           >
             <X className="w-5 h-5" />
@@ -470,7 +542,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
         </div>
 
         {/* Viewfinder / Camera Screen */}
-        <div className="relative w-full h-56 bg-black flex items-center justify-center overflow-hidden flex-shrink-0">
+        <div className="relative w-full h-60 bg-black flex items-center justify-center overflow-hidden flex-shrink-0">
           {cameraActive ? (
             <>
               <video
@@ -492,13 +564,13 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 <div className="absolute left-2 right-2 h-0.5 bg-gradient-to-r from-transparent via-red-500 to-transparent shadow-[0_0_10px_#ef4444] animate-pulse" />
               </div>
 
-              {/* Viewfinder Control Buttons (Torch, Flip, Gallery) */}
+              {/* Viewfinder Control Buttons (Torch, Flip, Gallery, Camera Photo) */}
               <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1.5">
                 {hasTorch && (
                   <button
                     type="button"
                     onClick={toggleTorch}
-                    className={`p-2 rounded-full backdrop-blur-md transition-all shadow-sm ${
+                    className={`p-2 rounded-full backdrop-blur-md transition-all shadow-sm cursor-pointer ${
                       isTorchOn ? 'bg-amber-400 text-gray-900' : 'bg-black/60 text-white hover:bg-black/80'
                     }`}
                     title={isTorchOn ? 'Matikan Lampu Flash' : 'Nyalakan Lampu Flash'}
@@ -510,27 +582,53 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 <button
                   type="button"
                   onClick={toggleCameraFacing}
-                  className="p-2 rounded-full bg-black/60 hover:bg-black/80 text-white backdrop-blur-md transition-all shadow-sm"
+                  className="p-2 rounded-full bg-black/60 hover:bg-black/80 text-white backdrop-blur-md transition-all shadow-sm cursor-pointer"
                   title="Putar Kamera"
                 >
                   <RotateCcw className="w-4 h-4" />
                 </button>
 
+                {/* Tombol Ambil Gambar / Snapshot dari Kamera */}
                 <button
                   type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="p-2 rounded-full bg-blue-600/80 hover:bg-blue-600 text-white backdrop-blur-md transition-all shadow-sm flex items-center gap-1 px-2.5"
-                  title="Pilih Foto dari Galeri"
+                  onClick={handleCaptureVideoFrame}
+                  className="p-2 rounded-full bg-emerald-600/90 hover:bg-emerald-600 text-white backdrop-blur-md transition-all shadow-sm flex items-center gap-1 px-2.5 cursor-pointer"
+                  title="Jepret Foto Barcode"
+                >
+                  <CameraIcon className="w-4 h-4" />
+                  <span className="text-[10px] font-bold">Jepret</span>
+                </button>
+
+                {/* Tombol Buka Galeri (Murni buka album, tanpa paksa kamera) */}
+                <button
+                  type="button"
+                  onClick={() => galleryInputRef.current?.click()}
+                  className="p-2 rounded-full bg-blue-600/90 hover:bg-blue-600 text-white backdrop-blur-md transition-all shadow-sm flex items-center gap-1 px-2.5 cursor-pointer"
+                  title="Buka Galeri Foto"
                 >
                   <ImageIcon className="w-4 h-4" />
                   <span className="text-[10px] font-bold">Galeri</span>
                 </button>
               </div>
 
-              <div className="absolute bottom-2 left-0 right-0 text-center pointer-events-none z-10">
-                <span className="text-[10px] font-medium text-white/90 bg-black/60 px-3 py-1 rounded-full backdrop-blur-sm">
-                  ⚡ Memindai Barcode Otomatis Real-time
-                </span>
+              {/* Bottom Shutter Action Bar */}
+              <div className="absolute bottom-2 left-0 right-0 flex items-center justify-center gap-2 z-20 px-3">
+                <button
+                  type="button"
+                  onClick={handleCaptureVideoFrame}
+                  className="py-1 px-3.5 rounded-full bg-white/90 hover:bg-white text-gray-900 text-[11px] font-extrabold shadow-md flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
+                >
+                  <CameraIcon className="w-3.5 h-3.5 text-primary" />
+                  <span>Ambil Gambar</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => galleryInputRef.current?.click()}
+                  className="py-1 px-3.5 rounded-full bg-black/60 hover:bg-black/80 text-white text-[11px] font-bold backdrop-blur-sm shadow-md flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
+                >
+                  <ImageIcon className="w-3.5 h-3.5 text-blue-300" />
+                  <span>Pilih Galeri</span>
+                </button>
               </div>
             </>
           ) : (
@@ -550,16 +648,17 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 </h3>
                 <p className="text-[11px] text-gray-400 mt-0.5 leading-relaxed">
                   {permissionState === 'denied'
-                    ? 'Aktifkan izin kamera di pengaturan browser Anda, atau gunakan opsi ambil foto dari galeri.'
+                    ? 'Gunakan opsi Ambil Foto Kamera atau Buka Galeri Foto di bawah untuk memindai barcode.'
                     : 'Izinkan kamera untuk memindai kemasan barang belanjaan secara langsung.'}
                 </p>
               </div>
 
+              {/* 3 Action Buttons: Izinkan Kamera, Ambil Foto, & Buka Galeri */}
               <div className="flex items-center gap-2 pt-1 flex-wrap justify-center">
                 <button
                   type="button"
                   onClick={() => startCamera('environment')}
-                  className="px-3.5 py-1.5 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold text-xs shadow-soft transition-all flex items-center gap-1.5 min-h-[38px]"
+                  className="px-3.5 py-1.5 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold text-xs shadow-soft transition-all flex items-center gap-1.5 min-h-[38px] cursor-pointer"
                 >
                   <Camera className="w-3.5 h-3.5" />
                   <span>Izinkan Kamera</span>
@@ -567,11 +666,22 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
 
                 <button
                   type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 transition-all flex items-center gap-1.5 min-h-[38px]"
+                  onClick={() => cameraInputRef.current?.click()}
+                  className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-soft transition-all flex items-center gap-1.5 min-h-[38px] cursor-pointer"
+                  title="Ambil foto barcode dengan kamera HP"
+                >
+                  <CameraIcon className="w-3.5 h-3.5 text-white" />
+                  <span>Ambil Foto</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => galleryInputRef.current?.click()}
+                  className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 transition-all flex items-center gap-1.5 min-h-[38px] cursor-pointer"
+                  title="Pilih foto barcode yang sudah tersimpan di galeri"
                 >
                   <ImageIcon className="w-3.5 h-3.5 text-blue-300" />
-                  <span>Pilih dari Galeri</span>
+                  <span>Buka Galeri</span>
                 </button>
               </div>
 
@@ -587,7 +697,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
           {isDecodingPhoto && (
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm z-30 flex flex-col items-center justify-center text-white space-y-2">
               <Loader2 className="w-7 h-7 text-blue-400 animate-spin" />
-              <p className="text-xs font-bold text-white">Membaca Barcode dari Foto Galeri...</p>
+              <p className="text-xs font-bold text-white">Membaca Barcode dari Gambar...</p>
             </div>
           )}
         </div>
@@ -602,7 +712,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
             <button
               type="button"
               onClick={() => setPhotoError(null)}
-              className="p-1 text-rose-500 hover:text-rose-800"
+              className="p-1 text-rose-500 hover:text-rose-800 cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -688,7 +798,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                     type="button"
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
                     disabled={quantity <= 1}
-                    className="w-7 h-7 flex items-center justify-center rounded bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-200 disabled:opacity-40"
+                    className="w-7 h-7 flex items-center justify-center rounded bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-200 disabled:opacity-40 cursor-pointer"
                   >
                     <Minus className="w-3.5 h-3.5" />
                   </button>
@@ -696,7 +806,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setQuantity(quantity + 1)}
-                    className="w-7 h-7 flex items-center justify-center rounded bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-200"
+                    className="w-7 h-7 flex items-center justify-center rounded bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-200 cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                   </button>
@@ -720,7 +830,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
               <button
                 type="button"
                 onClick={() => setDetectedItem(null)}
-                className="flex-1 py-2.5 px-3 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 font-semibold text-xs text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-750 min-h-[44px]"
+                className="flex-1 py-2.5 px-3 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 font-semibold text-xs text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-750 min-h-[44px] cursor-pointer"
               >
                 Scan Ulang
               </button>
@@ -728,7 +838,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 type="button"
                 disabled={isAdding}
                 onClick={handleConfirmAddToCart}
-                className="flex-[1.5] py-2.5 px-3 rounded-xl bg-primary hover:bg-primary-hover active:scale-95 text-white font-bold text-xs shadow-soft transition-all flex items-center justify-center gap-1.5 min-h-[44px]"
+                className="flex-[1.5] py-2.5 px-3 rounded-xl bg-primary hover:bg-primary-hover active:scale-95 text-white font-bold text-xs shadow-soft transition-all flex items-center justify-center gap-1.5 min-h-[44px] cursor-pointer"
               >
                 <ShoppingBag className="w-4 h-4" />
                 <span>{isAdding ? 'Memasukkan...' : 'Masukkan ke Troli'}</span>
@@ -743,14 +853,25 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 <label className="block text-xs font-bold text-gray-700 dark:text-slate-300">
                   Ketik Barcode atau Nama Produk
                 </label>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="text-xs text-primary dark:text-blue-400 font-bold hover:underline flex items-center gap-1"
-                >
-                  <ImageIcon className="w-3.5 h-3.5" />
-                  <span>Scan dari Galeri Foto</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => cameraInputRef.current?.click()}
+                    className="text-xs text-emerald-600 dark:text-emerald-400 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <CameraIcon className="w-3 h-3" />
+                    <span>Ambil Foto</span>
+                  </button>
+                  <span className="text-gray-300 dark:text-slate-600">•</span>
+                  <button
+                    type="button"
+                    onClick={() => galleryInputRef.current?.click()}
+                    className="text-xs text-primary dark:text-blue-400 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <ImageIcon className="w-3 h-3" />
+                    <span>Galeri Foto</span>
+                  </button>
+                </div>
               </div>
 
               <div className="relative">
@@ -781,7 +902,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                     key={item.barcode}
                     type="button"
                     onClick={() => handleBarcodeDetected(item.barcode)}
-                    className="flex items-center justify-between p-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50/70 dark:bg-slate-800 hover:bg-blue-50/60 dark:hover:bg-slate-750 hover:border-blue-300 dark:hover:border-blue-600 active:scale-98 transition-all text-left min-h-[48px]"
+                    className="flex items-center justify-between p-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50/70 dark:bg-slate-800 hover:bg-blue-50/60 dark:hover:bg-slate-750 hover:border-blue-300 dark:hover:border-blue-600 active:scale-98 transition-all text-left min-h-[48px] cursor-pointer"
                   >
                     <div className="min-w-0 flex-1 pr-2">
                       <div className="flex items-center gap-1 mb-0.5">

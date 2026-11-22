@@ -26,12 +26,14 @@ interface AccountProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenSyncModal?: () => void;
+  onLogout?: () => void;
 }
 
 export const AccountProfileModal: React.FC<AccountProfileModalProps> = ({
   isOpen,
   onClose,
   onOpenSyncModal,
+  onLogout,
 }) => {
   const { userProfile, updateUserProfile, themeMode } = useStore();
 
@@ -463,7 +465,14 @@ export const AccountProfileModal: React.FC<AccountProfileModalProps> = ({
           <div className="space-y-2 pt-1">
             <button
               type="button"
-              onClick={() => showToast('Anda saat ini sudah berada di dalam aplikasi terotentikasi.')}
+              onClick={() => {
+                onClose();
+                if (onLogout) {
+                  onLogout();
+                } else {
+                  showToast('Kembali ke Halaman Login...');
+                }
+              }}
               className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-98 text-white font-bold text-xs shadow-soft flex items-center justify-center gap-2 transition-all min-h-[42px] cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
@@ -485,7 +494,14 @@ export const AccountProfileModal: React.FC<AccountProfileModalProps> = ({
 
               <button
                 type="button"
-                onClick={() => showToast('Sesi akun naomiiracle aman tersimpan offline & cloud.')}
+                onClick={() => {
+                  onClose();
+                  if (onLogout) {
+                    onLogout();
+                  } else {
+                    showToast('Keluar dari sesi akun.');
+                  }
+                }}
                 className="py-2.5 px-3 rounded-xl border border-red-200 dark:border-rose-900/60 bg-red-50/50 dark:bg-rose-950/30 text-danger dark:text-rose-400 hover:bg-red-100 dark:hover:bg-rose-900/50 font-bold text-xs flex items-center justify-center gap-1.5 transition-all min-h-[42px] cursor-pointer"
               >
                 <LogOut className="w-3.5 h-3.5" />
