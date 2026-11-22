@@ -37,8 +37,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
   const [bio, setBio] = useState(userProfile.bio);
   const [currency, setCurrency] = useState(userProfile.currency);
 
-  // Password management
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  // Password management inside Edit Profile
   const [showPassword, setShowPassword] = useState(false);
   const [currentPasswordDisplay, setCurrentPasswordDisplay] = useState(userProfile.passwordMasked || 'naomi12345');
   const [newPassword, setNewPassword] = useState('');
@@ -199,6 +198,20 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
       showToast('⚠️ Username tidak boleh kosong!');
       return;
     }
+
+    if (newPassword) {
+      if (newPassword.length < 6) {
+        setPasswordError('Kata sandi baru minimal 6 karakter!');
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        setPasswordError('Konfirmasi kata sandi tidak cocok!');
+        return;
+      }
+      setCurrentPasswordDisplay(newPassword);
+      updateUserProfile({ passwordMasked: newPassword });
+    }
+
     updateUserProfile({
       fullName: fullName.trim() || 'naomi miracle',
       username: cleanUsername,
@@ -206,26 +219,10 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
       currency,
     });
     setIsEditing(false);
-    showToast('Profil berhasil disimpan! ✨');
-  };
-
-  const handleSavePassword = () => {
-    setPasswordError(null);
-    if (!newPassword || newPassword.length < 6) {
-      setPasswordError('Kata sandi baru minimal 6 karakter!');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setPasswordError('Konfirmasi kata sandi tidak cocok!');
-      return;
-    }
-
-    setCurrentPasswordDisplay(newPassword);
-    updateUserProfile({ passwordMasked: newPassword });
-    setIsChangingPassword(false);
     setNewPassword('');
     setConfirmPassword('');
-    showToast('Kata sandi akun berhasil diperbarui! 🔒');
+    setPasswordError(null);
+    showToast('Profil & Pengaturan berhasil disimpan! ✨');
   };
 
   return (
@@ -390,11 +387,67 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
               <button
                 type="button"
                 onClick={handleRemoveAvatar}
-                className="text-[10px] text-danger dark:text-rose-400 font-semibold hover:underline mt-1 cursor-pointer"
+                className="text-[10px] text-danger dark:text-rose-400 font-semibold hover:underline mt-1 cursor-pointer block"
               >
                 Hapus foto profil khusus
               </button>
             )}
+
+            {/* Kata Sandi Akun - Hanya Muncul Di Dalam Mode Edit Profil */}
+            <div className="pt-2 border-t border-gray-100 dark:border-slate-700/80 space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] text-text-secondary dark:text-slate-400 font-semibold flex items-center gap-1">
+                  <Lock className="w-3 h-3 text-primary dark:text-blue-400" />
+                  <span>Ganti Kata Sandi (Opsional):</span>
+                </label>
+                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-0.5">
+                  <ShieldCheck className="w-3 h-3" />
+                  <span>Terenkripsi</span>
+                </span>
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => {
+                      setNewPassword(e.target.value);
+                      if (passwordError) setPasswordError(null);
+                    }}
+                    placeholder="Kata sandi baru (kosongkan jika tidak diubah)"
+                    className="w-full text-xs px-2.5 py-1.5 pr-8 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-text-main dark:hover:text-slate-200 cursor-pointer p-0.5"
+                    title={showPassword ? 'Sembunyikan sandi' : 'Tampilkan sandi'}
+                  >
+                    {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+
+                {newPassword && (
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value);
+                      if (passwordError) setPasswordError(null);
+                    }}
+                    placeholder="Ulangi kata sandi baru"
+                    className="w-full text-xs px-2.5 py-1.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary font-mono animate-fade-in"
+                  />
+                )}
+
+                {passwordError && (
+                  <p className="text-[10px] text-danger dark:text-rose-400 font-bold">
+                    {passwordError}
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
@@ -449,11 +502,11 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
         </select>
       </div>
 
-      {/* Card: PERANGKAT & APLIKASI (Pasang PWA - Tepat Di Bawah Mata Uang Belanja Sesuai Foto User) */}
-      <div className="bg-card dark:bg-slate-800/90 rounded-2xl p-3.5 border border-border dark:border-slate-700 shadow-soft space-y-2">
+      {/* Card: PERANGKAT & APLIKASI (Pasang PWA - Mengikuti Gaya UI Aplikasi) */}
+      <div className="bg-card dark:bg-slate-800/90 rounded-2xl p-3.5 border border-border dark:border-slate-700 shadow-soft space-y-2.5">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-black tracking-wider text-text-secondary dark:text-slate-400 uppercase flex items-center gap-1.5">
-            <span>📱</span>
+            <Smartphone className="w-3.5 h-3.5 text-primary dark:text-blue-400" />
             <span>Perangkat &amp; Aplikasi</span>
           </span>
           {isPwaInstalled && (
@@ -477,7 +530,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
           <button
             type="button"
             onClick={handleInstallPWA}
-            className="px-3.5 py-1.5 rounded-full bg-[#bd4f6c] hover:bg-[#a8445e] active:scale-95 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer flex-shrink-0 min-h-[36px]"
+            className="px-3.5 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/70 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-primary dark:text-blue-300 border border-blue-200 dark:border-blue-800 font-bold text-xs flex items-center gap-1.5 shadow-soft transition-all cursor-pointer flex-shrink-0 min-h-[38px] active:scale-95"
             title="Pasang Aplikasi PWA"
           >
             <Smartphone className="w-3.5 h-3.5" />
@@ -497,103 +550,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
             >
               Aktifkan Kembali
             </button>
-          </div>
-        )}
-      </div>
-
-      {/* Card 3: KATA SANDI AKUN */}
-      <div className="bg-card dark:bg-slate-800/90 rounded-2xl p-3.5 border border-border dark:border-slate-700 shadow-soft space-y-2.5">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-black tracking-wider text-text-secondary dark:text-slate-400 uppercase flex items-center gap-1">
-            <Lock className="w-3 h-3" />
-            <span>Kata Sandi Akun</span>
-          </span>
-
-          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-0.5">
-            <ShieldCheck className="w-3 h-3" />
-            <span>Terenkripsi</span>
-          </span>
-        </div>
-
-        {/* Masked Password Field with Eye Toggle */}
-        <div className="flex items-center gap-2">
-          <div className="flex-1 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 flex items-center justify-between text-xs font-mono min-h-[40px]">
-            <span className="tracking-widest font-extrabold text-text-main dark:text-slate-100">
-              {showPassword ? currentPasswordDisplay : '••••••••••••••••'}
-            </span>
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="p-1 text-gray-400 hover:text-text-main dark:hover:text-slate-200 transition-colors cursor-pointer"
-              title={showPassword ? 'Sembunyikan sandi' : 'Tampilkan sandi'}
-            >
-              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setIsChangingPassword(!isChangingPassword)}
-            className="bg-blue-50 dark:bg-blue-950/70 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-primary dark:text-blue-300 border border-blue-200 dark:border-blue-800 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1 transition-all cursor-pointer min-h-[40px]"
-          >
-            <Edit3 className="w-3.5 h-3.5" />
-            <span>Ganti Sandi</span>
-          </button>
-        </div>
-
-        {/* Inline Password Change Form */}
-        {isChangingPassword && (
-          <div className="pt-2 border-t border-gray-100 dark:border-slate-700/80 space-y-2 animate-slide-up">
-            <div>
-              <label className="text-[10px] text-text-secondary dark:text-slate-400 font-semibold block mb-0.5">
-                Kata Sandi Baru:
-              </label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Minimal 6 karakter"
-                className="w-full text-xs px-2.5 py-1.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary font-mono"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] text-text-secondary dark:text-slate-400 font-semibold block mb-0.5">
-                Ulangi Kata Sandi Baru:
-              </label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Konfirmasi sandi baru"
-                className="w-full text-xs px-2.5 py-1.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary font-mono"
-              />
-            </div>
-
-            {passwordError && (
-              <p className="text-[10px] text-danger dark:text-rose-400 font-bold">
-                {passwordError}
-              </p>
-            )}
-
-            <div className="flex gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsChangingPassword(false);
-                  setPasswordError(null);
-                }}
-                className="flex-1 py-1.5 rounded-xl border border-gray-300 dark:border-slate-700 text-xs font-semibold text-text-secondary dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer"
-              >
-                Batal
-              </button>
-              <button
-                type="button"
-                onClick={handleSavePassword}
-                className="flex-1 py-1.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-soft cursor-pointer"
-              >
-                Simpan Sandi
-              </button>
-            </div>
           </div>
         )}
       </div>

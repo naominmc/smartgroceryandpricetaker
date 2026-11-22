@@ -106,9 +106,6 @@ export const PWAInstallBanner: React.FC = () => {
                 <h3 className="text-xs font-bold text-text-main dark:text-slate-100 leading-tight">
                   Sembunyikan Notifikasi PWA?
                 </h3>
-                <p className="text-[10.5px] text-text-secondary dark:text-slate-400 mt-1 leading-relaxed">
-                  Pilih apakah banner pemasangan aplikasi ingin disembunyikan seterusnya atau sementara saja.
-                </p>
               </div>
             </div>
 
