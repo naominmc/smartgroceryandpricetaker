@@ -38,3 +38,14 @@ export function parseRupiah(input: string): number {
   const parsed = parseInt(cleaned, 10);
   return isNaN(parsed) ? 0 : parsed;
 }
+
+/**
+ * Formats a raw number or numeric string into dots separated thousands (Indonesian standard)
+ * Example: 1000 -> 1.000, 100000 -> 100.000, 1235678 -> 1.235.678
+ */
+export function formatNumberWithDots(value: string | number | undefined | null): string {
+  if (value === undefined || value === null || value === '') return '';
+  const clean = value.toString().replace(/\D/g, '');
+  if (!clean) return '';
+  return clean.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}

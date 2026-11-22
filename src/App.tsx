@@ -42,6 +42,19 @@ export const App: React.FC = () => {
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  const getShortPaymentName = (method: string): string => {
+    if (!method) return 'BCA';
+    if (method.includes('Alipay')) return 'Alipay';
+    if (method.includes('Visa')) return 'VISA';
+    if (method.includes('Mastercard')) return 'MC';
+    if (method.includes('GoPay') || method.includes('QRIS')) return 'GoPay';
+    if (method.includes('Mandiri')) return 'Mandiri';
+    if (method.includes('Blu')) return 'Blu BCA';
+    if (method.includes('Tunai') || method.includes('Cash')) return 'Tunai';
+    if (method.includes('BCA')) return 'BCA';
+    return method.replace('Bank ', '').split(' ')[0] || 'Bank';
+  };
+
   const handleTriggerRefresh = () => {
     if (isRefreshing) return;
     setIsRefreshing(true);
@@ -276,15 +289,15 @@ export const App: React.FC = () => {
                 <Scan className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-300" />
               </button>
 
-              {/* Bank Selector Button (Bank BCA) */}
+              {/* Bank Selector Button (Dinamis Sesuai Akun Bank Terpilih) */}
               <button
                 type="button"
                 onClick={() => setIsPaymentModalOpen(true)}
                 className="bg-white text-blue-800 dark:bg-blue-600 dark:text-white hover:bg-blue-50 dark:hover:bg-blue-700 active:scale-95 font-extrabold text-[10.5px] sm:text-[11px] px-2 sm:px-2.5 py-1.5 rounded-xl shadow-sm transition-all flex items-center gap-1 min-h-[34px] sm:min-h-[36px] cursor-pointer whitespace-nowrap"
-                title="Pilih Bank / Sumber Dana"
+                title={`Pilih Sumber Dana (Saat ini: ${selectedPaymentMethod})`}
               >
-                <CreditCard className="w-3.5 h-3.5 text-blue-600 dark:text-blue-200" />
-                <span>BCA</span>
+                <CreditCard className="w-3.5 h-3.5 text-blue-600 dark:text-blue-200 flex-shrink-0" />
+                <span className="truncate max-w-[65px] sm:max-w-[85px]">{getShortPaymentName(selectedPaymentMethod)}</span>
               </button>
             </div>
           </div>

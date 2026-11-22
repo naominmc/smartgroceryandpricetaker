@@ -193,9 +193,16 @@ export const useStore = create<AppState>((set, get) => {
       });
     },
 
-    // Default payment storage / bank: Bank BCA requested by user
-    selectedPaymentMethod: PAYMENT_ACCOUNTS[0].name, // 'Bank BCA'
-    setSelectedPaymentMethod: (method) => set({ selectedPaymentMethod: method }),
+    // Default payment storage / bank: Bank BCA requested by user (persisted in localStorage)
+    selectedPaymentMethod: typeof window !== 'undefined'
+      ? (localStorage.getItem('smart_grocery_payment_method') || PAYMENT_ACCOUNTS[0].name)
+      : PAYMENT_ACCOUNTS[0].name,
+    setSelectedPaymentMethod: (method) => {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('smart_grocery_payment_method', method);
+      }
+      set({ selectedPaymentMethod: method });
+    },
 
     sessionLocation: typeof window !== 'undefined' ? (localStorage.getItem('smart_grocery_location') || 'LOTTE MART GROCERY - PURI INDAH').toUpperCase() : 'LOTTE MART GROCERY - PURI INDAH',
     setSessionLocation: (loc) => {

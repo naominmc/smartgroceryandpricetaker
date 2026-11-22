@@ -19,7 +19,11 @@ import {
   Smartphone,
   RotateCcw,
   X,
+  Calendar,
+  MapPin,
+  AlertTriangle,
 } from 'lucide-react';
+import type { PurchaseTransaction } from '../types';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/database';
 import { formatRupiah } from '../utils/currency';
@@ -51,6 +55,10 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  // Recycle Bin Modal Confirmation states
+  const [txToRestore, setTxToRestore] = useState<PurchaseTransaction | null>(null);
+  const [txToDeletePermanent, setTxToDeletePermanent] = useState<PurchaseTransaction | null>(null);
 
   // Storage and cache usage state
   const [storageInfo, setStorageInfo] = useState<{
@@ -669,30 +677,30 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
       </div>
 
       {/* Card: BARU SAJA DIHAPUS (RECYCLE BIN 30 HARI - SETELAH PWA) */}
-      <div className="bg-card dark:bg-slate-800/90 rounded-2xl p-3.5 border border-border dark:border-slate-700 shadow-soft space-y-2.5">
+      <div className="bg-card dark:bg-slate-800/90 rounded-2xl p-4 border border-border dark:border-slate-700 shadow-soft space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] font-black tracking-wider text-text-secondary dark:text-slate-400 uppercase flex items-center gap-1.5">
+          <span className="text-[10.5px] font-black tracking-wider text-text-secondary dark:text-slate-400 uppercase flex items-center gap-1.5">
             <Trash2 className="w-3.5 h-3.5 text-danger dark:text-rose-400" />
             <span>Baru Saja Dihapus (Recycle Bin)</span>
           </span>
 
-          <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-red-50 dark:bg-rose-950/70 border border-red-200/60 dark:border-rose-900/60 px-2 py-0.5 rounded-full flex items-center gap-1">
+          <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-red-50 dark:bg-rose-950/70 border border-red-200/60 dark:border-rose-900/60 px-2.5 py-0.5 rounded-full flex items-center gap-1">
             <span>{deletedTransactions.length} Struk</span>
           </span>
         </div>
 
-        <p className="text-[10.5px] text-text-secondary dark:text-slate-400 leading-snug">
+        <p className="text-[11px] text-text-secondary dark:text-slate-400 leading-snug">
           Struk yang dihapus tersimpan di sini selama <strong>30 hari</strong> sebelum terhapus permanen. Anda dapat memulihkannya kembali ke Riwayat kapan saja.
         </p>
 
         {deletedTransactions.length === 0 ? (
-          <div className="bg-gray-50/80 dark:bg-slate-900/60 rounded-xl p-3 text-center border border-dashed border-gray-200 dark:border-slate-750">
+          <div className="bg-gray-50/80 dark:bg-slate-900/60 rounded-xl p-4 text-center border border-dashed border-gray-200 dark:border-slate-750">
             <p className="text-xs font-semibold text-text-secondary dark:text-slate-400">
               Tidak ada struk di tempat sampah 🍃
             </p>
           </div>
         ) : (
-          <div className="space-y-2 pt-1">
+          <div className="space-y-3 pt-1">
             {deletedTransactions.map((tx) => {
               const txDate = new Date(tx.purchasedAt);
               const dateStr = txDate.toLocaleDateString('id-ID', {
@@ -700,6 +708,10 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
                 month: 'short',
                 year: 'numeric',
               });
+              const timeStr = `pukul ${txDate.toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit',
+              }).replace(':', '.')}`;
               const daysRemaining = tx.deletedAt
                 ? Math.max(1, 30 - Math.floor((Date.now() - new Date(tx.deletedAt).getTime()) / (1000 * 60 * 60 * 24)))
                 : 30;
@@ -707,52 +719,56 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
               return (
                 <div
                   key={tx.id}
-                  className="bg-white dark:bg-slate-900/90 rounded-xl p-2.5 border border-gray-200 dark:border-slate-700/80 shadow-2xs flex flex-col gap-2"
+                  className="bg-white dark:bg-slate-900/90 rounded-2xl p-3.5 border border-gray-200 dark:border-slate-700/80 shadow-xs flex flex-col gap-2.5"
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-text-main dark:text-slate-200">
-                        <span>{dateStr}</span>
-                        <span className="text-gray-400">•</span>
-                        <span className="text-primary dark:text-blue-400 truncate">
-                          {((tx.location && tx.location.trim()) ? tx.location.trim() : 'LOTTE MART GROCERY').toUpperCase()}
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-text-secondary dark:text-slate-400 mt-0.5">
-                        {tx.items?.length || 0} barang • {formatRupiah(tx.finalTotal)}
-                      </p>
+                  {/* Top row: Tanggal & Waktu + Sisa Hari */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 text-xs text-text-secondary dark:text-slate-400 font-medium">
+                      <Calendar className="w-3.5 h-3.5 text-gray-400 dark:text-slate-500 flex-shrink-0" />
+                      <span className="font-bold text-text-main dark:text-slate-200">{dateStr}</span>
+                      <span className="text-[10.5px]">({timeStr})</span>
                     </div>
 
-                    <span className="text-[9.5px] font-extrabold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/70 border border-amber-200 dark:border-amber-900 px-1.5 py-0.5 rounded-md whitespace-nowrap">
+                    <span className="text-[10px] font-extrabold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/70 border border-amber-200 dark:border-amber-900 px-2 py-0.5 rounded-full whitespace-nowrap">
                       Sisa {daysRemaining} hari
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-1.5 pt-1 border-t border-gray-100 dark:border-slate-800">
+                  {/* Middle row: Toko Lokasi */}
+                  <div className="text-[11px] font-bold text-primary dark:text-blue-400 uppercase tracking-tight flex items-center gap-1">
+                    <MapPin className="w-3 h-3 flex-shrink-0" />
+                    <span className="truncate">
+                      {((tx.location && tx.location.trim()) ? tx.location.trim() : 'LOTTE MART GROCERY - PURI INDAH').toUpperCase()}
+                    </span>
+                  </div>
+
+                  {/* Pricing row */}
+                  <div className="flex items-center justify-between text-xs pt-1.5 border-t border-gray-100 dark:border-slate-800">
+                    <span className="text-[11px] text-text-secondary dark:text-slate-400 font-medium">
+                      {tx.items?.length || 0} jenis barang
+                    </span>
+                    <span className="font-extrabold text-sm text-text-main dark:text-slate-100">
+                      {formatRupiah(tx.finalTotal)}
+                    </span>
+                  </div>
+
+                  {/* Action buttons with warning modals */}
+                  <div className="flex items-center gap-2 pt-1">
                     <button
                       type="button"
-                      onClick={async () => {
-                        await db.transactions.update(tx.id, {
-                          isDeleted: false,
-                          deletedAt: undefined,
-                        });
-                        showToast('Struk berhasil dipulihkan ke Riwayat! 🎉');
-                      }}
-                      className="flex-1 py-1 px-2 rounded-lg bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-primary dark:text-blue-300 font-bold text-[11px] flex items-center justify-center gap-1 transition-all cursor-pointer border border-blue-200 dark:border-blue-900/60 min-h-[30px]"
+                      onClick={() => setTxToRestore(tx)}
+                      className="flex-1 py-2 px-3 rounded-xl bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-primary dark:text-blue-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-blue-200 dark:border-blue-900/60 min-h-[36px] active:scale-95"
                     >
-                      <RotateCcw className="w-3 h-3" />
+                      <RotateCcw className="w-3.5 h-3.5" />
                       <span>Pulihkan</span>
                     </button>
 
                     <button
                       type="button"
-                      onClick={async () => {
-                        await db.transactions.delete(tx.id);
-                        showToast('Struk telah dihapus permanen.');
-                      }}
-                      className="py-1 px-2.5 rounded-lg text-danger dark:text-rose-400 hover:bg-red-50 dark:hover:bg-rose-950/60 font-bold text-[11px] flex items-center justify-center gap-1 transition-all cursor-pointer border border-red-200 dark:border-rose-900/60 min-h-[30px]"
+                      onClick={() => setTxToDeletePermanent(tx)}
+                      className="py-2 px-3.5 rounded-xl text-danger dark:text-rose-400 hover:bg-red-50 dark:hover:bg-rose-950/60 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-red-200 dark:border-rose-900/60 min-h-[36px] active:scale-95"
                     >
-                      <Trash2 className="w-3 h-3" />
+                      <Trash2 className="w-3.5 h-3.5" />
                       <span>Hapus Permanen</span>
                     </button>
                   </div>
@@ -764,11 +780,13 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
               <button
                 type="button"
                 onClick={async () => {
-                  const ids = deletedTransactions.map((t) => t.id);
-                  await Promise.all(ids.map((id) => db.transactions.delete(id)));
-                  showToast('Semua struk di tempat sampah telah dikosongkan.');
+                  if (window.confirm('Hapus seluruh struk di tempat sampah secara permanen?')) {
+                    const ids = deletedTransactions.map((t) => t.id);
+                    await Promise.all(ids.map((id) => db.transactions.delete(id)));
+                    showToast('Semua struk di tempat sampah telah dikosongkan.');
+                  }
                 }}
-                className="w-full text-center text-[10.5px] font-bold text-danger dark:text-rose-400 hover:underline pt-1 cursor-pointer block"
+                className="w-full text-center text-[11px] font-bold text-danger dark:text-rose-400 hover:underline pt-1 cursor-pointer block"
               >
                 Kosongkan Semua Sampah
               </button>
@@ -950,6 +968,113 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
             >
               Mengerti
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Warning Modal: Konfirmasi Pulihkan Struk Belanja */}
+      {txToRestore && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-[340px] bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-modal animate-scale-up border dark:border-slate-800 space-y-3.5">
+            <div className="flex items-center gap-2.5 text-blue-600 dark:text-blue-400">
+              <div className="w-9 h-9 rounded-full bg-blue-50 dark:bg-blue-950/80 flex items-center justify-center flex-shrink-0">
+                <RotateCcw className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-sm text-text-main dark:text-slate-100">
+                  Pulihkan Struk Belanja?
+                </h3>
+                <span className="text-[10px] text-text-secondary dark:text-slate-400 font-medium">
+                  Konfirmasi Pengembalian
+                </span>
+              </div>
+            </div>
+
+            <p className="text-xs text-text-secondary dark:text-slate-300 leading-relaxed">
+              Struk belanja dari <strong className="text-text-main dark:text-slate-100">{txToRestore.location || 'LOTTE MART GROCERY'}</strong> senilai <strong className="text-primary dark:text-blue-400">{formatRupiah(txToRestore.finalTotal)}</strong> akan dipulihkan kembali ke daftar Riwayat transaksi aktif Anda.
+            </p>
+
+            <div className="bg-blue-50/80 dark:bg-blue-950/40 p-2.5 rounded-xl border border-blue-100 dark:border-blue-900/60 text-[11px] text-blue-800 dark:text-blue-300 flex items-start gap-1.5 font-medium">
+              <span className="flex-shrink-0">💡</span>
+              <span>Struk ini akan kembali dihitung ke dalam ringkasan belanja dan histori pengeluaran.</span>
+            </div>
+
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setTxToRestore(null)}
+                className="flex-1 py-2.5 px-3 rounded-xl border border-gray-300 dark:border-slate-700 text-text-main dark:text-slate-200 font-bold text-xs hover:bg-gray-50 dark:hover:bg-slate-800 min-h-[42px] cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  await db.transactions.update(txToRestore.id, {
+                    isDeleted: false,
+                    deletedAt: undefined,
+                  });
+                  syncService.notifyChange();
+                  showToast('Struk berhasil dipulihkan ke Riwayat! 🎉');
+                  setTxToRestore(null);
+                }}
+                className="flex-1 py-2.5 px-3 rounded-xl bg-primary hover:bg-primary-hover active:scale-95 text-white font-bold text-xs shadow-soft min-h-[42px] cursor-pointer"
+              >
+                Ya, Pulihkan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Warning Modal: Konfirmasi Hapus Struk Permanen */}
+      {txToDeletePermanent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-[340px] bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-modal animate-scale-up border border-rose-200 dark:border-rose-950 space-y-3.5">
+            <div className="flex items-center gap-2.5 text-danger dark:text-rose-400">
+              <div className="w-9 h-9 rounded-full bg-red-50 dark:bg-rose-950/80 flex items-center justify-center flex-shrink-0">
+                <Trash2 className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-sm text-text-main dark:text-slate-100">
+                  Hapus Struk Permanen?
+                </h3>
+                <span className="text-[10px] text-danger dark:text-rose-400 font-bold">
+                  Tidak Dapat Dibatalkan
+                </span>
+              </div>
+            </div>
+
+            <p className="text-xs text-text-secondary dark:text-slate-300 leading-relaxed">
+              Apakah Anda yakin ingin menghapus struk belanja dari <strong className="text-text-main dark:text-slate-100">{txToDeletePermanent.location || 'LOTTE MART GROCERY'}</strong> senilai <strong className="text-text-main dark:text-slate-100">{formatRupiah(txToDeletePermanent.finalTotal)}</strong>?
+            </p>
+
+            <div className="bg-red-50/80 dark:bg-rose-950/40 p-2.5 rounded-xl border border-red-200/80 dark:border-rose-900/60 text-[11px] text-rose-800 dark:text-rose-300 flex items-start gap-1.5 font-semibold">
+              <span className="flex-shrink-0">⚠️</span>
+              <span>Data struk ini akan dihapus selamanya dari memori lokal dan tidak bisa dikembalikan lagi jika tidak sengaja kepencet!</span>
+            </div>
+
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setTxToDeletePermanent(null)}
+                className="flex-1 py-2.5 px-3 rounded-xl border border-gray-300 dark:border-slate-700 text-text-main dark:text-slate-200 font-bold text-xs hover:bg-gray-50 dark:hover:bg-slate-800 min-h-[42px] cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  await db.transactions.delete(txToDeletePermanent.id);
+                  syncService.notifyChange();
+                  showToast('Struk telah dihapus permanen.');
+                  setTxToDeletePermanent(null);
+                }}
+                className="flex-1 py-2.5 px-3 rounded-xl bg-danger hover:bg-red-700 active:scale-95 text-white font-bold text-xs shadow-soft min-h-[42px] cursor-pointer"
+              >
+                Hapus Permanen
+              </button>
+            </div>
           </div>
         </div>
       )}

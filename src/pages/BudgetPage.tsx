@@ -19,7 +19,7 @@ import { PaymentMethodSelectorModal } from '../components/PaymentMethodSelectorM
 import type { BudgetStatus } from '../types';
 import { PRODUCT_CATEGORIES } from '../types';
 import { calculateCartTotals, evaluateBudgetSafety } from '../utils/calculations';
-import { formatRupiah, getActiveCurrency } from '../utils/currency';
+import { formatRupiah, getActiveCurrency, formatNumberWithDots } from '../utils/currency';
 import { formatPeriodLabel, getCurrentMonthPeriod } from '../utils/priceComparison';
 
 export const BudgetPage: React.FC = () => {
@@ -137,20 +137,31 @@ export const BudgetPage: React.FC = () => {
         </div>
 
         <form onSubmit={handleSaveBudget} className="space-y-3">
-          <div className="relative">
-            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-sm text-gray-400 dark:text-slate-500">
-              {getActiveCurrency().symbol}
-            </span>
-            <input
-              type="number"
-              min="0"
-              onKeyDown={(e) => { if (e.key === "-" || e.key === "Subtract") e.preventDefault(); }}
-              inputMode="numeric"
-              value={budgetLimitInput}
-              onChange={(e) => setBudgetLimitInput(e.target.value)}
-              placeholder="1200000"
-              className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 font-bold text-base outline-none focus:ring-2 focus:ring-primary min-h-[44px]"
-            />
+          <div className="space-y-1.5">
+            <div className="relative">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-sm text-gray-400 dark:text-slate-500">
+                {getActiveCurrency().symbol}
+              </span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={formatNumberWithDots(budgetLimitInput)}
+                onChange={(e) => {
+                  const rawDigits = e.target.value.replace(/\D/g, '');
+                  setBudgetLimitInput(rawDigits);
+                }}
+                placeholder="1.200.000"
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 font-bold text-base outline-none focus:ring-2 focus:ring-primary min-h-[44px]"
+              />
+            </div>
+            {budgetLimitInput && (
+              <p className="text-[11px] text-text-secondary dark:text-slate-400 font-semibold px-0.5">
+                Nilai:{' '}
+                <strong className="text-primary dark:text-blue-400">
+                  {formatRupiah(parseInt(budgetLimitInput || '0', 10))}
+                </strong>
+              </p>
+            )}
           </div>
 
           <button
