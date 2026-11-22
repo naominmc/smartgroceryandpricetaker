@@ -2,9 +2,11 @@ import { create } from 'zustand';
 import type { CartItem, SupermarketCatalogItem } from '../types';
 import { PAYMENT_ACCOUNTS } from '../data/paymentMethods';
 import { soundService } from '../utils/sound';
+import type { AppLanguage } from '../utils/i18n';
 
 export type NavigationTab = 'shopping' | 'history' | 'budget' | 'profile';
 export type ThemeMode = 'light' | 'dark';
+export type { AppLanguage };
 
 export interface UserProfile {
   fullName: string;
@@ -26,6 +28,10 @@ interface AppState {
   themeMode: ThemeMode;
   toggleThemeMode: () => void;
   setThemeMode: (mode: ThemeMode) => void;
+
+  // Language Selection: id | en | zh
+  language: AppLanguage;
+  setLanguage: (lang: AppLanguage) => void;
 
   // Sound Effects (Pop on click, Cha-ching on checkout)
   isSoundEnabled: boolean;
@@ -85,6 +91,14 @@ const getInitialTheme = (): ThemeMode => {
     if (window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
   }
   return 'light';
+};
+
+const getInitialLanguage = (): AppLanguage => {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem('smart_grocery_lang');
+    if (saved === 'id' || saved === 'en' || saved === 'zh') return saved;
+  }
+  return 'id';
 };
 
 const getInitialProfile = (): UserProfile => {
@@ -150,6 +164,15 @@ export const useStore = create<AppState>((set, get) => {
         }
       }
       set({ themeMode: mode });
+    },
+
+    // Language
+    language: getInitialLanguage(),
+    setLanguage: (lang) => {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('smart_grocery_lang', lang);
+      }
+      set({ language: lang });
     },
 
     // Sound effects toggle

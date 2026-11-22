@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ShoppingCart, History, Wallet, User, Lock } from 'lucide-react';
 import type { NavigationTab } from '../store/useStore';
 import { useStore } from '../store/useStore';
+import { t } from '../utils/i18n';
 
 interface BottomNavigationProps {
   cartItemCount?: number;
@@ -10,14 +11,14 @@ interface BottomNavigationProps {
 export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   cartItemCount = 0,
 }) => {
-  const { activeTab, setActiveTab, userProfile, isEditingProfile } = useStore();
+  const { activeTab, setActiveTab, userProfile, isEditingProfile, language } = useStore();
   const [blockedToast, setBlockedToast] = useState(false);
 
   const navItems: { id: NavigationTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-    { id: 'shopping', label: 'Belanja', icon: ShoppingCart },
-    { id: 'history', label: 'Riwayat', icon: History },
-    { id: 'budget', label: 'Anggaran', icon: Wallet },
-    { id: 'profile', label: 'Profil', icon: User },
+    { id: 'shopping', label: t('navShopping', language), icon: ShoppingCart },
+    { id: 'history', label: t('navHistory', language), icon: History },
+    { id: 'budget', label: t('navBudget', language), icon: Wallet },
+    { id: 'profile', label: t('navProfile', language), icon: User },
   ];
 
   const handleTabClick = (tabId: NavigationTab) => {
@@ -39,7 +40,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
         {blockedToast && (
           <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-amber-500 text-slate-950 font-black text-[11px] px-3.5 py-1.5 rounded-full shadow-lg whitespace-nowrap animate-bounce flex items-center gap-1.5 z-50">
             <Lock className="w-3.5 h-3.5" />
-            <span>Simpan profil terlebih dahulu sebelum pindah!</span>
+            <span>{t('saveProfileFirst', language)}</span>
           </div>
         )}
 

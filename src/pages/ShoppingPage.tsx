@@ -38,6 +38,7 @@ import { syncService } from '../services/syncService';
 import { calculateCartTotals, evaluateBudgetSafety } from '../utils/calculations';
 import { formatRupiah, formatNumberWithDots } from '../utils/currency';
 import { formatPeriodLabel, getCurrentMonthPeriod } from '../utils/priceComparison';
+import { t } from '../utils/i18n';
 import type { CartItem, ProductCategory } from '../types';
 
 export const ShoppingPage: React.FC = () => {
@@ -54,6 +55,7 @@ export const ShoppingPage: React.FC = () => {
     setSessionDate,
     isOnline,
     setIsOnline,
+    language,
   } = useStore();
 
   const [currentPeriod] = useState(getCurrentMonthPeriod());
@@ -448,12 +450,12 @@ export const ShoppingPage: React.FC = () => {
                   <span>
                     {budgetStatus.level === 'exceeded'
                       ? `+${formatRupiah(budgetStatus.excessAmount)}`
-                      : `Sisa ${formatRupiah(budgetStatus.remaining)}`}
+                      : `${t('remainingBudget', language)}: ${formatRupiah(budgetStatus.remaining)}`}
                   </span>
                 </span>
 
                 <span className="text-[11px] text-text-secondary dark:text-slate-400 font-semibold truncate">
-                  | Total: <strong className="text-text-main dark:text-slate-100 font-black">{formatRupiah(totals.finalTotal)}</strong>
+                  | {t('totalSpent', language)}: <strong className="text-text-main dark:text-slate-100 font-black">{formatRupiah(totals.finalTotal)}</strong>
                   <span className="text-[10px] ml-0.5 opacity-80">({totals.totalQuantity} unit)</span>
                 </span>
               </div>
@@ -491,7 +493,7 @@ export const ShoppingPage: React.FC = () => {
                 className="px-2 py-1.5 text-text-secondary dark:text-slate-400 hover:text-text-main dark:hover:text-slate-100 bg-gray-100/80 dark:bg-slate-700/80 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl transition-all flex items-center gap-0.5 text-[10px] font-bold cursor-pointer min-h-[36px]"
                 title="Buka detail lengkap anggaran"
               >
-                <span>Detail</span>
+                <span>{t('detail', language)}</span>
                 <ChevronDown className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -509,7 +511,7 @@ export const ShoppingPage: React.FC = () => {
                 className="flex items-center gap-1 text-[11px] font-bold text-primary dark:text-blue-400 hover:underline cursor-pointer bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-lg border border-blue-100 dark:border-blue-900"
                 title="Perkecil kartu agar tidak menutupi layar"
               >
-                <span>Perkecil</span>
+                <span>{t('minimize', language)}</span>
                 <ChevronUp className="w-3.5 h-3.5" />
               </button>
             </div>

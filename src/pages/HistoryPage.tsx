@@ -20,6 +20,8 @@ import { HistoryTransactionCard } from '../components/HistoryTransactionCard';
 import { EmptyState } from '../components/EmptyState';
 import { formatRupiah } from '../utils/currency';
 import { formatPeriodLabel, getPreviousMonthPeriod } from '../utils/priceComparison';
+import { useStore } from '../store/useStore';
+import { t } from '../utils/i18n';
 
 const MONTH_OPTIONS = [
   { value: '01', label: 'Januari' },
@@ -39,6 +41,7 @@ const MONTH_OPTIONS = [
 const DAY_OPTIONS = Array.from({ length: 31 }, (_, i) => String(i + 1));
 
 export const HistoryPage: React.FC = () => {
+  const { language } = useStore();
   const [selectedDay, setSelectedDay] = useState<string>('all');
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [selectedYear, setSelectedYear] = useState<string>('all');
@@ -254,7 +257,7 @@ export const HistoryPage: React.FC = () => {
             Arsip Transaksi Selesai
           </span>
           <h1 className="text-xl font-extrabold text-text-main dark:text-slate-100 tracking-tight">
-            Riwayat Belanja
+            {t('historyTitle', language)}
           </h1>
         </div>
 

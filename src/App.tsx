@@ -14,6 +14,7 @@ import { SyncModal } from './components/SyncModal';
 import { syncService } from './services/syncService';
 import { groceryService } from './services/groceryService';
 import { soundService } from './utils/sound';
+import { t } from './utils/i18n';
 import type { ProductCategory } from './types';
 import { CreditCard, Scan, Sun, Moon, Volume2, VolumeX } from 'lucide-react';
 
@@ -30,6 +31,7 @@ export const App: React.FC = () => {
     isSoundEnabled,
     toggleSound,
     isEditingProfile,
+    language,
   } = useStore();
   const [isInitialized, setIsInitialized] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -253,8 +255,8 @@ export const App: React.FC = () => {
                 type="button"
                 onClick={toggleThemeMode}
                 className="bg-white/20 hover:bg-white/30 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 text-white font-bold p-1.5 sm:p-2 rounded-xl backdrop-blur-sm transition-all shadow-sm min-h-[34px] min-w-[34px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center cursor-pointer"
-                title={isDark ? 'Beralih ke Light Mode' : 'Beralih ke Dark Mode'}
-                aria-label={isDark ? 'Mode Terang' : 'Mode Gelap'}
+                title={isDark ? t('themeLight', language) : t('themeDark', language)}
+                aria-label={isDark ? t('themeLight', language) : t('themeDark', language)}
               >
                 {isDark ? (
                   <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-300" />
@@ -268,8 +270,8 @@ export const App: React.FC = () => {
                 type="button"
                 onClick={toggleSound}
                 className="bg-white/20 hover:bg-white/30 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 text-white font-bold p-1.5 sm:p-2 rounded-xl backdrop-blur-sm transition-all shadow-sm min-h-[34px] min-w-[34px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center cursor-pointer"
-                title={isSoundEnabled ? 'Matikan Suara Efek' : 'Aktifkan Suara Efek'}
-                aria-label={isSoundEnabled ? 'Suara Aktif' : 'Suara Bisu'}
+                title={isSoundEnabled ? t('soundMute', language) : t('soundOn', language)}
+                aria-label={isSoundEnabled ? t('soundOn', language) : t('soundMute', language)}
               >
                 {isSoundEnabled ? (
                   <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-300" />
@@ -283,8 +285,8 @@ export const App: React.FC = () => {
                 type="button"
                 onClick={openScanner}
                 className="bg-white/20 hover:bg-white/30 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 text-white font-bold p-1.5 sm:p-2 rounded-xl backdrop-blur-sm transition-all shadow-sm min-h-[34px] min-w-[34px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center cursor-pointer"
-                title="Scan Barcode Barang"
-                aria-label="Scan Barcode Barang"
+                title={t('scanBarcode', language)}
+                aria-label={t('scanBarcode', language)}
               >
                 <Scan className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-300" />
               </button>
@@ -294,7 +296,7 @@ export const App: React.FC = () => {
                 type="button"
                 onClick={() => setIsPaymentModalOpen(true)}
                 className="bg-white text-blue-800 dark:bg-blue-600 dark:text-white hover:bg-blue-50 dark:hover:bg-blue-700 active:scale-95 font-extrabold text-[10.5px] sm:text-[11px] px-2 sm:px-2.5 py-1.5 rounded-xl shadow-sm transition-all flex items-center gap-1 min-h-[34px] sm:min-h-[36px] cursor-pointer whitespace-nowrap"
-                title={`Pilih Sumber Dana (Saat ini: ${selectedPaymentMethod})`}
+                title={`${t('paymentSource', language)} (${selectedPaymentMethod})`}
               >
                 <CreditCard className="w-3.5 h-3.5 text-blue-600 dark:text-blue-200 flex-shrink-0" />
                 <span className="truncate max-w-[65px] sm:max-w-[85px]">{getShortPaymentName(selectedPaymentMethod)}</span>

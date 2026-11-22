@@ -21,9 +21,10 @@ import { PRODUCT_CATEGORIES } from '../types';
 import { calculateCartTotals, evaluateBudgetSafety } from '../utils/calculations';
 import { formatRupiah, getActiveCurrency, formatNumberWithDots } from '../utils/currency';
 import { formatPeriodLabel, getCurrentMonthPeriod } from '../utils/priceComparison';
+import { t } from '../utils/i18n';
 
 export const BudgetPage: React.FC = () => {
-  const { username, selectedPaymentMethod } = useStore();
+  const { username, selectedPaymentMethod, language } = useStore();
   const [currentPeriod] = useState(getCurrentMonthPeriod());
   const [budgetLimitInput, setBudgetLimitInput] = useState('1200000');
   const [isSaved, setIsSaved] = useState(false);
@@ -129,7 +130,7 @@ export const BudgetPage: React.FC = () => {
             <Wallet className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="font-bold text-sm text-text-main dark:text-slate-100">Batas Anggaran</h2>
+            <h2 className="font-bold text-sm text-text-main dark:text-slate-100">{t('budgetLimitTitle', language)}</h2>
             <p className="text-[11px] text-text-secondary dark:text-slate-400">
               Batas belanja bulanan tanpa mempengaruhi riwayat lama
             </p>
@@ -226,7 +227,7 @@ export const BudgetPage: React.FC = () => {
           </div>
           <div className="bg-gray-50 dark:bg-slate-750 p-2.5 rounded-xl border dark:border-slate-700/60">
             <span className="text-[11px] text-text-secondary dark:text-slate-400 block">
-              {budgetStatus.level === 'exceeded' ? 'Kelebihan Pagu' : 'Sisa Batas Aman'}
+              {budgetStatus.level === 'exceeded' ? 'Kelebihan Pagu' : t('remaining', language)}
             </span>
             <span
               className={`text-base font-extrabold ${
@@ -244,7 +245,7 @@ export const BudgetPage: React.FC = () => {
         <div className="text-[11px] text-gray-500 dark:text-slate-400 bg-blue-50/60 dark:bg-slate-750 p-2.5 rounded-xl space-y-1 border dark:border-slate-700/60">
           <div className="flex items-center gap-1 font-semibold text-primary dark:text-blue-400">
             <Info className="w-3.5 h-3.5" />
-            <span>Panduan Batas Anggaran:</span>
+            <span>{t('budgetGuideTitle', language)}</span>
           </div>
           <ul className="list-disc list-inside space-y-0.5 text-gray-600 dark:text-slate-300 pl-1">
             <li>

@@ -12,8 +12,12 @@ import {
   ShoppingBag,
   Volume2,
   VolumeX,
+  Languages,
+  X,
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
+import { t, type AppLanguage } from '../utils/i18n';
+import { soundService } from '../utils/sound';
 
 interface LoginPageProps {
   onLogin: () => void;
@@ -36,9 +40,9 @@ const getRegisteredAccounts = (): RegisteredAccount[] => {
     }
   } catch {}
 
-  // Initial seeded account: Naomi
+  // Initial seeded account: Naomi Miracle
   const defaultAcc: RegisteredAccount = {
-    fullName: localStorage.getItem('sg_fullName') || 'naomi miracle',
+    fullName: localStorage.getItem('sg_fullName') || 'Naomi Miracle',
     username: (localStorage.getItem('sg_username') || 'naomiiracle').replace(/^@/, ''),
     email: (localStorage.getItem('sg_email') || 'naomi@mutiarabangsa.sch.id').toLowerCase(),
     password: localStorage.getItem('sg_password') || 'naomi12345',
@@ -60,6 +64,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     toggleThemeMode,
     isSoundEnabled,
     toggleSound,
+    language,
+    setLanguage,
     updateUserProfile,
   } = useStore();
 
@@ -72,6 +78,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [showLangMenu, setShowLangMenu] = useState(false);
 
   const isDark = themeMode === 'dark';
 
@@ -82,17 +89,38 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     }, 2800);
   };
 
+  // Realtime check for duplicates in signup mode
+  const cleanUsername = usernameInput.trim().replace(/^@/, '').toLowerCase();
+  const registeredAccounts = getRegisteredAccounts();
+  const isUsernameTaken =
+    activeAuthTab === 'signup' &&
+    cleanUsername.length >= 3 &&
+    registeredAccounts.some((acc) => acc.username.toLowerCase() === cleanUsername);
+
+  const cleanEmail = emailInput.trim().toLowerCase();
+  const isEmailTaken =
+    activeAuthTab === 'signup' &&
+    cleanEmail.length > 3 &&
+    registeredAccounts.some((acc) => acc.email.toLowerCase() === cleanEmail);
+
   const handleGoogleLogin = () => {
     setIsLoading(true);
-    showToast('Menghubungkan akun Google...');
+    showToast(t('googleConnecting', language));
     setTimeout(() => {
       updateUserProfile({
         isGoogleLinked: true,
-        loginTime: new Date().toLocaleDateString('id-ID', {
-          day: 'numeric',
-          month: 'short',
-          year: 'numeric',
-        }) + ', ' + new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB',
+        loginTime:
+          new Date().toLocaleDateString(language === 'zh' ? 'zh-CN' : language === 'en' ? 'en-US' : 'id-ID', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+          }) +
+          ', ' +
+          new Date().toLocaleTimeString(language === 'zh' ? 'zh-CN' : language === 'en' ? 'en-US' : 'id-ID', {
+            hour: '2-digit',
+            minute: '2-digit',
+          }) +
+          ' WIB',
       });
       setIsLoading(false);
       onLogin();
@@ -108,41 +136,37 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       // Validate full name
       const cleanFullName = fullNameInput.trim();
       if (!cleanFullName || cleanFullName.length < 3) {
-        showToast('⚠️ Nama lengkap harus diisi (minimal 3 karakter).');
+        showToast(t('minFullName', language));
         return;
       }
 
       // Validate email format
-      const cleanEmail = emailInput.trim().toLowerCase();
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!cleanEmail || !emailRegex.test(cleanEmail)) {
-        showToast('⚠️ Format alamat email tidak valid (contoh: nama@domain.com).');
+        showToast(t('invalidEmail', language));
         return;
       }
 
       // Validate username
-      const cleanUsername = usernameInput.trim().replace(/^@/, '').toLowerCase();
       if (!cleanUsername || cleanUsername.length < 3) {
-        showToast('⚠️ Username minimal 3 karakter.');
+        showToast(t('minUsername', language));
         return;
       }
 
-      // Check if email or username already registered
-      const emailExists = accounts.some((acc) => acc.email.toLowerCase() === cleanEmail);
-      if (emailExists) {
-        showToast('⚠️ Email sudah terdaftar! Silakan langsung Sign In (Masuk).');
+      // Duplicate validations
+      if (isEmailTaken) {
+        showToast(t('emailTaken', language));
         return;
       }
 
-      const usernameExists = accounts.some((acc) => acc.username.toLowerCase() === cleanUsername);
-      if (usernameExists) {
-        showToast('⚠️ Username sudah dipakai! Silakan pilih username lain.');
+      if (isUsernameTaken) {
+        showToast(t('usernameTaken', language));
         return;
       }
 
       // Validate password
       if (!passwordInput.trim() || passwordInput.trim().length < 6) {
-        showToast('⚠️ Kata sandi akun minimal 6 karakter.');
+        showToast(t('minPassword', language));
         return;
       }
 
@@ -158,46 +182,25 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       accounts.push(newAccount);
       saveRegisteredAccounts(accounts);
 
-      updateUserProfile({
-        fullName: newAccount.fullName,
-        username: newAccount.username,
-        email: newAccount.email,
-        passwordMasked: newAccount.password,
-      });
+      soundService.pop();
 
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('sg_password', newAccount.password);
-        localStorage.setItem('sg_fullName', newAccount.fullName);
-        localStorage.setItem('sg_username', newAccount.username);
-        localStorage.setItem('sg_email', newAccount.email);
-      }
-
-      showToast('Pendaftaran akun berhasil! Masuk ke aplikasi... 🎉');
-
+      // Reset form & redirect back to Sign In tab without auto-logging in
       setTimeout(() => {
-        updateUserProfile({
-          loginTime:
-            new Date().toLocaleDateString('id-ID', {
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric',
-            }) +
-            ', ' +
-            new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) +
-            ' WIB',
-        });
         setIsLoading(false);
-        onLogin();
-      }, 450);
+        setActiveAuthTab('signin');
+        setEmailInput(newAccount.username);
+        setPasswordInput('');
+        showToast(t('registeredSuccessRedirect', language));
+      }, 350);
     } else {
       // SIGN IN (MASUK) - Harus akun yang sudah terdaftar
       const inputQuery = emailInput.trim().toLowerCase();
       if (!inputQuery) {
-        showToast('⚠️ Masukkan email atau username akun Anda.');
+        showToast(t('fillEmailUser', language));
         return;
       }
       if (!passwordInput.trim()) {
-        showToast('⚠️ Harap masukkan kata sandi akun.');
+        showToast(t('fillPassword', language));
         return;
       }
 
@@ -211,13 +214,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
       if (!matchedAccount) {
         setIsLoading(false);
-        showToast('⚠️ Akun belum terdaftar! Silakan lakukan Sign Up (Daftar Akun) terlebih dahulu.');
+        showToast(t('accountNotFound', language));
         return;
       }
 
       if (passwordInput.trim() !== matchedAccount.password) {
         setIsLoading(false);
-        showToast('⚠️ Kata sandi salah! Silakan coba lagi.');
+        showToast(t('wrongPassword', language));
         return;
       }
 
@@ -235,18 +238,21 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         localStorage.setItem('sg_email', matchedAccount.email);
       }
 
-      showToast(`Masuk berhasil! Selamat datang, ${matchedAccount.fullName} 👋`);
+      showToast(t('signInSuccess', language, { name: matchedAccount.fullName }));
 
       setTimeout(() => {
         updateUserProfile({
           loginTime:
-            new Date().toLocaleDateString('id-ID', {
+            new Date().toLocaleDateString(language === 'zh' ? 'zh-CN' : language === 'en' ? 'en-US' : 'id-ID', {
               day: 'numeric',
               month: 'short',
               year: 'numeric',
             }) +
             ', ' +
-            new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) +
+            new Date().toLocaleTimeString(language === 'zh' ? 'zh-CN' : language === 'en' ? 'en-US' : 'id-ID', {
+              hour: '2-digit',
+              minute: '2-digit',
+            }) +
             ' WIB',
         });
         setIsLoading(false);
@@ -266,7 +272,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           : `linear-gradient(135deg, rgba(238, 242, 255, 0.92) 0%, rgba(240, 253, 250, 0.88) 100%), url('/supermarket_bg.jpg')`,
       }}
     >
-      {/* Toast Notification */}
+      {/* Toast Alert */}
       {toastMessage && (
         <div className="fixed top-5 z-50 bg-gray-900/90 dark:bg-slate-800/95 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg border border-white/20 animate-fade-in flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
@@ -277,14 +283,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       {/* Main Viewport Container (Smartphone Max Width 430px) */}
       <main className="w-full max-w-[430px] min-h-[100dvh] sm:min-h-[auto] sm:max-h-[920px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl text-text-main dark:text-dark-text flex flex-col relative shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] dark:shadow-dark-float sm:rounded-[36px] overflow-hidden border border-white/60 dark:border-slate-800 transition-colors duration-200">
         
-        {/* Top Header Bar dengan Fitur Suara di Kiri, Logo di Tengah, dan Tema di Kanan */}
-        <header className="px-5 pt-4 pb-3.5 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 dark:from-slate-900 dark:via-blue-950 dark:to-indigo-950 text-white shadow-md relative overflow-hidden flex items-center justify-center border-b dark:border-slate-800">
+        {/* Top Header Bar dengan Fitur Suara di Kiri, Logo di Tengah, dan Pilihan Bahasa + Tema di Kanan */}
+        <header className="px-5 pt-4 pb-3.5 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 dark:from-slate-900 dark:via-blue-950 dark:to-indigo-950 text-white shadow-md relative overflow-hidden flex items-center justify-between border-b dark:border-slate-800">
           {/* Fitur Suara di Sebelah Kiri */}
           <button
             type="button"
             onClick={toggleSound}
-            className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 text-white font-bold p-2 rounded-xl backdrop-blur-sm transition-all shadow-sm min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer"
-            title={isSoundEnabled ? 'Matikan Suara Efek' : 'Aktifkan Suara Efek'}
+            className="bg-white/20 hover:bg-white/30 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 text-white font-bold p-2 rounded-xl backdrop-blur-sm transition-all shadow-sm min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer"
+            title={isSoundEnabled ? t('soundMute', language) : t('soundOn', language)}
             aria-label={isSoundEnabled ? 'Suara Aktif' : 'Suara Bisu'}
           >
             {isSoundEnabled ? (
@@ -308,46 +314,101 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             </div>
           </div>
 
-          {/* Theme Mode Toggle Button di Pojok Kanan Atas */}
-          <button
-            type="button"
-            onClick={toggleThemeMode}
-            className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 text-white font-bold p-2 rounded-xl backdrop-blur-sm transition-all shadow-sm min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer"
-            title={isDark ? 'Beralih ke Light Mode' : 'Beralih ke Dark Mode'}
-            aria-label={isDark ? 'Mode Terang' : 'Mode Gelap'}
-          >
-            {isDark ? <Sun className="w-4 h-4 text-amber-300" /> : <Moon className="w-4 h-4 text-blue-100" />}
-          </button>
+          {/* Right Action: Language Switcher Dropdown & Theme Toggle Button */}
+          <div className="flex items-center gap-1.5 relative">
+            {/* Pilihan Bahasa di Halaman Sign In / Sign Up */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowLangMenu(!showLangMenu)}
+                className="bg-white/20 hover:bg-white/30 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 text-white font-black text-[11px] px-2 py-1.5 rounded-xl backdrop-blur-sm transition-all shadow-sm min-h-[36px] flex items-center gap-1 cursor-pointer"
+                title={t('langLabel', language)}
+              >
+                <Languages className="w-3.5 h-3.5 text-blue-200" />
+                <span>{language === 'id' ? 'ID' : language === 'en' ? 'EN' : '中文'}</span>
+              </button>
+
+              {showLangMenu && (
+                <div className="absolute right-0 top-full mt-2 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-200 dark:border-slate-700 py-1.5 z-50 min-w-[125px] animate-fade-in text-gray-800 dark:text-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLanguage('id');
+                      setShowLangMenu(false);
+                      soundService.pop();
+                    }}
+                    className={`w-full text-left px-3 py-2 text-xs font-bold hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer ${
+                      language === 'id' ? 'text-primary dark:text-blue-400 bg-blue-50/60 dark:bg-slate-750' : ''
+                    }`}
+                  >
+                    <span>🇮🇩</span> <span>Indonesia</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLanguage('en');
+                      setShowLangMenu(false);
+                      soundService.pop();
+                    }}
+                    className={`w-full text-left px-3 py-2 text-xs font-bold hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer ${
+                      language === 'en' ? 'text-primary dark:text-blue-400 bg-blue-50/60 dark:bg-slate-750' : ''
+                    }`}
+                  >
+                    <span>🇬🇧</span> <span>English</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLanguage('zh');
+                      setShowLangMenu(false);
+                      soundService.pop();
+                    }}
+                    className={`w-full text-left px-3 py-2 text-xs font-bold hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer ${
+                      language === 'zh' ? 'text-primary dark:text-blue-400 bg-blue-50/60 dark:bg-slate-750' : ''
+                    }`}
+                  >
+                    <span>🇨🇳</span> <span>中文</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Theme Mode Toggle Button */}
+            <button
+              type="button"
+              onClick={toggleThemeMode}
+              className="bg-white/20 hover:bg-white/30 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 text-white font-bold p-2 rounded-xl backdrop-blur-sm transition-all shadow-sm min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer"
+              title={isDark ? t('themeLight', language) : t('themeDark', language)}
+              aria-label={isDark ? 'Mode Terang' : 'Mode Gelap'}
+            >
+              {isDark ? <Sun className="w-4 h-4 text-amber-300" /> : <Moon className="w-4 h-4 text-blue-100" />}
+            </button>
+          </div>
         </header>
 
-        {/* Scrollable Form Body - UI Lebih Padat & Rapi */}
+        {/* Scrollable Form Body - UI Lebih Padat & Rapi (Kalimat Subtitle dihapus bersih) */}
         <div className="flex-1 px-5 py-3.5 overflow-y-auto space-y-3 flex flex-col justify-between">
           <div className="space-y-3">
-            {/* Hero Welcome Banner */}
-            <div className="text-center pt-0.5 pb-0.5 space-y-0.5">
+            {/* Hero Welcome Banner (Tanpa Subtitle) */}
+            <div className="text-center pt-1 pb-1">
               <h2 className="text-2xl font-black text-gray-900 dark:text-slate-100 tracking-tight">
-                {activeAuthTab === 'signin' ? 'Smart Grocery' : 'Create your account'}
+                {activeAuthTab === 'signin' ? 'Smart Grocery' : t('registerTitle', language)}
               </h2>
-              <p className="text-xs text-text-secondary dark:text-slate-400 font-medium">
-                {activeAuthTab === 'signin'
-                  ? 'Sign in to continue your progress'
-                  : 'Join the Smart Grocery shopping community'}
-              </p>
             </div>
 
             {/* Email / Password Form */}
             <form onSubmit={handleSubmitForm} className="space-y-2.5">
               {activeAuthTab === 'signup' ? (
-                /* Mode Daftar Akun (Contoh layout: Full Name, Email, Password & Username menggantikan Class) */
+                /* Mode Daftar Akun (Nama Lengkap, Email, Password & Username berdampingan) */
                 <div className="space-y-2.5 animate-slide-up">
                   <div>
                     <label className="block text-[11px] font-bold text-gray-700 dark:text-slate-300 mb-0.5 tracking-wider uppercase">
-                      Full Name
+                      {t('fullName', language)}
                     </label>
                     <div className="relative">
                       <input
                         type="text"
-                        placeholder="John Doe"
+                        placeholder="Naomi Miracle"
                         value={fullNameInput}
                         onChange={(e) => setFullNameInput(e.target.value)}
                         className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-gray-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary min-h-[40px]"
@@ -359,26 +420,40 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
                   <div>
                     <label className="block text-[11px] font-bold text-gray-700 dark:text-slate-300 mb-0.5 tracking-wider uppercase">
-                      Email
+                      {t('email', language)}
                     </label>
                     <div className="relative">
                       <input
                         type="email"
-                        placeholder="email@mutiarabangsa.sch.id"
+                        placeholder="naomi@mutiarabangsa.sch.id"
                         value={emailInput}
                         onChange={(e) => setEmailInput(e.target.value)}
-                        className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-gray-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary min-h-[40px]"
+                        className={`w-full pl-9 pr-8 py-2 rounded-xl border text-xs font-semibold outline-none transition-all min-h-[40px] ${
+                          isEmailTaken
+                            ? 'border-red-500 bg-red-50/60 dark:bg-red-950/20 text-red-700 dark:text-red-300 focus:ring-2 focus:ring-red-400'
+                            : 'border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-primary'
+                        }`}
                         required
                       />
                       <Mail className="w-4 h-4 text-gray-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                      {isEmailTaken && (
+                        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full bg-red-100 dark:bg-red-900/60 text-red-600 dark:text-red-300">
+                          <X className="w-3.5 h-3.5 stroke-[2.5]" />
+                        </div>
+                      )}
                     </div>
+                    {isEmailTaken && (
+                      <span className="text-[10.5px] font-bold text-red-500 block mt-0.5">
+                        ✕ {t('emailTaken', language)}
+                      </span>
+                    )}
                   </div>
 
-                  {/* Password & Username (Menggantikan kolom Class seperti di contoh) */}
+                  {/* Password & Username (Menggantikan kolom Class) */}
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label className="block text-[11px] font-bold text-gray-700 dark:text-slate-300 mb-0.5 tracking-wider uppercase">
-                        Password
+                        {t('password', language)}
                       </label>
                       <div className="relative">
                         <input
@@ -402,7 +477,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
                     <div>
                       <label className="block text-[11px] font-bold text-gray-700 dark:text-slate-300 mb-0.5 tracking-wider uppercase">
-                        Username
+                        {t('username', language)}
                       </label>
                       <div className="relative">
                         <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">@</span>
@@ -411,10 +486,24 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                           placeholder="naomiiracle"
                           value={usernameInput}
                           onChange={(e) => setUsernameInput(e.target.value)}
-                          className="w-full pl-7 pr-2.5 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-gray-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary min-h-[40px]"
+                          className={`w-full pl-7 pr-8 py-2 rounded-xl border text-xs font-semibold outline-none transition-all min-h-[40px] ${
+                            isUsernameTaken
+                              ? 'border-red-500 bg-red-50/60 dark:bg-red-950/20 text-red-700 dark:text-red-300 focus:ring-2 focus:ring-red-400'
+                              : 'border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-primary'
+                          }`}
                           required
                         />
+                        {isUsernameTaken && (
+                          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full bg-red-100 dark:bg-red-900/60 text-red-600 dark:text-red-300">
+                            <X className="w-3.5 h-3.5 stroke-[2.5]" />
+                          </div>
+                        )}
                       </div>
+                      {isUsernameTaken && (
+                        <span className="text-[10.5px] font-bold text-red-500 block mt-0.5">
+                          ✕ {t('usernameTaken', language)}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -423,12 +512,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 <div className="space-y-2.5">
                   <div>
                     <label className="block text-[11px] font-bold text-gray-700 dark:text-slate-300 mb-0.5 tracking-wider uppercase">
-                      EMAIL ADDRESS / USERNAME
+                      {t('emailOrUsername', language)}
                     </label>
                     <div className="relative">
                       <input
                         type="text"
-                        placeholder="you@mutiarabangsa.sch.id atau @username"
+                        placeholder="naomi@mutiarabangsa.sch.id / @naomiiracle"
                         value={emailInput}
                         onChange={(e) => setEmailInput(e.target.value)}
                         className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-gray-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary min-h-[40px]"
@@ -441,14 +530,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                   <div>
                     <div className="flex items-center justify-between mb-0.5">
                       <label className="block text-[11px] font-bold text-gray-700 dark:text-slate-300 tracking-wider uppercase">
-                        PASSWORD
+                        {t('password', language)}
                       </label>
                       <button
                         type="button"
                         onClick={() => showToast('Gunakan akun naomi miracle atau mode demo.')}
                         className="text-[11px] text-text-secondary hover:text-primary dark:text-slate-400 dark:hover:text-blue-400 font-medium cursor-pointer"
                       >
-                        Forgot password?
+                        {t('forgotPassword', language)}
                       </button>
                     </div>
                     <div className="relative">
@@ -479,34 +568,42 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                         onChange={(e) => setRememberMe(e.target.checked)}
                         className="rounded text-primary focus:ring-primary"
                       />
-                      <span className="text-gray-600 dark:text-slate-400 text-[11px] font-medium">Ingat Saya</span>
+                      <span className="text-gray-600 dark:text-slate-400 text-[11px] font-medium">
+                        {t('rememberMe', language)}
+                      </span>
                     </label>
                   </div>
                 </div>
               )}
 
-              {/* Teks Penyesuaian: Belum punya akun? Buat sekarang! (Tanpa create now) */}
+              {/* Teks Penyesuaian Switch Sign In / Sign Up */}
               <div className="text-center text-xs text-text-secondary dark:text-slate-400 pt-0.5">
                 {activeAuthTab === 'signin' ? (
                   <span>
-                    Belum punya akun?{' '}
+                    {t('noAccount', language)}{' '}
                     <button
                       type="button"
-                      onClick={() => setActiveAuthTab('signup')}
+                      onClick={() => {
+                        setActiveAuthTab('signup');
+                        soundService.pop();
+                      }}
                       className="font-bold text-primary dark:text-blue-400 hover:underline cursor-pointer"
                     >
-                      Buat sekarang!
+                      {t('createNow', language)}
                     </button>
                   </span>
                 ) : (
                   <span>
-                    Sudah punya akun?{' '}
+                    {t('haveAccount', language)}{' '}
                     <button
                       type="button"
-                      onClick={() => setActiveAuthTab('signin')}
+                      onClick={() => {
+                        setActiveAuthTab('signin');
+                        soundService.pop();
+                      }}
                       className="font-bold text-primary dark:text-blue-400 hover:underline cursor-pointer"
                     >
-                      Masuk sekarang!
+                      {t('signInNow', language)}
                     </button>
                   </span>
                 )}
@@ -520,10 +617,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 <ShoppingBag className="w-4 h-4" />
                 <span>
                   {isLoading
-                    ? 'Memproses...'
+                    ? t('processing', language)
                     : activeAuthTab === 'signin'
-                    ? 'Sign In →'
-                    : 'Register →'}
+                    ? t('signInBtn', language)
+                    : t('registerBtn', language)}
                 </span>
               </button>
             </form>
@@ -532,7 +629,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             <div className="flex items-center gap-3 pt-0.5">
               <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700" />
               <span className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">
-                OR
+                {t('orDivider', language)}
               </span>
               <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700" />
             </div>
@@ -562,14 +659,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                 />
               </svg>
-              <span>Continue with Google</span>
+              <span>{t('continueGoogle', language)}</span>
             </button>
           </div>
 
-          {/* Footer Branding (App version dihapus) */}
+          {/* Footer Branding */}
           <footer className="pt-3 pb-2 text-center text-xs text-gray-400 dark:text-slate-500 mt-auto">
             <p className="font-semibold text-text-secondary dark:text-slate-400 text-xs">
-              Smart Grocery by Naomi Miracle
+              {t('footerBy', language)}
             </p>
           </footer>
         </div>
@@ -577,4 +674,3 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     </div>
   );
 };
-

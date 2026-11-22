@@ -22,6 +22,7 @@ import {
   Calendar,
   MapPin,
   AlertTriangle,
+  Languages,
 } from 'lucide-react';
 import type { PurchaseTransaction } from '../types';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -29,13 +30,21 @@ import { db } from '../db/database';
 import { formatRupiah } from '../utils/currency';
 import { useStore } from '../store/useStore';
 import { pwaService } from '../utils/pwa';
+import { t, type AppLanguage } from '../utils/i18n';
 
 interface ProfilePageProps {
   onLogout?: () => void;
 }
 
 export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
-  const { userProfile, updateUserProfile, isEditingProfile, setIsEditingProfile } = useStore();
+  const {
+    userProfile,
+    updateUserProfile,
+    isEditingProfile,
+    setIsEditingProfile,
+    language,
+    setLanguage,
+  } = useStore();
 
   // Recycle Bin / Recently Deleted query
   const deletedTransactions =
@@ -597,11 +606,50 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
       {/* Sembunyikan section lainnya saat sedang edit profil agar tidak bisa scroll ke bawah */}
       {!isEditing && (
         <>
+          {/* Card: PILIHAN BAHASA (Diatas Mata Uang Belanja) */}
+          <div className="bg-card dark:bg-slate-800/90 rounded-2xl p-3.5 border border-border dark:border-slate-700 shadow-soft space-y-2">
+            <label className="text-[10px] font-black tracking-wider text-text-secondary dark:text-slate-400 uppercase flex items-center gap-1.5">
+              <Languages className="w-3.5 h-3.5 text-primary dark:text-blue-400" />
+              <span>{t('languageSection', language)}</span>
+            </label>
+
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { id: 'id', label: 'Indonesia', flag: '🇮🇩' },
+                { id: 'en', label: 'English', flag: '🇬🇧' },
+                { id: 'zh', label: '中文', flag: '🇨🇳' },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    setLanguage(item.id as AppLanguage);
+                    showToast(
+                      item.id === 'id'
+                        ? 'Bahasa diubah ke Indonesia 🇮🇩'
+                        : item.id === 'en'
+                        ? 'Language switched to English 🇬🇧'
+                        : '语言已切换为中文 🇨🇳'
+                    );
+                  }}
+                  className={`py-2 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border min-h-[40px] ${
+                    language === item.id
+                      ? 'bg-primary text-white border-primary shadow-sm font-black'
+                      : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 border-gray-300 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-750'
+                  }`}
+                >
+                  <span className="text-sm">{item.flag}</span>
+                  <span>{item.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Card 2: MATA UANG BELANJA */}
           <div className="bg-card dark:bg-slate-800/90 rounded-2xl p-3.5 border border-border dark:border-slate-700 shadow-soft space-y-1.5">
         <label className="text-[10px] font-black tracking-wider text-text-secondary dark:text-slate-400 uppercase flex items-center gap-1">
           <Globe className="w-3 h-3" />
-          <span>Mata Uang Belanja :</span>
+          <span>{t('currencySection', language)}</span>
         </label>
 
         <select
