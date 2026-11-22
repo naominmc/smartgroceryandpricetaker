@@ -33,6 +33,8 @@ export default {
           secondary: '#6B7280',
         },
         border: '#E5E7EB',
+        'slate-750': '#1e293b',
+        'slate-850': '#151e2e',
         dark: {
           bg: '#0F172A',
           card: '#1E293B',

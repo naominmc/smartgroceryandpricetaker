@@ -56,11 +56,11 @@ export const HistoryTransactionCard: React.FC<HistoryTransactionCardProps> = ({ 
       </div>
 
       {/* Snapshot budget usage & Payment Method indicator */}
-      <div className="mt-2.5 text-[11px] text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-750 px-2.5 py-1.5 rounded-lg flex flex-wrap items-center justify-between gap-1">
+      <div className="mt-2.5 text-[11px] text-gray-700 dark:text-slate-200 bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 px-2.5 py-1.5 rounded-lg flex flex-wrap items-center justify-between gap-1">
         {transaction.budgetLimitSnapshot > 0 && (
           <div>
             <span>Snapshot Batas: </span>
-            <span className="font-semibold text-text-main dark:text-slate-200">
+            <span className="font-extrabold text-gray-900 dark:text-slate-100">
               {formatRupiah(transaction.budgetLimitSnapshot)} (
               {((transaction.finalTotal / transaction.budgetLimitSnapshot) * 100).toFixed(1)}%)
             </span>

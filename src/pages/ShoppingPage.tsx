@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { db } from '../db/database';
 import { groceryService } from '../services/groceryService';
+import { soundService } from '../utils/sound';
 import { useStore } from '../store/useStore';
 import { BudgetSafetyCard } from '../components/BudgetSafetyCard';
 import { GroceryItemCard } from '../components/GroceryItemCard';
@@ -284,6 +285,7 @@ export const ShoppingPage: React.FC = () => {
       setCheckoutErrorMessage(null);
       const completedTx = await groceryService.completeCheckout(budgetLimit, selectedPaymentMethod, sessionLocation, sessionDate);
       setIsCheckoutDialogOpen(false);
+      soundService.money();
 
       // Trigger celebration confetti
       try {
@@ -321,8 +323,6 @@ export const ShoppingPage: React.FC = () => {
         <div>
           <div className="flex items-center gap-1.5 text-xs text-text-secondary dark:text-slate-400 font-medium">
             <span>{formatPeriodLabel(currentPeriod)}</span>
-            <span>•</span>
-            <span className="text-primary dark:text-blue-400 font-semibold">Troli Supermarket</span>
           </div>
           <h1 className="text-xl font-extrabold text-text-main dark:text-slate-100 tracking-tight">Belanja Bulanan</h1>
         </div>
@@ -411,14 +411,14 @@ export const ShoppingPage: React.FC = () => {
               } catch {}
             }
           }}
-          className="flex items-center gap-1 px-2.5 py-1.5 bg-gray-50 dark:bg-slate-750 rounded-xl border border-gray-200/80 dark:border-slate-700 flex-shrink-0 ml-auto cursor-pointer justify-end"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-100 dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 flex-shrink-0 ml-auto cursor-pointer justify-end shadow-xs"
         >
           <Calendar className="w-3.5 h-3.5 text-primary dark:text-blue-400 pointer-events-none flex-shrink-0" />
           <input
             type="date"
             value={sessionDate}
             onChange={(e) => setSessionDate(e.target.value)}
-            className="w-[84px] text-xs font-semibold text-text-secondary dark:text-slate-300 bg-transparent focus:outline-none cursor-pointer p-0 text-right [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+            className="w-[84px] text-xs font-bold text-gray-900 dark:text-slate-100 bg-transparent focus:outline-none cursor-pointer p-0 text-right [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
           />
         </div>
       </div>

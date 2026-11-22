@@ -109,7 +109,7 @@ export function evaluateBudgetSafety(
   const excessAmount = Math.max(0, safeActiveTotal - safeLimit);
 
   let level: BudgetStatusLevel = 'safe';
-  let message = 'Anggaran masih aman.';
+  let message = 'Anggaran masih aman';
 
   if (percentage > 100) {
     level = 'exceeded';
@@ -122,7 +122,7 @@ export function evaluateBudgetSafety(
     message = 'Hati-hati, anggaran mulai menipis.';
   } else {
     level = 'safe';
-    message = 'Anggaran masih aman.';
+    message = 'Anggaran masih aman';
   }
 
   return {

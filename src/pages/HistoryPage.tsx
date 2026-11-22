@@ -480,9 +480,6 @@ export const HistoryPage: React.FC = () => {
 
         {/* Quick Presets */}
         <div className="flex items-center gap-1.5 pt-0.5 overflow-x-auto no-scrollbar">
-          <span className="text-[10px] text-text-secondary dark:text-slate-400 whitespace-nowrap font-medium">
-            Pilihan Cepat:
-          </span>
           <button
             type="button"
             onClick={() => {

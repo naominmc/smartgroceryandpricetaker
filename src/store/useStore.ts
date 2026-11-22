@@ -1,8 +1,9 @@
 import { create } from 'zustand';
 import type { CartItem, SupermarketCatalogItem } from '../types';
 import { PAYMENT_ACCOUNTS } from '../data/paymentMethods';
+import { soundService } from '../utils/sound';
 
-export type NavigationTab = 'shopping' | 'history' | 'budget';
+export type NavigationTab = 'shopping' | 'history' | 'budget' | 'profile';
 export type ThemeMode = 'light' | 'dark';
 
 export interface UserProfile {
@@ -25,6 +26,10 @@ interface AppState {
   themeMode: ThemeMode;
   toggleThemeMode: () => void;
   setThemeMode: (mode: ThemeMode) => void;
+
+  // Sound Effects (Pop on click, Cha-ching on checkout)
+  isSoundEnabled: boolean;
+  toggleSound: () => void;
 
   // User Profile
   username: string;
@@ -138,6 +143,15 @@ export const useStore = create<AppState>((set, get) => {
         }
       }
       set({ themeMode: mode });
+    },
+
+    // Sound effects toggle
+    isSoundEnabled: soundService.isEnabled(),
+    toggleSound: () => {
+      const next = !get().isSoundEnabled;
+      soundService.setEnabled(next);
+      set({ isSoundEnabled: next });
+      if (next) soundService.pop();
     },
 
     // User profile "naomiiracle" requested by user

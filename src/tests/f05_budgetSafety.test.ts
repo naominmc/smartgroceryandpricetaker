@@ -10,7 +10,7 @@ describe('F-05: Budget Safety Cap Evaluation', () => {
     expect(status.percentage).toBe(50);
     expect(status.remaining).toBe(500000);
     expect(status.excessAmount).toBe(0);
-    expect(status.message).toBe('Anggaran masih aman.');
+    expect(status.message).toBe('Anggaran masih aman');
   });
 
   it('Anggaran Rp1.000.000 dengan belanja Rp700.000 menunjukkan status waspada (kuning)', () => {

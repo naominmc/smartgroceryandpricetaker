@@ -133,9 +133,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                   }}
                 />
               </div>
-              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-amber-400 rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center shadow-xs">
-                <Sparkles className="w-2 h-2 text-white fill-white" />
-              </span>
             </div>
 
             <div>

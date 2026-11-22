@@ -6,15 +6,16 @@ import { BottomNavigation } from './components/BottomNavigation';
 import { ShoppingPage } from './pages/ShoppingPage';
 import { HistoryPage } from './pages/HistoryPage';
 import { BudgetPage } from './pages/BudgetPage';
+import { ProfilePage } from './pages/ProfilePage';
 import { LoginPage } from './pages/LoginPage';
 import { PaymentMethodSelectorModal } from './components/PaymentMethodSelectorModal';
 import { BarcodeScannerModal } from './components/BarcodeScannerModal';
 import { SyncModal } from './components/SyncModal';
-import { AccountProfileModal } from './components/AccountProfileModal';
 import { syncService } from './services/syncService';
 import { groceryService } from './services/groceryService';
+import { soundService } from './utils/sound';
 import type { ProductCategory } from './types';
-import { CreditCard, Sparkles, Scan, Sun, Moon } from 'lucide-react';
+import { CreditCard, Scan, Sun, Moon, Volume2, VolumeX } from 'lucide-react';
 
 export const App: React.FC = () => {
   const {
@@ -26,6 +27,8 @@ export const App: React.FC = () => {
     openScanner,
     themeMode,
     toggleThemeMode,
+    isSoundEnabled,
+    toggleSound,
   } = useStore();
   const [isInitialized, setIsInitialized] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -36,7 +39,6 @@ export const App: React.FC = () => {
   });
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // Load cart items count for navigation badge
   const cartItems = useLiveQuery(() => db.cartItems.toArray()) || [];
@@ -49,6 +51,25 @@ export const App: React.FC = () => {
       document.documentElement.classList.remove('dark');
     }
   }, [themeMode]);
+
+  // Global click sound effect (pop sound on buttons & interactive elements)
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      const interactive = target.closest(
+        'button, a, input[type="button"], input[type="submit"], input[type="checkbox"], [role="button"], select'
+      );
+      if (interactive) {
+        soundService.pop();
+      }
+    };
+
+    document.addEventListener('click', handleGlobalClick, true);
+    return () => {
+      document.removeEventListener('click', handleGlobalClick, true);
+    };
+  }, []);
 
   useEffect(() => {
     async function init() {
@@ -73,6 +94,13 @@ export const App: React.FC = () => {
     discounts: number[];
   }) => {
     await groceryService.addItemToCart(item);
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('smart_grocery_authenticated');
+    }
   };
 
   if (!isInitialized) {
@@ -118,14 +146,14 @@ export const App: React.FC = () => {
       {/* Mobile Smartphone Viewport Frame (Max width 430px) */}
       <main className="w-full max-w-[430px] h-[100dvh] max-h-[100dvh] sm:h-[calc(100vh-3rem)] sm:max-h-[920px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl text-text-main dark:text-dark-text flex flex-col relative shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] dark:shadow-dark-float sm:rounded-[36px] overflow-hidden border border-white/60 dark:border-slate-800 transition-colors duration-200">
         
-        {/* Top Header with App Logo & Name, Theme Mode Toggle, Scan, & Bank BCA */}
+        {/* Top Header with App Logo & Name, Theme Mode Toggle, Sound Toggle, Scan, & Bank BCA */}
         <header className="flex-shrink-0 px-4 pt-3.5 pb-2.5 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 dark:from-slate-900 dark:via-blue-950 dark:to-indigo-950 text-white shadow-md relative overflow-hidden border-b dark:border-slate-800">
           {/* Subtle Background Pattern/Glow */}
           <div className="absolute -right-6 -top-6 w-28 h-28 bg-white/10 dark:bg-blue-500/10 rounded-full blur-xl pointer-events-none" />
           <div className="absolute left-1/3 -bottom-4 w-20 h-20 bg-amber-400/15 rounded-full blur-lg pointer-events-none" />
 
           <div className="relative z-10 flex items-center justify-between gap-1.5 sm:gap-2">
-            {/* App Logo Maskot Capybara & App Name + Tagline Unik (Selalu 1 Baris Sama Rata) */}
+            {/* App Logo Maskot Capybara (Kotak tanpa icon plus) & App Name */}
             <div className="flex items-center gap-2 min-w-0">
               <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-amber-300 via-orange-400 to-indigo-500 p-0.5 shadow-md flex-shrink-0 relative group">
                 <div className="w-full h-full bg-white/95 dark:bg-slate-900 rounded-[14px] overflow-hidden flex items-center justify-center">
@@ -138,9 +166,6 @@ export const App: React.FC = () => {
                     }}
                   />
                 </div>
-                <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-amber-400 rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center shadow-xs">
-                  <Sparkles className="w-2 h-2 text-white fill-white" />
-                </span>
               </div>
 
               <div className="min-w-0">
@@ -153,7 +178,7 @@ export const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Quick Action Buttons: Theme Toggle, Scan, & Bank Selector */}
+            {/* Quick Action Buttons: Theme Toggle, Sound Toggle, Scan, & Bank Selector */}
             <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
               {/* Theme Mode Toggle Button (Light / Dark) */}
               <button
@@ -170,7 +195,22 @@ export const App: React.FC = () => {
                 )}
               </button>
 
-              {/* Scan Barcode Button (Tetap di header atas sesuai permintaan) */}
+              {/* Sound Effect Toggle Button (Next to Light/Dark Mode Toggle) */}
+              <button
+                type="button"
+                onClick={toggleSound}
+                className="bg-white/20 hover:bg-white/30 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 text-white font-bold p-1.5 sm:p-2 rounded-xl backdrop-blur-sm transition-all shadow-sm min-h-[34px] min-w-[34px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center cursor-pointer"
+                title={isSoundEnabled ? 'Matikan Suara Efek' : 'Aktifkan Suara Efek'}
+                aria-label={isSoundEnabled ? 'Suara Aktif' : 'Suara Bisu'}
+              >
+                {isSoundEnabled ? (
+                  <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-300" />
+                ) : (
+                  <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-300 opacity-60" />
+                )}
+              </button>
+
+              {/* Scan Barcode Button */}
               <button
                 type="button"
                 onClick={openScanner}
@@ -200,15 +240,15 @@ export const App: React.FC = () => {
           {activeTab === 'shopping' && <ShoppingPage />}
           {activeTab === 'history' && <HistoryPage />}
           {activeTab === 'budget' && <BudgetPage />}
+          {activeTab === 'profile' && <ProfilePage onLogout={handleLogout} />}
         </div>
 
-        {/* Floating Bottom Navigation dengan Profil di Pojok Kanan Bawah */}
+        {/* Floating Bottom Navigation */}
         <BottomNavigation
           cartItemCount={cartItems.length}
-          onOpenProfile={() => setIsProfileModalOpen(true)}
         />
 
-        {/* Modals: Barcode Scanner, Payment Method Selector, Sync, & Account Profile */}
+        {/* Modals: Barcode Scanner, Payment Method Selector, & Sync */}
         <BarcodeScannerModal
           isOpen={isScannerOpen}
           onClose={closeScanner}
@@ -223,18 +263,6 @@ export const App: React.FC = () => {
         <SyncModal
           isOpen={isSyncModalOpen}
           onClose={() => setIsSyncModalOpen(false)}
-        />
-
-        <AccountProfileModal
-          isOpen={isProfileModalOpen}
-          onClose={() => setIsProfileModalOpen(false)}
-          onLogout={() => {
-            setIsProfileModalOpen(false);
-            setIsAuthenticated(false);
-            if (typeof window !== 'undefined') {
-              localStorage.removeItem('smart_grocery_authenticated');
-            }
-          }}
         />
       </main>
     </div>

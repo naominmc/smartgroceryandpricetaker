@@ -129,7 +129,7 @@ export const BudgetPage: React.FC = () => {
             <Wallet className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="font-bold text-sm text-text-main dark:text-slate-100">Pagu Batas Anggaran (Safety Cap)</h2>
+            <h2 className="font-bold text-sm text-text-main dark:text-slate-100">Batas Anggaran (Safety Cap)</h2>
             <p className="text-[11px] text-text-secondary dark:text-slate-400">
               Batas belanja bulanan tanpa mempengaruhi riwayat lama
             </p>
