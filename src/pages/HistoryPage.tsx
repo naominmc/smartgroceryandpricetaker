@@ -36,7 +36,7 @@ const MONTH_OPTIONS = [
   { value: '12', label: 'Desember' },
 ];
 
-const DAY_OPTIONS = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
+const DAY_OPTIONS = Array.from({ length: 31 }, (_, i) => String(i + 1));
 
 export const HistoryPage: React.FC = () => {
   const [selectedDay, setSelectedDay] = useState<string>('all');
@@ -83,7 +83,7 @@ export const HistoryPage: React.FC = () => {
 
   // Date selection presets checks
   const now = new Date();
-  const nowDay = String(now.getDate()).padStart(2, '0');
+  const nowDay = String(now.getDate());
   const nowMonth = String(now.getMonth() + 1).padStart(2, '0');
   const nowYear = now.getFullYear().toString();
 
@@ -108,7 +108,7 @@ export const HistoryPage: React.FC = () => {
     if (y && m && d) {
       setSelectedYear(y);
       setSelectedMonth(m);
-      setSelectedDay(d);
+      setSelectedDay(String(parseInt(d, 10)));
     }
   };
 
@@ -128,7 +128,7 @@ export const HistoryPage: React.FC = () => {
         : tx.period
         ? tx.period.split('-')[1]
         : '';
-      const txDay = hasValidDate ? String(txDate.getDate()).padStart(2, '0') : '';
+      const txDay = hasValidDate ? String(txDate.getDate()) : '';
 
       if (selectedYear !== 'all' && txYear !== selectedYear) return false;
       if (selectedMonth !== 'all' && txMonth !== selectedMonth) return false;
@@ -173,7 +173,7 @@ export const HistoryPage: React.FC = () => {
     if (distinctPeriods.length > 0) {
       return formatPeriodLabel(distinctPeriods[0]);
     }
-    return 'Semua Periode';
+    return 'Seluruh Periode';
   }, [selectedDay, selectedMonth, selectedYear, distinctPeriods]);
 
   // Month-over-month comparison when month and year are selected
@@ -417,12 +417,12 @@ export const HistoryPage: React.FC = () => {
             <select
               value={selectedDay}
               onChange={(e) => setSelectedDay(e.target.value)}
-              className="w-full appearance-none pl-2.5 pr-6 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-semibold text-text-main dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary min-h-[38px] cursor-pointer"
+              className="w-full appearance-none pl-2 pr-5 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10.5px] sm:text-xs font-semibold text-text-main dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary min-h-[38px] cursor-pointer truncate"
             >
-              <option value="all">Semua Tgl</option>
+              <option value="all">Seluruh Tanggal</option>
               {DAY_OPTIONS.map((day) => (
                 <option key={day} value={day}>
-                  Tgl {day}
+                  {day}
                 </option>
               ))}
             </select>
@@ -434,9 +434,9 @@ export const HistoryPage: React.FC = () => {
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="w-full appearance-none pl-2.5 pr-6 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-semibold text-text-main dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary min-h-[38px] cursor-pointer"
+              className="w-full appearance-none pl-2 pr-5 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10.5px] sm:text-xs font-semibold text-text-main dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary min-h-[38px] cursor-pointer truncate"
             >
-              <option value="all">Semua Bln</option>
+              <option value="all">Seluruh Bulan</option>
               {MONTH_OPTIONS.map((m) => (
                 <option key={m.value} value={m.value}>
                   {m.label}
@@ -451,9 +451,9 @@ export const HistoryPage: React.FC = () => {
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(e.target.value)}
-              className="w-full appearance-none pl-2.5 pr-6 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-semibold text-text-main dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary min-h-[38px] cursor-pointer"
+              className="w-full appearance-none pl-2 pr-5 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10.5px] sm:text-xs font-semibold text-text-main dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary min-h-[38px] cursor-pointer truncate"
             >
-              <option value="all">Semua Thn</option>
+              <option value="all">Seluruh Tahun</option>
               {availableYears.map((yr) => (
                 <option key={yr} value={yr}>
                   {yr}
@@ -475,7 +475,7 @@ export const HistoryPage: React.FC = () => {
               const now = new Date();
               setSelectedYear(now.getFullYear().toString());
               setSelectedMonth(String(now.getMonth() + 1).padStart(2, '0'));
-              setSelectedDay(String(now.getDate()).padStart(2, '0'));
+              setSelectedDay(String(now.getDate()));
             }}
             className={`px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-colors whitespace-nowrap cursor-pointer ${
               isTodaySelected
@@ -510,7 +510,7 @@ export const HistoryPage: React.FC = () => {
                 : 'bg-gray-100 dark:bg-slate-700/80 text-text-secondary dark:text-slate-300 border-gray-200 dark:border-slate-600 hover:bg-gray-200'
             }`}
           >
-            Semua Waktu
+            Seluruhnya
           </button>
         </div>
       </div>
