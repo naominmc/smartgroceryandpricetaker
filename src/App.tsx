@@ -210,15 +210,15 @@ export const App: React.FC = () => {
                 )}
               </button>
 
-              {/* Scan Barcode Button */}
+              {/* Scan Barcode Button (Hanya Logo/Icon Saja) */}
               <button
                 type="button"
                 onClick={openScanner}
-                className="bg-white/20 hover:bg-white/30 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 text-white font-bold text-[10.5px] sm:text-[11px] px-2 sm:px-2.5 py-1.5 rounded-xl backdrop-blur-sm transition-all flex items-center gap-1 shadow-sm min-h-[34px] sm:min-h-[36px] cursor-pointer whitespace-nowrap"
+                className="bg-white/20 hover:bg-white/30 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 text-white font-bold p-1.5 sm:p-2 rounded-xl backdrop-blur-sm transition-all shadow-sm min-h-[34px] min-w-[34px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center cursor-pointer"
                 title="Scan Barcode Barang"
+                aria-label="Scan Barcode Barang"
               >
-                <Scan className="w-3.5 h-3.5 text-amber-300" />
-                <span>Scan</span>
+                <Scan className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-300" />
               </button>
 
               {/* Bank Selector Button (Bank BCA) */}
