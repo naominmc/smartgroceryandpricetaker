@@ -198,7 +198,7 @@ export const HistoryPage: React.FC = () => {
       return `Tahun ${selectedYear}`;
     }
     if (distinctPeriods.length > 0) {
-      return formatPeriodLabel(distinctPeriods[0]);
+      return formatPeriodLabel(distinctPeriods[0], language);
     }
     return 'Seluruh Periode';
   }, [isThisWeekFilter, startOfWeek, endOfWeek, selectedDay, selectedMonth, selectedYear, distinctPeriods]);
@@ -324,7 +324,7 @@ export const HistoryPage: React.FC = () => {
           {hasMonthYearSelected && prevTotalSpending > 0 && spendingPctChange !== null && (
             <div className="border-t border-gray-100 dark:border-slate-700 pt-2 flex items-center justify-between text-xs">
               <span className="text-text-secondary dark:text-slate-400">
-                Vs {formatPeriodLabel(prevPeriod)} ({formatRupiah(prevTotalSpending)}):
+                Vs {formatPeriodLabel(prevPeriod, language)} ({formatRupiah(prevTotalSpending)}):
               </span>
               <span
                 className={`font-bold flex items-center gap-1 ${

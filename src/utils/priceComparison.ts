@@ -103,15 +103,25 @@ export function getCurrentMonthPeriod(): string {
   return `${y}-${m}`;
 }
 
-export function formatPeriodLabel(period: string): string {
+export function formatPeriodLabel(period: string, lang: 'id' | 'en' | 'zh' = 'id'): string {
   if (!period) return '';
   const [year, month] = period.split('-').map(Number);
-  const months = [
-    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-  ];
   if (month >= 1 && month <= 12) {
-    return `${months[month - 1]} ${year}`;
+    if (lang === 'zh') {
+      return `${year}年${month}月`;
+    }
+    if (lang === 'en') {
+      const enMonths = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ];
+      return `${enMonths[month - 1]} ${year}`;
+    }
+    const idMonths = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    return `${idMonths[month - 1]} ${year}`;
   }
   return period;
 }

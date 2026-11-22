@@ -18,6 +18,14 @@ export const translations = {
     saveProfileFirst: 'Simpan profil terlebih dahulu sebelum pindah!',
     paymentSource: 'Sumber Dana',
 
+    // Language Modal & Confirmation
+    selectLangTitle: 'Pilih Bahasa Aplikasi',
+    confirmLangTitle: 'Ganti Bahasa Aplikasi?',
+    confirmLangDesc: 'Apakah Anda yakin ingin mengganti bahasa aplikasi ke {lang}?',
+    confirmLangBtn: 'Ya, Ganti Bahasa',
+    cancelBtn: 'Batal',
+    langChangedToast: 'Bahasa aplikasi berhasil diubah ke {lang} ✅',
+
     // LoginPage
     loginTitle: 'Smart Grocery',
     registerTitle: 'Daftar Akun',
@@ -121,6 +129,30 @@ export const translations = {
     budgetDanger: 'Bahaya (Over Budget)',
     editBudgetBtn: 'Ubah Batas Anggaran',
     resetBudgetBtn: 'Atur Ulang Anggaran',
+    budgetAnalysisTitle: 'Analisis Keselamatan Anggaran',
+    percentUsed: '{percentage}% Digunakan',
+    activeCartSpending: 'Belanja Aktif di Troli',
+    overBudgetAmount: 'Kelebihan Pagu',
+    safeLimitRemaining: 'Sisa Batas Aman',
+    budgetGuideGreen: 'Hijau (< 70%): Aman untuk kebutuhan tambahan.',
+    budgetGuideYellow: 'Kuning (70% - 89%): Waspada, batasi barang tersier/camilan.',
+    budgetGuideRed: 'Merah (≥ 90%): Kritis, segera cek ulang barang di troli.',
+    spendingByCategory: 'Pengeluaran per Kategori di Troli',
+    activeCategoriesCount: '{count} kategori aktif',
+    noItemsCategory: 'Belum ada barang di troli untuk dihitung per kategori.',
+    monthlySpendingHistory: 'Histori Pengeluaran Antar-Bulan',
+    completedTransactionsArchive: 'Arsip transaksi selesai',
+    budgetDesc: 'Batas belanja bulanan tanpa mempengaruhi riwayat lama',
+    saveBudgetBtn: 'Simpan Batas Anggaran',
+    budgetSavedToast: 'Batas anggaran berhasil diperbarui!',
+    paymentSourceLabel: 'Sumber Dana Pembayaran:',
+    changeBtn: 'Ubah',
+
+    // Safety Messages
+    statusSafeMsg: 'Anggaran masih aman',
+    statusWarningMsg: 'Hati-hati, anggaran mulai menipis.',
+    statusDangerMsg: 'Peringatan! Belanja mendekati batas maksimum.',
+    statusExceededMsg: 'Anggaran terlampaui {amount}.',
 
     // History Page
     historyTitle: 'Riwayat Transaksi',
@@ -154,6 +186,14 @@ export const translations = {
     pullToRefresh: 'Pull down or click logo to refresh',
     saveProfileFirst: 'Please save your profile before switching sections!',
     paymentSource: 'Payment Source',
+
+    // Language Modal & Confirmation
+    selectLangTitle: 'Select App Language',
+    confirmLangTitle: 'Change App Language?',
+    confirmLangDesc: 'Are you sure you want to change the app language to {lang}?',
+    confirmLangBtn: 'Yes, Change Language',
+    cancelBtn: 'Cancel',
+    langChangedToast: 'App language changed to {lang} ✅',
 
     // LoginPage
     loginTitle: 'Smart Grocery',
@@ -258,6 +298,30 @@ export const translations = {
     budgetDanger: 'Danger (Over Budget)',
     editBudgetBtn: 'Change Budget Limit',
     resetBudgetBtn: 'Reset Budget',
+    budgetAnalysisTitle: 'Budget Safety Analysis',
+    percentUsed: '{percentage}% Used',
+    activeCartSpending: 'Active Spending in Cart',
+    overBudgetAmount: 'Over Budget Amount',
+    safeLimitRemaining: 'Remaining Safe Budget',
+    budgetGuideGreen: 'Green (< 70%): Safe for additional needs.',
+    budgetGuideYellow: 'Yellow (70% - 89%): Caution, limit non-essential items/snacks.',
+    budgetGuideRed: 'Red (≥ 90%): Critical, please recheck items in cart immediately.',
+    spendingByCategory: 'Spending by Category in Cart',
+    activeCategoriesCount: '{count} active categories',
+    noItemsCategory: 'No items in cart to calculate by category.',
+    monthlySpendingHistory: 'Monthly Spending History',
+    completedTransactionsArchive: 'Completed transactions archive',
+    budgetDesc: 'Monthly shopping limit without affecting past history',
+    saveBudgetBtn: 'Save Budget Limit',
+    budgetSavedToast: 'Budget limit updated successfully!',
+    paymentSourceLabel: 'Payment Source:',
+    changeBtn: 'Change',
+
+    // Safety Messages
+    statusSafeMsg: 'Budget is still safe',
+    statusWarningMsg: 'Caution, budget is getting low.',
+    statusDangerMsg: 'Warning! Spending is near maximum limit.',
+    statusExceededMsg: 'Budget exceeded by {amount}.',
 
     // History Page
     historyTitle: 'Shopping History',
@@ -291,6 +355,14 @@ export const translations = {
     pullToRefresh: '下拉或点击徽标以刷新',
     saveProfileFirst: '切换页面前请先保存个人资料！',
     paymentSource: '支付账户',
+
+    // Language Modal & Confirmation
+    selectLangTitle: '选择应用语言',
+    confirmLangTitle: '更改应用语言？',
+    confirmLangDesc: '您确定要将应用语言更改为 {lang} 吗？',
+    confirmLangBtn: '确认更改',
+    cancelBtn: '取消',
+    langChangedToast: '应用语言已成功更改为 {lang} ✅',
 
     // LoginPage
     loginTitle: 'Smart Grocery',
@@ -395,6 +467,30 @@ export const translations = {
     budgetDanger: '超支 (Over Budget)',
     editBudgetBtn: '修改预算上限',
     resetBudgetBtn: '重置预算',
+    budgetAnalysisTitle: '预算安全分析',
+    percentUsed: '已使用 {percentage}%',
+    activeCartSpending: '购物车当前消费',
+    overBudgetAmount: '超支金额',
+    safeLimitRemaining: '剩余安全额度',
+    budgetGuideGreen: '绿色 (< 70%): 安全，可用于额外需求。',
+    budgetGuideYellow: '黄色 (70% - 89%): 预警，请节制非必需品或零食。',
+    budgetGuideRed: '红色 (≥ 90%): 紧急，请立即重新检查购物车商品。',
+    spendingByCategory: '购物车各分类支出',
+    activeCategoriesCount: '{count} 个活跃分类',
+    noItemsCategory: '购物车暂无商品以计算分类支出。',
+    monthlySpendingHistory: '按月支出历史',
+    completedTransactionsArchive: '已完成交易归档',
+    budgetDesc: '月度购物限额，不影响以往历史记录',
+    saveBudgetBtn: '保存预算限额',
+    budgetSavedToast: '预算限额已成功更新！',
+    paymentSourceLabel: '支付账户来源：',
+    changeBtn: '更改',
+
+    // Safety Messages
+    statusSafeMsg: '预算仍在安全范围内',
+    statusWarningMsg: '注意，预算开始减少。',
+    statusDangerMsg: '警告！支出接近最高预算限额。',
+    statusExceededMsg: '已超支 {amount}。',
 
     // History Page
     historyTitle: '购物历史',
@@ -418,11 +514,47 @@ export type TranslationKey = keyof typeof translations.id;
 
 export const t = (key: TranslationKey, lang: AppLanguage = 'id', params?: Record<string, string | number>): string => {
   const dict = translations[lang] || translations.id;
-  let text: string = dict[key] || translations.id[key] || key;
+  let text: string = (dict as any)[key] || (translations.id as any)[key] || key;
   if (params) {
     Object.entries(params).forEach(([paramKey, paramVal]) => {
       text = text.replace(new RegExp(`\\{${paramKey}\\}`, 'g'), String(paramVal));
     });
   }
   return text;
+};
+
+export const getLanguageDisplayName = (lang: AppLanguage): string => {
+  switch (lang) {
+    case 'id':
+      return 'Indonesia';
+    case 'en':
+      return 'English';
+    case 'zh':
+      return '中文';
+    default:
+      return 'Indonesia';
+  }
+};
+
+export const translateCategory = (category: string, lang: AppLanguage = 'id'): string => {
+  const cat = (category || '').trim().toLowerCase();
+
+  const mapping: Record<string, { id: string; en: string; zh: string }> = {
+    'beras dan bahan pokok': { id: 'Beras & Bahan Pokok', en: 'Rice & Staples', zh: '米面粮油' },
+    'sayur dan buah': { id: 'Sayur & Buah', en: 'Vegetables & Fruits', zh: '蔬菜水果' },
+    'daging dan protein': { id: 'Daging & Protein', en: 'Meat & Protein', zh: '肉禽蛋品' },
+    'susu dan produk dingin': { id: 'Susu & Produk Dingin', en: 'Dairy & Chilled', zh: '乳品冷藏' },
+    'makanan instan': { id: 'Makanan Instan', en: 'Instant Food', zh: '方便速食' },
+    'minuman': { id: 'Minuman', en: 'Beverages', zh: '饮料水饮' },
+    'perlengkapan mandi': { id: 'Perlengkapan Mandi', en: 'Toiletries', zh: '洗漱用品' },
+    'kebersihan rumah': { id: 'Kebersihan Rumah', en: 'Household Cleaning', zh: '居家清洁' },
+    'kebutuhan kuliah': { id: 'Kebutuhan Kuliah', en: 'Campus & Study', zh: '学习用品' },
+    'lainnya': { id: 'Lainnya', en: 'Others', zh: '其他' },
+  };
+
+  const matched = mapping[cat];
+  if (matched) {
+    return matched[lang] || matched.id;
+  }
+  return category;
 };

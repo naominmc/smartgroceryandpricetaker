@@ -30,7 +30,8 @@ import { db } from '../db/database';
 import { formatRupiah } from '../utils/currency';
 import { useStore } from '../store/useStore';
 import { pwaService } from '../utils/pwa';
-import { t, type AppLanguage } from '../utils/i18n';
+import { t, type AppLanguage, getLanguageDisplayName } from '../utils/i18n';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 
 interface ProfilePageProps {
   onLogout?: () => void;
@@ -45,6 +46,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
     language,
     setLanguage,
   } = useStore();
+
+  const [pendingLangChange, setPendingLangChange] = useState<AppLanguage | null>(null);
 
   // Recycle Bin / Recently Deleted query
   const deletedTransactions =
@@ -606,7 +609,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
       {/* Sembunyikan section lainnya saat sedang edit profil agar tidak bisa scroll ke bawah */}
       {!isEditing && (
         <>
-          {/* Card: PILIHAN BAHASA (Diatas Mata Uang Belanja) */}
+          {/* Card: PILIHAN BAHASA (Diatas Mata Uang Belanja - Langsung Nama Tanpa Logo) */}
           <div className="bg-card dark:bg-slate-800/90 rounded-2xl p-3.5 border border-border dark:border-slate-700 shadow-soft space-y-2">
             <label className="text-[10px] font-black tracking-wider text-text-secondary dark:text-slate-400 uppercase flex items-center gap-1.5">
               <Languages className="w-3.5 h-3.5 text-primary dark:text-blue-400" />
@@ -615,35 +618,51 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
 
             <div className="grid grid-cols-3 gap-2">
               {[
-                { id: 'id', label: 'Indonesia', flag: '🇮🇩' },
-                { id: 'en', label: 'English', flag: '🇬🇧' },
-                { id: 'zh', label: '中文', flag: '🇨🇳' },
+                { id: 'id', label: 'Indonesia' },
+                { id: 'en', label: 'English' },
+                { id: 'zh', label: '中文' },
               ].map((item) => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => {
-                    setLanguage(item.id as AppLanguage);
-                    showToast(
-                      item.id === 'id'
-                        ? 'Bahasa diubah ke Indonesia 🇮🇩'
-                        : item.id === 'en'
-                        ? 'Language switched to English 🇬🇧'
-                        : '语言已切换为中文 🇨🇳'
-                    );
+                    if (item.id === language) return;
+                    setPendingLangChange(item.id as AppLanguage);
                   }}
-                  className={`py-2 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border min-h-[40px] ${
+                  className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center cursor-pointer border min-h-[42px] ${
                     language === item.id
                       ? 'bg-primary text-white border-primary shadow-sm font-black'
                       : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 border-gray-300 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-750'
                   }`}
                 >
-                  <span className="text-sm">{item.flag}</span>
                   <span>{item.label}</span>
                 </button>
               ))}
             </div>
           </div>
+
+          {/* Konfirmasi Ganti Bahasa di Halaman Profil */}
+          <ConfirmDialog
+            isOpen={Boolean(pendingLangChange)}
+            title={t('confirmLangTitle', language)}
+            message={t('confirmLangDesc', language, {
+              lang: pendingLangChange ? getLanguageDisplayName(pendingLangChange) : '',
+            })}
+            confirmLabel={t('confirmLangBtn', language)}
+            cancelLabel={t('cancelBtn', language)}
+            onConfirm={() => {
+              if (pendingLangChange) {
+                setLanguage(pendingLangChange);
+                showToast(
+                  t('langChangedToast', pendingLangChange, {
+                    lang: getLanguageDisplayName(pendingLangChange),
+                  })
+                );
+                setPendingLangChange(null);
+              }
+            }}
+            onCancel={() => setPendingLangChange(null)}
+          />
 
           {/* Card 2: MATA UANG BELANJA */}
           <div className="bg-card dark:bg-slate-800/90 rounded-2xl p-3.5 border border-border dark:border-slate-700 shadow-soft space-y-1.5">

@@ -21,7 +21,7 @@ import { PRODUCT_CATEGORIES } from '../types';
 import { calculateCartTotals, evaluateBudgetSafety } from '../utils/calculations';
 import { formatRupiah, getActiveCurrency, formatNumberWithDots } from '../utils/currency';
 import { formatPeriodLabel, getCurrentMonthPeriod } from '../utils/priceComparison';
-import { t } from '../utils/i18n';
+import { t, translateCategory } from '../utils/i18n';
 
 export const BudgetPage: React.FC = () => {
   const { username, selectedPaymentMethod, language } = useStore();
@@ -92,10 +92,10 @@ export const BudgetPage: React.FC = () => {
       {/* Header */}
       <div className="pt-1">
         <span className="text-xs text-text-secondary dark:text-slate-400 font-medium block">
-          {formatPeriodLabel(currentPeriod)} • {username}
+          {formatPeriodLabel(currentPeriod, language)} • {username}
         </span>
         <h1 className="text-xl font-extrabold text-text-main dark:text-slate-100 tracking-tight">
-          Pengendali Anggaran
+          {t('budgetLimitTitle', language)}
         </h1>
       </div>
 
@@ -107,7 +107,7 @@ export const BudgetPage: React.FC = () => {
               <CreditCard className="w-4 h-4 text-white dark:text-blue-300" />
             </div>
             <div>
-              <span className="text-[10px] text-blue-200 dark:text-blue-300 block">Penyimpanan Duit &amp; Rekening Bayar</span>
+              <span className="text-[10px] text-blue-200 dark:text-blue-300 block">{t('paymentSourceLabel', language)}</span>
               <h3 className="font-extrabold text-sm text-white">{selectedPaymentMethod}</h3>
             </div>
           </div>
@@ -115,9 +115,9 @@ export const BudgetPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsPaymentModalOpen(true)}
-            className="text-xs font-bold bg-white dark:bg-blue-600 text-blue-800 dark:text-white hover:bg-blue-50 dark:hover:bg-blue-700 px-3 py-1.5 rounded-xl shadow-sm transition-all flex items-center gap-1 min-h-[36px]"
+            className="text-xs font-bold bg-white dark:bg-blue-600 text-blue-800 dark:text-white hover:bg-blue-50 dark:hover:bg-blue-700 px-3 py-1.5 rounded-xl shadow-sm transition-all flex items-center gap-1 min-h-[36px] cursor-pointer"
           >
-            <span>Ubah</span>
+            <span>{t('changeBtn', language)}</span>
             <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -132,7 +132,7 @@ export const BudgetPage: React.FC = () => {
           <div>
             <h2 className="font-bold text-sm text-text-main dark:text-slate-100">{t('budgetLimitTitle', language)}</h2>
             <p className="text-[11px] text-text-secondary dark:text-slate-400">
-              Batas belanja bulanan tanpa mempengaruhi riwayat lama
+              {t('budgetDesc', language)}
             </p>
           </div>
         </div>
@@ -167,17 +167,17 @@ export const BudgetPage: React.FC = () => {
 
           <button
             type="submit"
-            className="w-full bg-primary hover:bg-primary-hover active:scale-95 text-white font-bold text-xs py-3 px-4 rounded-xl shadow-soft transition-all flex items-center justify-center gap-1.5 min-h-[44px]"
+            className="w-full bg-primary hover:bg-primary-hover active:scale-95 text-white font-bold text-xs py-3 px-4 rounded-xl shadow-soft transition-all flex items-center justify-center gap-1.5 min-h-[44px] cursor-pointer"
           >
             <Save className="w-4 h-4" />
-            <span>Simpan Batas Anggaran</span>
+            <span>{t('saveBudgetBtn', language)}</span>
           </button>
         </form>
 
         {isSaved && (
           <div className="bg-emerald-50 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-200 text-xs font-semibold p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-800 flex items-center gap-2 animate-fade-in">
             <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-            <span>Batas anggaran berhasil diperbarui!</span>
+            <span>{t('budgetSavedToast', language)}</span>
           </div>
         )}
       </div>
@@ -185,7 +185,9 @@ export const BudgetPage: React.FC = () => {
       {/* Safety Status Analysis Card */}
       <div className="bg-card dark:bg-slate-800/90 rounded-card p-4 border border-border dark:border-slate-700 shadow-soft space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="font-bold text-xs text-text-main dark:text-slate-100">Analisis Keselamatan Anggaran</h3>
+          <h3 className="font-bold text-xs text-text-main dark:text-slate-100">
+            {t('budgetAnalysisTitle', language)}
+          </h3>
           <span
             className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
               budgetStatus.level === 'safe'
@@ -195,7 +197,7 @@ export const BudgetPage: React.FC = () => {
                 : 'bg-red-50 dark:bg-rose-950 text-danger dark:text-rose-300'
             }`}
           >
-            {budgetStatus.percentage}% Digunakan
+            {t('percentUsed', language, { percentage: budgetStatus.percentage })}
           </span>
         </div>
 
@@ -214,20 +216,30 @@ export const BudgetPage: React.FC = () => {
           ) : (
             <AlertTriangle className="w-4 h-4 text-warning dark:text-amber-400 flex-shrink-0" />
           )}
-          <span>{budgetStatus.message}</span>
+          <span>
+            {budgetStatus.level === 'safe'
+              ? t('statusSafeMsg', language)
+              : budgetStatus.level === 'warning'
+              ? t('statusWarningMsg', language)
+              : budgetStatus.level === 'danger'
+              ? t('statusDangerMsg', language)
+              : t('statusExceededMsg', language, { amount: formatRupiah(budgetStatus.excessAmount) })}
+          </span>
         </div>
 
         {/* Metrics Grid */}
         <div className="grid grid-cols-2 gap-3 pt-1">
           <div className="bg-gray-50 dark:bg-slate-750 p-2.5 rounded-xl border dark:border-slate-700/60">
-            <span className="text-[11px] text-text-secondary dark:text-slate-400 block">Belanja Aktif di Troli</span>
+            <span className="text-[11px] text-text-secondary dark:text-slate-400 block">
+              {t('activeCartSpending', language)}
+            </span>
             <span className="text-base font-extrabold text-text-main dark:text-slate-100">
               {formatRupiah(budgetStatus.activeTotal)}
             </span>
           </div>
           <div className="bg-gray-50 dark:bg-slate-750 p-2.5 rounded-xl border dark:border-slate-700/60">
             <span className="text-[11px] text-text-secondary dark:text-slate-400 block">
-              {budgetStatus.level === 'exceeded' ? 'Kelebihan Pagu' : t('remaining', language)}
+              {budgetStatus.level === 'exceeded' ? t('overBudgetAmount', language) : t('safeLimitRemaining', language)}
             </span>
             <span
               className={`text-base font-extrabold ${
@@ -241,7 +253,7 @@ export const BudgetPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Safety Level Rules Info */}
+        {/* Safety Level Rules Info (Panduan Warna) */}
         <div className="text-[11px] text-gray-500 dark:text-slate-400 bg-blue-50/60 dark:bg-slate-750 p-2.5 rounded-xl space-y-1 border dark:border-slate-700/60">
           <div className="flex items-center gap-1 font-semibold text-primary dark:text-blue-400">
             <Info className="w-3.5 h-3.5" />
@@ -249,16 +261,13 @@ export const BudgetPage: React.FC = () => {
           </div>
           <ul className="list-disc list-inside space-y-0.5 text-gray-600 dark:text-slate-300 pl-1">
             <li>
-              <span className="text-emerald-700 dark:text-emerald-400 font-semibold">Hijau (&lt; 70%):</span> Aman untuk
-              kebutuhan tambahan.
+              <span className="text-emerald-700 dark:text-emerald-400 font-semibold">{t('budgetGuideGreen', language)}</span>
             </li>
             <li>
-              <span className="text-amber-700 dark:text-amber-400 font-semibold">Kuning (70% - 89%):</span> Waspada,
-              batasi barang tersier/camilan.
+              <span className="text-amber-700 dark:text-amber-400 font-semibold">{t('budgetGuideYellow', language)}</span>
             </li>
             <li>
-              <span className="text-red-700 dark:text-rose-400 font-semibold">Merah (≥ 90%):</span> Kritis, segera
-              cek ulang barang di troli.
+              <span className="text-red-700 dark:text-rose-400 font-semibold">{t('budgetGuideRed', language)}</span>
             </li>
           </ul>
         </div>
@@ -269,16 +278,16 @@ export const BudgetPage: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 font-bold text-xs text-text-main dark:text-slate-100">
             <PieChart className="w-4 h-4 text-primary dark:text-blue-400" />
-            <span>Pengeluaran per Kategori di Troli</span>
+            <span>{t('spendingByCategory', language)}</span>
           </div>
           <span className="text-[11px] text-text-secondary dark:text-slate-400">
-            {activeCategoriesWithSpending.length} kategori aktif
+            {t('activeCategoriesCount', language, { count: activeCategoriesWithSpending.length })}
           </span>
         </div>
 
         {activeCategoriesWithSpending.length === 0 ? (
           <p className="text-xs text-text-secondary dark:text-slate-400 italic text-center py-2">
-            Belum ada barang di troli untuk dihitung per kategori.
+            {t('noItemsCategory', language)}
           </p>
         ) : (
           <div className="space-y-2.5">
@@ -291,7 +300,9 @@ export const BudgetPage: React.FC = () => {
               return (
                 <div key={category} className="space-y-1">
                   <div className="flex justify-between items-center text-xs">
-                    <span className="font-medium text-text-main dark:text-slate-200 truncate pr-2">{category}</span>
+                    <span className="font-medium text-text-main dark:text-slate-200 truncate pr-2">
+                      {translateCategory(category, language)}
+                    </span>
                     <span className="font-bold text-text-main dark:text-slate-100">
                       {formatRupiah(amount)}{' '}
                       <span className="text-text-secondary dark:text-slate-400 font-normal">({categoryPercent}%)</span>
@@ -315,7 +326,7 @@ export const BudgetPage: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 font-bold text-xs text-text-main dark:text-slate-100">
             <Calendar className="w-4 h-4 text-primary dark:text-blue-400" />
-            <span>Histori Pengeluaran Antar-Bulan</span>
+            <span>{t('monthlySpendingHistory', language)}</span>
           </div>
         </div>
 
@@ -332,9 +343,11 @@ export const BudgetPage: React.FC = () => {
               >
                 <div>
                   <span className="font-bold text-text-main dark:text-slate-100 block">
-                    {formatPeriodLabel(period)}
+                    {formatPeriodLabel(period, language)}
                   </span>
-                  <span className="text-[10px] text-text-secondary dark:text-slate-400">Arsip transaksi selesai</span>
+                  <span className="text-[10px] text-text-secondary dark:text-slate-400">
+                    {t('completedTransactionsArchive', language)}
+                  </span>
                 </div>
                 <span className="font-extrabold text-primary dark:text-blue-400 text-sm">
                   {formatRupiah(total)}

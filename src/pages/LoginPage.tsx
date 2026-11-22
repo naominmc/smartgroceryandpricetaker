@@ -16,8 +16,9 @@ import {
   X,
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
-import { t, type AppLanguage } from '../utils/i18n';
+import { t, type AppLanguage, getLanguageDisplayName } from '../utils/i18n';
 import { soundService } from '../utils/sound';
+import { LanguageSelectorModal } from '../components/LanguageSelectorModal';
 
 interface LoginPageProps {
   onLogin: () => void;
@@ -78,7 +79,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [showLangMenu, setShowLangMenu] = useState(false);
+  const [isLangModalOpen, setIsLangModalOpen] = useState(false);
 
   const isDark = themeMode === 'dark';
 
@@ -283,97 +284,26 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       {/* Main Viewport Container (Smartphone Max Width 430px) */}
       <main className="w-full max-w-[430px] min-h-[100dvh] sm:min-h-[auto] sm:max-h-[920px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl text-text-main dark:text-dark-text flex flex-col relative shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] dark:shadow-dark-float sm:rounded-[36px] overflow-hidden border border-white/60 dark:border-slate-800 transition-colors duration-200">
         
-        {/* Top Header Bar dengan Fitur Suara di Kiri, Logo di Tengah, dan Pilihan Bahasa + Tema di Kanan */}
-        <header className="px-5 pt-4 pb-3.5 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 dark:from-slate-900 dark:via-blue-950 dark:to-indigo-950 text-white shadow-md relative overflow-hidden flex items-center justify-between border-b dark:border-slate-800">
-          {/* Fitur Suara di Sebelah Kiri */}
-          <button
-            type="button"
-            onClick={toggleSound}
-            className="bg-white/20 hover:bg-white/30 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 text-white font-bold p-2 rounded-xl backdrop-blur-sm transition-all shadow-sm min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer"
-            title={isSoundEnabled ? t('soundMute', language) : t('soundOn', language)}
-            aria-label={isSoundEnabled ? 'Suara Aktif' : 'Suara Bisu'}
-          >
-            {isSoundEnabled ? (
-              <Volume2 className="w-4 h-4 text-emerald-300" />
-            ) : (
-              <VolumeX className="w-4 h-4 text-slate-300 opacity-60" />
-            )}
-          </button>
-
-          {/* Logo Maskot Capybara di Atas Tengah Tanpa Text */}
-          <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-amber-300 via-orange-400 to-indigo-500 p-0.5 shadow-lg flex-shrink-0 relative group">
-            <div className="w-full h-full bg-white/95 dark:bg-slate-900 rounded-[14px] overflow-hidden flex items-center justify-center">
-              <img
-                src="/capybara_logo.png"
-                alt="Capybara Smart Grocery"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = '/capybara_mascot.svg';
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Right Action: Language Switcher Dropdown & Theme Toggle Button */}
-          <div className="flex items-center gap-1.5 relative">
-            {/* Pilihan Bahasa di Halaman Sign In / Sign Up */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowLangMenu(!showLangMenu)}
-                className="bg-white/20 hover:bg-white/30 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 text-white font-black text-[11px] px-2 py-1.5 rounded-xl backdrop-blur-sm transition-all shadow-sm min-h-[36px] flex items-center gap-1 cursor-pointer"
-                title={t('langLabel', language)}
-              >
-                <Languages className="w-3.5 h-3.5 text-blue-200" />
-                <span>{language === 'id' ? 'ID' : language === 'en' ? 'EN' : '中文'}</span>
-              </button>
-
-              {showLangMenu && (
-                <div className="absolute right-0 top-full mt-2 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-200 dark:border-slate-700 py-1.5 z-50 min-w-[125px] animate-fade-in text-gray-800 dark:text-slate-100">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLanguage('id');
-                      setShowLangMenu(false);
-                      soundService.pop();
-                    }}
-                    className={`w-full text-left px-3 py-2 text-xs font-bold hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer ${
-                      language === 'id' ? 'text-primary dark:text-blue-400 bg-blue-50/60 dark:bg-slate-750' : ''
-                    }`}
-                  >
-                    <span>🇮🇩</span> <span>Indonesia</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLanguage('en');
-                      setShowLangMenu(false);
-                      soundService.pop();
-                    }}
-                    className={`w-full text-left px-3 py-2 text-xs font-bold hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer ${
-                      language === 'en' ? 'text-primary dark:text-blue-400 bg-blue-50/60 dark:bg-slate-750' : ''
-                    }`}
-                  >
-                    <span>🇬🇧</span> <span>English</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLanguage('zh');
-                      setShowLangMenu(false);
-                      soundService.pop();
-                    }}
-                    className={`w-full text-left px-3 py-2 text-xs font-bold hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer ${
-                      language === 'zh' ? 'text-primary dark:text-blue-400 bg-blue-50/60 dark:bg-slate-750' : ''
-                    }`}
-                  >
-                    <span>🇨🇳</span> <span>中文</span>
-                  </button>
-                </div>
+        {/* Top Header Bar dengan 2 Tombol di Kiri (Suara & Tema dengan Warna Seragam), Logo Center, dan Bahasa di Kanan */}
+        <header className="px-4 sm:px-5 pt-4 pb-3.5 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 dark:from-slate-900 dark:via-blue-950 dark:to-indigo-950 text-white shadow-md relative overflow-hidden flex items-center justify-between border-b dark:border-slate-800">
+          {/* Sebelah Kiri: 2 Tombol (Sound & Dark/Light Mode dengan Style & Warna Seragam) */}
+          <div className="flex items-center gap-1.5 z-10">
+            {/* Fitur Suara */}
+            <button
+              type="button"
+              onClick={toggleSound}
+              className="bg-white/20 hover:bg-white/30 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 text-white font-bold p-2 rounded-xl backdrop-blur-sm transition-all shadow-sm min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer"
+              title={isSoundEnabled ? t('soundMute', language) : t('soundOn', language)}
+              aria-label={isSoundEnabled ? 'Suara Aktif' : 'Suara Bisu'}
+            >
+              {isSoundEnabled ? (
+                <Volume2 className="w-4 h-4 text-blue-100" />
+              ) : (
+                <VolumeX className="w-4 h-4 text-slate-300 opacity-60" />
               )}
-            </div>
+            </button>
 
-            {/* Theme Mode Toggle Button */}
+            {/* Dark Mode / Light Mode Toggle Button */}
             <button
               type="button"
               onClick={toggleThemeMode}
@@ -384,7 +314,51 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               {isDark ? <Sun className="w-4 h-4 text-amber-300" /> : <Moon className="w-4 h-4 text-blue-100" />}
             </button>
           </div>
+
+          {/* Logo Maskot Capybara - 100% PASTI DI TENGAH (Absolute Centered) */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none">
+            <div className="w-12 h-12 sm:w-13 sm:h-13 rounded-2xl bg-gradient-to-br from-amber-300 via-orange-400 to-indigo-500 p-0.5 shadow-lg flex-shrink-0 relative group pointer-events-auto">
+              <div className="w-full h-full bg-white/95 dark:bg-slate-900 rounded-[14px] overflow-hidden flex items-center justify-center">
+                <img
+                  src="/capybara_logo.png"
+                  alt="Capybara Smart Grocery"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = '/capybara_mascot.svg';
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Sebelah Kanan: 1 Tombol Bahasa (Membuka Dialog Modal Konfirmasi agar Tidak Terpotong) */}
+          <div className="flex items-center z-10">
+            <button
+              type="button"
+              onClick={() => setIsLangModalOpen(true)}
+              className="bg-white/20 hover:bg-white/30 dark:bg-slate-800/80 dark:hover:bg-slate-800 active:scale-95 text-white font-black text-xs px-2.5 py-1.5 rounded-xl backdrop-blur-sm transition-all shadow-sm min-h-[36px] flex items-center gap-1.5 cursor-pointer text-blue-100"
+              title={t('langLabel', language)}
+            >
+              <Languages className="w-3.5 h-3.5 text-blue-100 flex-shrink-0" />
+              <span>{getLanguageDisplayName(language)}</span>
+            </button>
+          </div>
         </header>
+
+        {/* Modal Pemilihan & Konfirmasi Bahasa */}
+        <LanguageSelectorModal
+          isOpen={isLangModalOpen}
+          onClose={() => setIsLangModalOpen(false)}
+          currentLanguage={language}
+          onConfirmLanguage={(newLang) => {
+            setLanguage(newLang);
+            showToast(
+              t('langChangedToast', newLang, {
+                lang: getLanguageDisplayName(newLang),
+              })
+            );
+          }}
+        />
 
         {/* Scrollable Form Body - UI Lebih Padat & Rapi (Kalimat Subtitle dihapus bersih) */}
         <div className="flex-1 px-5 py-3.5 overflow-y-auto space-y-3 flex flex-col justify-between">
