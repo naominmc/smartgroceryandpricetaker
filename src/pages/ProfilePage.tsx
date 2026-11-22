@@ -38,8 +38,10 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
   const [currency, setCurrency] = useState(userProfile.currency);
 
   // Password management inside Edit Profile
-  const [showPassword, setShowPassword] = useState(false);
-  const [currentPasswordDisplay, setCurrentPasswordDisplay] = useState(userProfile.passwordMasked || 'naomi12345');
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
@@ -105,7 +107,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
     setUsername(userProfile.username);
     setBio(userProfile.bio);
     setCurrency(userProfile.currency || 'ID Rupiah Indonesia (Rp - IDR)');
-    setCurrentPasswordDisplay(userProfile.passwordMasked || 'naomi12345');
   }, [userProfile]);
 
   const handleClearCacheAndStorage = async () => {
@@ -199,17 +200,48 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
       return;
     }
 
-    if (newPassword) {
+    // Ambil kata sandi aktif saat ini (verifikasi riil dari localStorage atau userProfile)
+    const savedPw = typeof window !== 'undefined' ? localStorage.getItem('sg_password') : null;
+    const currentActivePassword =
+      savedPw && savedPw !== '••••••••••••••'
+        ? savedPw
+        : userProfile.passwordMasked && userProfile.passwordMasked !== '••••••••••••••'
+        ? userProfile.passwordMasked
+        : 'naomi12345';
+
+    const isAttemptingPasswordChange = Boolean(oldPassword || newPassword || confirmPassword);
+
+    if (isAttemptingPasswordChange) {
+      if (!oldPassword) {
+        setPasswordError('Masukkan kata sandi sebelumnya untuk verifikasi!');
+        return;
+      }
+      if (oldPassword !== currentActivePassword) {
+        setPasswordError('Kata sandi sebelumnya salah! Verifikasi gagal.');
+        return;
+      }
+      if (!newPassword) {
+        setPasswordError('Masukkan kata sandi baru!');
+        return;
+      }
       if (newPassword.length < 6) {
         setPasswordError('Kata sandi baru minimal 6 karakter!');
         return;
       }
-      if (newPassword !== confirmPassword) {
-        setPasswordError('Konfirmasi kata sandi tidak cocok!');
+      if (newPassword === oldPassword) {
+        setPasswordError('Kata sandi baru tidak boleh sama dengan kata sandi sebelumnya!');
         return;
       }
-      setCurrentPasswordDisplay(newPassword);
+      if (newPassword !== confirmPassword) {
+        setPasswordError('Konfirmasi kata sandi baru tidak cocok!');
+        return;
+      }
+
+      // Verifikasi sukses: perbarui kata sandi secara riil
       updateUserProfile({ passwordMasked: newPassword });
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('sg_password', newPassword);
+      }
     }
 
     updateUserProfile({
@@ -219,10 +251,15 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
       currency,
     });
     setIsEditing(false);
+    setOldPassword('');
     setNewPassword('');
     setConfirmPassword('');
     setPasswordError(null);
-    showToast('Profil & Pengaturan berhasil disimpan! ✨');
+    showToast(
+      isAttemptingPasswordChange
+        ? 'Kata sandi & profil berhasil diperbarui! ✨'
+        : 'Profil & Pengaturan berhasil disimpan! ✨'
+    );
   };
 
   return (
@@ -407,43 +444,92 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
               </div>
 
               <div className="space-y-1.5">
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={newPassword}
-                    onChange={(e) => {
-                      setNewPassword(e.target.value);
-                      if (passwordError) setPasswordError(null);
-                    }}
-                    placeholder="Kata sandi baru (kosongkan jika tidak diubah)"
-                    className="w-full text-xs px-2.5 py-1.5 pr-8 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary font-mono"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-text-main dark:hover:text-slate-200 cursor-pointer p-0.5"
-                    title={showPassword ? 'Sembunyikan sandi' : 'Tampilkan sandi'}
-                  >
-                    {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                  </button>
+                {/* 1. Kata Sandi Sebelumnya (Verifikasi Ril) */}
+                <div>
+                  <label className="text-[9px] text-text-secondary dark:text-slate-400 font-semibold block mb-0.5">
+                    Kata Sandi Sebelumnya:
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showOldPassword ? 'text' : 'password'}
+                      value={oldPassword}
+                      onChange={(e) => {
+                        setOldPassword(e.target.value);
+                        if (passwordError) setPasswordError(null);
+                      }}
+                      placeholder="Masukkan kata sandi lama / sebelumnya"
+                      className="w-full text-xs px-2.5 py-1.5 pr-8 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowOldPassword(!showOldPassword)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-text-main dark:hover:text-slate-200 cursor-pointer p-0.5"
+                      title={showOldPassword ? 'Sembunyikan sandi' : 'Tampilkan sandi'}
+                    >
+                      {showOldPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
                 </div>
 
-                {newPassword && (
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={confirmPassword}
-                    onChange={(e) => {
-                      setConfirmPassword(e.target.value);
-                      if (passwordError) setPasswordError(null);
-                    }}
-                    placeholder="Ulangi kata sandi baru"
-                    className="w-full text-xs px-2.5 py-1.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary font-mono animate-fade-in"
-                  />
+                {/* 2. Kata Sandi Baru */}
+                <div>
+                  <label className="text-[9px] text-text-secondary dark:text-slate-400 font-semibold block mb-0.5">
+                    Kata Sandi Baru:
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showNewPassword ? 'text' : 'password'}
+                      value={newPassword}
+                      onChange={(e) => {
+                        setNewPassword(e.target.value);
+                        if (passwordError) setPasswordError(null);
+                      }}
+                      placeholder="Kata sandi baru (kosongkan jika tidak diubah)"
+                      className="w-full text-xs px-2.5 py-1.5 pr-8 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-text-main dark:hover:text-slate-200 cursor-pointer p-0.5"
+                      title={showNewPassword ? 'Sembunyikan sandi' : 'Tampilkan sandi'}
+                    >
+                      {showNewPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* 3. Konfirmasi Kata Sandi Baru */}
+                {(newPassword || oldPassword) && (
+                  <div className="animate-fade-in">
+                    <label className="text-[9px] text-text-secondary dark:text-slate-400 font-semibold block mb-0.5">
+                      Konfirmasi Kata Sandi Baru:
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        value={confirmPassword}
+                        onChange={(e) => {
+                          setConfirmPassword(e.target.value);
+                          if (passwordError) setPasswordError(null);
+                        }}
+                        placeholder="Ulangi kata sandi baru"
+                        className="w-full text-xs px-2.5 py-1.5 pr-8 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-text-main dark:hover:text-slate-200 cursor-pointer p-0.5"
+                        title={showConfirmPassword ? 'Sembunyikan sandi' : 'Tampilkan sandi'}
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
                 )}
 
                 {passwordError && (
-                  <p className="text-[10px] text-danger dark:text-rose-400 font-bold">
-                    {passwordError}
+                  <p className="text-[10px] text-danger dark:text-rose-400 font-bold animate-shake pt-0.5">
+                    ⚠️ {passwordError}
                   </p>
                 )}
               </div>

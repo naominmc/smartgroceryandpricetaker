@@ -87,6 +87,11 @@ const getInitialTheme = (): ThemeMode => {
 
 const getInitialProfile = (): UserProfile => {
   if (typeof window !== 'undefined') {
+    const savedPw = localStorage.getItem('sg_password');
+    const validPw = savedPw && savedPw !== '••••••••••••••' ? savedPw : 'naomi12345';
+    if (!savedPw || savedPw === '••••••••••••••') {
+      localStorage.setItem('sg_password', validPw);
+    }
     return {
       fullName: localStorage.getItem('sg_fullName') || 'naomi miracle',
       username: localStorage.getItem('sg_username') || 'naomiiracle',
@@ -96,7 +101,7 @@ const getInitialProfile = (): UserProfile => {
       currency: localStorage.getItem('sg_currency') || 'ID Rupiah Indonesia (Rp - IDR)',
       loginTime: localStorage.getItem('sg_loginTime') || '22 Nov 2026, 11.12 WIB',
       isGoogleLinked: true,
-      passwordMasked: localStorage.getItem('sg_password') || '••••••••••••••',
+      passwordMasked: validPw,
     };
   }
   return {
@@ -108,7 +113,7 @@ const getInitialProfile = (): UserProfile => {
     currency: 'ID Rupiah Indonesia (Rp - IDR)',
     loginTime: '22 Nov 2026, 11.12 WIB',
     isGoogleLinked: true,
-    passwordMasked: '••••••••••••••',
+    passwordMasked: 'naomi12345',
   };
 };
 

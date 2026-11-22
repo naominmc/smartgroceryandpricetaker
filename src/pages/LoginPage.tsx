@@ -78,9 +78,26 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         fullName: fullNameInput.trim() || 'naomi miracle',
         username: usernameInput.trim() || 'naomiiracle',
         email: emailInput.trim(),
+        passwordMasked: passwordInput.trim(),
       });
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('sg_password', passwordInput.trim());
+      }
       showToast('Akun berhasil didaftarkan! Masuk ke aplikasi...');
     } else {
+      const savedPw = typeof window !== 'undefined' ? localStorage.getItem('sg_password') : null;
+      const validPw =
+        savedPw && savedPw !== '••••••••••••••'
+          ? savedPw
+          : userProfile.passwordMasked && userProfile.passwordMasked !== '••••••••••••••'
+          ? userProfile.passwordMasked
+          : 'naomi12345';
+
+      if (passwordInput.trim() !== validPw) {
+        setIsLoading(false);
+        showToast('Kata sandi salah. Silakan coba lagi.');
+        return;
+      }
       showToast('Otentikasi berhasil! Menyiapkan dashboard...');
     }
 
