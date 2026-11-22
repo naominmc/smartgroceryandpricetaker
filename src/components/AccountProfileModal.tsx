@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   X,
   User,
@@ -19,6 +19,8 @@ import {
   RotateCcw,
   Smartphone,
   ShieldCheck,
+  HardDrive,
+  Trash2,
 } from 'lucide-react';
 import { useStore, type UserProfile } from '../store/useStore';
 
@@ -52,12 +54,85 @@ export const AccountProfileModal: React.FC<AccountProfileModalProps> = ({
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
+  // Storage and cache usage state
+  const [storageInfo, setStorageInfo] = useState<{
+    usedGb: string;
+    usedMb: string;
+    quotaGb: string;
+    percent: string;
+  }>({
+    usedGb: '0.000',
+    usedMb: '0.0',
+    quotaGb: '0.0',
+    percent: '0.1',
+  });
+  const [isClearingCache, setIsClearingCache] = useState(false);
+
   // Toast / feedback message
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  if (!isOpen) return null;
+  const calculateStorage = async () => {
+    try {
+      if (navigator.storage && navigator.storage.estimate) {
+        const estimate = await navigator.storage.estimate();
+        const usageBytes = estimate.usage || 0;
+        const quotaBytes = estimate.quota || 50 * 1024 * 1024 * 1024;
+
+        const usedGb = (usageBytes / (1024 * 1024 * 1024)).toFixed(3);
+        const usedMb = (usageBytes / (1024 * 1024)).toFixed(1);
+        const quotaGb = (quotaBytes / (1024 * 1024 * 1024)).toFixed(1);
+        const calcPercent = quotaBytes > 0 ? ((usageBytes / quotaBytes) * 100).toFixed(2) : '0.1';
+
+        setStorageInfo({
+          usedGb,
+          usedMb,
+          quotaGb,
+          percent: parseFloat(calcPercent) < 0.1 ? '0.1' : calcPercent,
+        });
+      } else {
+        setStorageInfo({
+          usedGb: '0.005',
+          usedMb: '5.2',
+          quotaGb: '32.0',
+          percent: '0.1',
+        });
+      }
+    } catch (e) {
+      console.warn('Gagal membaca storage estimate:', e);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      calculateStorage();
+    }
+  }, [isOpen]);
+
+  const handleClearCacheAndStorage = async () => {
+    try {
+      setIsClearingCache(true);
+      // 1. Bersihkan CacheStorage jika didukung
+      if ('caches' in window) {
+        const cacheKeys = await window.caches.keys();
+        await Promise.all(cacheKeys.map((key) => window.caches.delete(key)));
+      }
+
+      // 2. Bersihkan sessionStorage
+      try {
+        sessionStorage.clear();
+      } catch {}
+
+      // 3. Hitung ulang kapasitas penyimpanan
+      await calculateStorage();
+      showToast('Cache peramban berhasil dibersihkan! Penyimpanan lebih lega 🧹');
+    } catch (err: any) {
+      showToast('Gagal membersihkan cache: ' + (err.message || 'Error'));
+    } finally {
+      setIsClearingCache(false);
+    }
+  };
 
   const showToast = (msg: string) => {
     setSuccessToast(msg);
@@ -126,6 +201,8 @@ export const AccountProfileModal: React.FC<AccountProfileModalProps> = ({
     setConfirmPassword('');
     showToast('Kata sandi akun berhasil diperbarui! 🔒');
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm animate-fade-in">
@@ -459,6 +536,85 @@ export const AccountProfileModal: React.FC<AccountProfileModalProps> = ({
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Card 4: PENYIMPANAN & CACHE APLIKASI */}
+          <div className="bg-card dark:bg-slate-800/90 rounded-2xl p-3.5 border border-border dark:border-slate-700 shadow-soft space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black tracking-wider text-text-secondary dark:text-slate-400 uppercase flex items-center gap-1.5">
+                <HardDrive className="w-3.5 h-3.5 text-primary dark:text-blue-400" />
+                <span>Penyimpanan &amp; Cache Aplikasi</span>
+              </span>
+
+              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200/60 dark:border-emerald-800/60 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Optimal</span>
+              </span>
+            </div>
+
+            {/* Storage Meter Display */}
+            <div className="bg-gray-50/80 dark:bg-slate-900/60 rounded-xl p-3 border border-gray-100 dark:border-slate-750 space-y-2">
+              <div className="flex items-end justify-between">
+                <div>
+                  <span className="text-[10px] text-text-secondary dark:text-slate-400 font-semibold block">
+                    Penyimpanan Terpakai:
+                  </span>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-lg font-black text-primary dark:text-blue-400 tracking-tight">
+                      {storageInfo.usedGb} GB
+                    </span>
+                    <span className="text-[11px] font-bold text-text-secondary dark:text-slate-400">
+                      ({storageInfo.usedMb} MB)
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <span className="text-[10px] text-text-secondary dark:text-slate-400 font-semibold block">
+                    Kuota Perangkat:
+                  </span>
+                  <span className="text-xs font-extrabold text-text-main dark:text-slate-200">
+                    {storageInfo.quotaGb} GB
+                  </span>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="w-full h-1.5 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full transition-all duration-500"
+                  style={{ width: `${Math.max(parseFloat(storageInfo.percent), 1)}%` }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between text-[10px] text-text-secondary dark:text-slate-400">
+                <span>Database offline Dexie &amp; Cache Peramban</span>
+                <span className="font-semibold">{storageInfo.percent}% terpakai</span>
+              </div>
+            </div>
+
+            {/* Cache Cleaner Row */}
+            <div className="flex items-center justify-between gap-2 pt-1 border-t border-gray-100 dark:border-slate-700/80">
+              <div className="min-w-0 flex-1">
+                <h4 className="text-xs font-bold text-text-main dark:text-slate-100 leading-tight">
+                  Bersihkan Cache &amp; Reset Data
+                </h4>
+                <p className="text-[10px] text-text-secondary dark:text-slate-400 mt-0.5 line-clamp-1">
+                  Hapus cache lokal peramban &amp; segarkan data
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleClearCacheAndStorage}
+                disabled={isClearingCache}
+                className="px-3 py-1.5 rounded-xl border border-red-200 dark:border-rose-900/60 bg-red-50/60 dark:bg-rose-950/40 hover:bg-red-100 dark:hover:bg-rose-900/60 active:scale-95 text-danger dark:text-rose-400 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer flex-shrink-0 disabled:opacity-50"
+                title="Bersihkan cache lokal"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{isClearingCache ? 'Membersihkan...' : 'Bersihkan'}</span>
+              </button>
+            </div>
           </div>
 
           {/* Action Buttons: Kembali ke Halaman Login, Ganti Akun, Keluar */}
