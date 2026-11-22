@@ -93,10 +93,10 @@ export const App: React.FC = () => {
       }}
     >
       {/* Mobile Smartphone Viewport Frame (Max width 430px) */}
-      <main className="w-full max-w-[430px] min-h-[100dvh] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl text-text-main dark:text-dark-text flex flex-col relative shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] dark:shadow-dark-float sm:rounded-[36px] sm:overflow-hidden border border-white/60 dark:border-slate-800 transition-colors duration-200">
+      <main className="w-full max-w-[430px] h-[100dvh] max-h-[100dvh] sm:h-[calc(100vh-3rem)] sm:max-h-[920px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl text-text-main dark:text-dark-text flex flex-col relative shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] dark:shadow-dark-float sm:rounded-[36px] overflow-hidden border border-white/60 dark:border-slate-800 transition-colors duration-200">
         
         {/* Top Header with User Profile: naomiiracle, Theme Mode Toggle, Scan, & Bank BCA */}
-        <header className="px-4 pt-3.5 pb-2.5 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 dark:from-slate-900 dark:via-blue-950 dark:to-indigo-950 text-white shadow-md relative overflow-hidden border-b dark:border-slate-800">
+        <header className="flex-shrink-0 px-4 pt-3.5 pb-2.5 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 dark:from-slate-900 dark:via-blue-950 dark:to-indigo-950 text-white shadow-md relative overflow-hidden border-b dark:border-slate-800">
           {/* Subtle Background Pattern/Glow */}
           <div className="absolute -right-6 -top-6 w-28 h-28 bg-white/10 dark:bg-blue-500/10 rounded-full blur-xl pointer-events-none" />
           <div className="absolute left-1/3 -bottom-4 w-20 h-20 bg-amber-400/15 rounded-full blur-lg pointer-events-none" />
@@ -181,7 +181,7 @@ export const App: React.FC = () => {
         </header>
 
         {/* Content Area with Safe-Area Padding */}
-        <div className="flex-1 px-4 pt-3 pb-safe overflow-y-auto">
+        <div className="flex-1 px-4 pt-3 pb-safe overflow-y-auto overscroll-contain">
           {activeTab === 'shopping' && <ShoppingPage />}
           {activeTab === 'history' && <HistoryPage />}
           {activeTab === 'budget' && <BudgetPage />}
