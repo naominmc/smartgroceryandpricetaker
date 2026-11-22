@@ -9,12 +9,7 @@ import {
   Minus,
   Search,
   Zap,
-  Image as ImageIcon,
-  RotateCcw,
-  Flashlight,
   AlertCircle,
-  ShieldAlert,
-  ShieldCheck,
   Loader2,
 } from 'lucide-react';
 import {
@@ -48,26 +43,12 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
   onClose,
   onAddToCart,
 }) => {
-  // Hanya 2 Mode: Kamera dan Galeri
-  const [activeTab, setActiveTab] = useState<'camera' | 'gallery'>('camera');
-
   const [detectedItem, setDetectedItem] = useState<ScannedProductItem | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const [cameraActive, setCameraActive] = useState(false);
-  const [cameraFacing, setCameraFacing] = useState<'environment' | 'user'>('environment');
-  const [cameraError, setCameraError] = useState<string | null>(null);
-  const [cameraPermissionState, setCameraPermissionState] = useState<
-    'idle' | 'requesting' | 'granted' | 'denied' | 'unsupported'
-  >('idle');
-
-  // Izin Akses Galeri
-  const [galleryPermissionState, setGalleryPermissionState] = useState<'idle' | 'granted'>('idle');
-
-  const [isTorchOn, setIsTorchOn] = useState(false);
   const [isDecodingPhoto, setIsDecodingPhoto] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
 
-  // Custom scanned item fields (jika barcode belum terdaftar di katalog)
+  // Custom scanned item fields (jika barcode belum terdaftar di katalog mock)
   const [customName, setCustomName] = useState('');
   const [customPrice, setCustomPrice] = useState('10000');
   const [customCategory, setCustomCategory] = useState<ProductCategory>('Makanan instan');
@@ -76,16 +57,11 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
   const [searchResults, setSearchResults] = useState<SupermarketCatalogItem[]>([]);
   const [isAdding, setIsAdding] = useState(false);
 
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const galleryInputRef = useRef<HTMLInputElement>(null);
-
-  const scanTimerRef = useRef<any>(null);
-  const zxingReaderRef = useRef<any>(null);
+  // Input file tunggal (Mendukung Kamera / Ambil Foto & Galeri Foto bawaan HP dalam 1 tombol)
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const lastScannedCodeRef = useRef<{ code: string; timestamp: number } | null>(null);
-  const isModalOpenRef = useRef(isOpen);
 
-  // Suara scanner beep kasir supermarket
+  // Suara beep kasir supermarket
   const playScannerBeep = () => {
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -114,241 +90,18 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
   };
 
   useEffect(() => {
-    isModalOpenRef.current = isOpen;
     if (!isOpen) {
-      stopCamera();
       setDetectedItem(null);
       setManualInput('');
       setPhotoError(null);
-      setIsTorchOn(false);
-      return;
     }
-
-    // Ketika modal dibuka dan mode kamera aktif
-    if (activeTab === 'camera') {
-      if (cameraPermissionState === 'granted') {
-        startCamera(cameraFacing);
-      }
-    } else {
-      stopCamera();
-    }
-
-    return () => {
-      stopCamera();
-    };
-  }, [isOpen, activeTab]);
-
-  const startCamera = async (facing: 'environment' | 'user' = cameraFacing) => {
-    stopCamera();
-    setCameraError(null);
-    setCameraPermissionState('requesting');
-
-    try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setCameraError('Kamera tidak didukung pada browser ini.');
-        setCameraPermissionState('unsupported');
-        return;
-      }
-
-      const constraints: MediaStreamConstraints = {
-        video: {
-          facingMode: { ideal: facing },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
-        audio: false,
-      };
-
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      streamRef.current = stream;
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play().catch(() => {});
-      }
-
-      setCameraActive(true);
-      setCameraPermissionState('granted');
-
-      // Mulai deteksi barcode real-time
-      startRealtimeDetection();
-    } catch (err: any) {
-      console.warn('Camera access denied or error:', err);
-      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        setCameraError('Izin akses kamera belum diberikan. Izinkan untuk memindai langsung.');
-        setCameraPermissionState('denied');
-      } else {
-        setCameraError('Kamera tidak dapat diakses (' + (err.message || 'Error') + ').');
-        setCameraPermissionState('denied');
-      }
-      setCameraActive(false);
-    }
-  };
-
-  const stopCamera = () => {
-    if (scanTimerRef.current) {
-      clearTimeout(scanTimerRef.current);
-      scanTimerRef.current = null;
-    }
-
-    if (zxingReaderRef.current) {
-      try {
-        zxingReaderRef.current.reset();
-      } catch {}
-      zxingReaderRef.current = null;
-    }
-
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
-
-    setCameraActive(false);
-    setIsTorchOn(false);
-  };
-
-  // Flip Kamera: Depan (Selfie) atau Belakang
-  const toggleCameraFacing = async () => {
-    const nextFacing = cameraFacing === 'environment' ? 'user' : 'environment';
-    setCameraFacing(nextFacing);
-    await startCamera(nextFacing);
-  };
-
-  // Toggle Flash / Senter
-  const toggleTorch = async () => {
-    if (!streamRef.current) return;
-    const track = streamRef.current.getVideoTracks()[0];
-    if (!track) return;
-    try {
-      const nextTorch = !isTorchOn;
-      await (track as any).applyConstraints({
-        advanced: [{ torch: nextTorch }],
-      });
-      setIsTorchOn(nextTorch);
-    } catch (err) {
-      console.warn('Hardware torch error, toggling simulated flash:', err);
-      setIsTorchOn(!isTorchOn);
-    }
-  };
-
-  // Deteksi Barcode Realtime dari Video Kamera
-  const startRealtimeDetection = async () => {
-    if (scanTimerRef.current) {
-      clearTimeout(scanTimerRef.current);
-      scanTimerRef.current = null;
-    }
-
-    // 1. Native W3C BarcodeDetector API
-    if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
-      try {
-        const formats = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'code_93', 'qr_code', 'itf'];
-        const detector = new (window as any).BarcodeDetector({ formats });
-
-        const detectFrame = async () => {
-          if (!isModalOpenRef.current || !videoRef.current || !streamRef.current) return;
-
-          if (videoRef.current.readyState >= 2) {
-            try {
-              const barcodes = await detector.detect(videoRef.current);
-              if (barcodes && barcodes.length > 0) {
-                const raw = barcodes[0].rawValue;
-                if (raw) {
-                  handleBarcodeDetected(raw);
-                }
-              }
-            } catch {
-              // Frame decoding error, continue loop
-            }
-          }
-
-          scanTimerRef.current = setTimeout(detectFrame, 120);
-        };
-
-        detectFrame();
-        return;
-      } catch (e) {
-        console.warn('Native BarcodeDetector error, fallback ZXing', e);
-      }
-    }
-
-    // 2. Fallback: ZXing MultiFormatReader
-    try {
-      const ZXing = (window as any).ZXing;
-      if (ZXing && videoRef.current) {
-        const codeReader = new ZXing.BrowserMultiFormatReader();
-        zxingReaderRef.current = codeReader;
-        codeReader.decodeFromVideoElement(videoRef.current, (result: any) => {
-          if (result && result.getText && isModalOpenRef.current) {
-            handleBarcodeDetected(result.getText());
-          }
-        });
-      }
-    } catch (err) {
-      console.warn('ZXing video detection error:', err);
-    }
-  };
-
-  // Jepret foto dari video frame dan decode barcode
-  const handleCaptureVideoFrame = async () => {
-    if (!videoRef.current || videoRef.current.readyState < 2) return;
-    try {
-      setIsDecodingPhoto(true);
-      setPhotoError(null);
-
-      const canvas = document.createElement('canvas');
-      canvas.width = videoRef.current.videoWidth || 1280;
-      canvas.height = videoRef.current.videoHeight || 720;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-      }
-
-      let detectedBarcode: string | null = null;
-
-      // 1. Native BarcodeDetector on canvas
-      if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
-        try {
-          const detector = new (window as any).BarcodeDetector({
-            formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'code_93', 'qr_code', 'itf'],
-          });
-          const barcodes = await detector.detect(canvas);
-          if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
-            detectedBarcode = barcodes[0].rawValue;
-          }
-        } catch (e) {}
-      }
-
-      // 2. ZXing on canvas
-      if (!detectedBarcode && (window as any).ZXing) {
-        try {
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-          const codeReader = new (window as any).ZXing.BrowserMultiFormatReader();
-          const result = await codeReader.decodeFromImageUrl(dataUrl);
-          if (result && result.getText()) {
-            detectedBarcode = result.getText();
-          }
-        } catch {}
-      }
-
-      if (detectedBarcode) {
-        handleBarcodeDetected(detectedBarcode);
-      } else {
-        setPhotoError('Barcode tidak terdeteksi pada jepretan. Arahkan pas ke garis tengah barcode.');
-      }
-    } catch (err: any) {
-      console.error('Frame capture error:', err);
-      setPhotoError('Gagal memproses jepretan kamera.');
-    } finally {
-      setIsDecodingPhoto(false);
-    }
-  };
+  }, [isOpen]);
 
   // Barcode ditemukan
   const handleBarcodeDetected = (code: string) => {
     if (!code) return;
     const cleanCode = code.trim();
 
-    // Prevent re-trigger within 2.5s
     const now = Date.now();
     if (
       lastScannedCodeRef.current &&
@@ -388,7 +141,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
     }
   };
 
-  // Pemindaian Barcode dari Foto Galeri
+  // Proses upload foto dari Kamera atau Galeri (Satu Tombol)
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -405,6 +158,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
 
       let detectedBarcode: string | null = null;
 
+      // 1. Coba Native BarcodeDetector API (Cepat di Android/Chrome)
       if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
         try {
           const detector = new (window as any).BarcodeDetector({
@@ -414,9 +168,12 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
           if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
             detectedBarcode = barcodes[0].rawValue;
           }
-        } catch (e) {}
+        } catch (e) {
+          console.warn('BarcodeDetector error:', e);
+        }
       }
 
+      // 2. Fallback ZXing Library
       if (!detectedBarcode && (window as any).ZXing) {
         try {
           const codeReader = new (window as any).ZXing.BrowserMultiFormatReader();
@@ -424,17 +181,19 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
           if (result && result.getText()) {
             detectedBarcode = result.getText();
           }
-        } catch {}
+        } catch {
+          // ZXing gagal mendeteksi
+        }
       }
 
       if (detectedBarcode) {
         handleBarcodeDetected(detectedBarcode);
       } else {
-        setPhotoError('Barcode tidak terdeteksi pada gambar galeri. Pastikan gambar jelas dan tidak buram.');
+        setPhotoError('Barcode tidak terdeteksi pada foto. Pastikan gambar barcode jelas, terang, dan tidak buram.');
       }
     } catch (err: any) {
-      console.error('Error photo gallery decode:', err);
-      setPhotoError('Gagal membaca gambar dari galeri foto.');
+      console.error('Error decode foto barcode:', err);
+      setPhotoError('Gagal memproses gambar foto. Pastikan format file gambar valid.');
     } finally {
       setIsDecodingPhoto(false);
       URL.revokeObjectURL(objectUrl);
@@ -442,12 +201,6 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
         e.target.value = '';
       }
     }
-  };
-
-  // Izin & Buka Galeri
-  const handleRequestGalleryAccess = () => {
-    setGalleryPermissionState('granted');
-    galleryInputRef.current?.click();
   };
 
   const handleManualSearch = (val: string) => {
@@ -496,9 +249,9 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-md animate-fade-in">
-      {/* File input untuk Galeri Foto perangkat (Murni Galeri, tanpa capture camera) */}
+      {/* File input tunggal: Membuka dialog bawaan sistem HP (Bisa Take Photo / Kamera & Pilih dari Galeri) */}
       <input
-        ref={galleryInputRef}
+        ref={photoInputRef}
         type="file"
         accept="image/*"
         onChange={handlePhotoUpload}
@@ -519,7 +272,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
             </div>
             <div>
               <h2 className="font-bold text-sm text-white">Scanner Barcode Supermarket</h2>
-              <p className="text-[10px] text-gray-400">Pilih mode Kamera atau Galeri Foto</p>
+              <p className="text-[10px] text-gray-400">Ambil foto langsung atau pilih dari galeri</p>
             </div>
           </div>
           <button
@@ -532,216 +285,38 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
           </button>
         </div>
 
-        {/* 2 PILIHAN UTAMA: Kamera & Galeri */}
-        <div className="bg-gray-900 dark:bg-slate-950 px-4 py-2 border-b border-gray-800 flex-shrink-0">
-          <div className="flex bg-gray-800/90 dark:bg-slate-900 p-1 rounded-xl border border-gray-700/60">
+        {/* Area Scanner Tunggal (1 Tombol: Bisa Ambil Foto Langsung atau Pilih Galeri) */}
+        <div className="relative w-full h-56 bg-gradient-to-b from-gray-950 via-slate-900 to-black flex items-center justify-center p-4 text-center flex-shrink-0">
+          <div
+            onClick={() => photoInputRef.current?.click()}
+            className="w-full h-full border-2 border-dashed border-blue-400/60 hover:border-blue-400 rounded-3xl flex flex-col items-center justify-center p-4 cursor-pointer hover:bg-white/5 active:scale-[0.99] transition-all group shadow-inner"
+          >
+            <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center mb-2 shadow-lg group-hover:scale-105 transition-transform">
+              <Camera className="w-6 h-6" />
+            </div>
+
+            <h3 className="text-sm font-extrabold text-white mb-0.5">
+              Ambil Foto / Dari Galeri
+            </h3>
+
+            <p className="text-[11px] text-gray-300 max-w-xs mb-3 leading-relaxed">
+              Ketuk untuk memotret kemasan barcode atau memilih foto dari galeri HP Anda.
+            </p>
+
             <button
               type="button"
-              onClick={() => {
-                setActiveTab('camera');
-                if (cameraPermissionState === 'granted') {
-                  startCamera(cameraFacing);
-                }
-              }}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                activeTab === 'camera'
-                  ? 'bg-primary text-white shadow-md'
-                  : 'text-gray-400 hover:text-white'
-              }`}
+              className="px-5 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-soft flex items-center gap-2 pointer-events-none transition-all"
             >
               <Camera className="w-3.5 h-3.5" />
-              <span>Kamera</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab('gallery');
-                stopCamera();
-              }}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                activeTab === 'gallery'
-                  ? 'bg-primary text-white shadow-md'
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              <ImageIcon className="w-3.5 h-3.5" />
-              <span>Galeri</span>
+              <span>Buka Kamera / Galeri</span>
             </button>
           </div>
-        </div>
 
-        {/* Layar Tampilan (Viewfinder Kamera ATAU Galeri) */}
-        <div className="relative w-full h-64 bg-black flex items-center justify-center overflow-hidden flex-shrink-0">
-          {/* TAB 1: MODE KAMERA */}
-          {activeTab === 'camera' ? (
-            cameraActive ? (
-              <>
-                <video
-                  ref={videoRef}
-                  className="absolute inset-0 w-full h-full object-cover"
-                  playsInline
-                  autoPlay
-                  muted
-                />
-
-                {/* Simulated Screen Torch Overlay when flash is active */}
-                {isTorchOn && (
-                  <div className="absolute inset-0 bg-white/20 pointer-events-none z-10" />
-                )}
-
-                {/* Viewfinder Target Reticle */}
-                <div className="relative w-64 h-32 border-2 border-dashed border-blue-400/80 rounded-2xl flex items-center justify-center pointer-events-none z-10 shadow-lg">
-                  <div className="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-blue-400" />
-                  <div className="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 border-blue-400" />
-                  <div className="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 border-blue-400" />
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-blue-400" />
-
-                  {/* Red Laser Barcode Scanner Line */}
-                  <div className="absolute left-2 right-2 h-0.5 bg-gradient-to-r from-transparent via-red-500 to-transparent shadow-[0_0_10px_#ef4444] animate-pulse" />
-                </div>
-
-                {/* Kontrol Kamera Atas: Putar Kamera (Flip) & Flash Senter */}
-                <div className="absolute top-2.5 inset-x-2.5 z-20 flex items-center justify-between">
-                  {/* Flip Camera: Selfie vs Belakang */}
-                  <button
-                    type="button"
-                    onClick={toggleCameraFacing}
-                    className="py-1.5 px-3 rounded-full bg-black/60 hover:bg-black/80 text-white backdrop-blur-md transition-all shadow-sm flex items-center gap-1.5 cursor-pointer border border-white/20 active:scale-95"
-                    title="Putar Kamera (Selfie / Belakang)"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    <span className="text-[10px] font-bold">
-                      {cameraFacing === 'environment' ? 'Kamera Belakang' : 'Selfie'}
-                    </span>
-                  </button>
-
-                  {/* Toggle Flashlight (Torch) */}
-                  <button
-                    type="button"
-                    onClick={toggleTorch}
-                    className={`py-1.5 px-3 rounded-full backdrop-blur-md transition-all shadow-sm flex items-center gap-1.5 cursor-pointer border border-white/20 active:scale-95 ${
-                      isTorchOn
-                        ? 'bg-amber-400 text-gray-900 font-extrabold shadow-amber-400/50'
-                        : 'bg-black/60 text-white hover:bg-black/80 font-bold'
-                    }`}
-                    title={isTorchOn ? 'Matikan Lampu Flash' : 'Nyalakan Lampu Flash'}
-                  >
-                    <Flashlight className="w-3.5 h-3.5" />
-                    <span className="text-[10px]">{isTorchOn ? 'Flash ON' : 'Flash OFF'}</span>
-                  </button>
-                </div>
-
-                {/* Tombol Jepret Kamera di Tengah Bawah */}
-                <div className="absolute bottom-2.5 inset-x-0 flex items-center justify-center z-20">
-                  <button
-                    type="button"
-                    onClick={handleCaptureVideoFrame}
-                    className="py-1.5 px-4 rounded-full bg-white/95 hover:bg-white text-gray-900 text-xs font-extrabold shadow-lg flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
-                  >
-                    <Camera className="w-4 h-4 text-primary" />
-                    <span>Jepret &amp; Pindai</span>
-                  </button>
-                </div>
-              </>
-            ) : (
-              /* Layar Izin Akses Kamera */
-              <div className="absolute inset-0 bg-gradient-to-b from-gray-950 via-gray-900 to-black flex flex-col items-center justify-center text-gray-300 px-6 text-center space-y-3">
-                {cameraPermissionState === 'denied' ? (
-                  <ShieldAlert className="w-10 h-10 text-rose-500 animate-pulse" />
-                ) : (
-                  <Camera className="w-10 h-10 text-blue-400" />
-                )}
-
-                <div>
-                  <h3 className="text-sm font-bold text-white">
-                    {cameraPermissionState === 'denied'
-                      ? 'Izin Akses Kamera Ditolak'
-                      : 'Izin Akses Kamera Diperlukan'}
-                  </h3>
-                  <p className="text-[11px] text-gray-400 mt-1 max-w-xs leading-relaxed">
-                    {cameraPermissionState === 'denied'
-                      ? 'Akses kamera diblokir di browser. Klik tombol di bawah untuk meminta izin ulang atau gunakan tab Galeri.'
-                      : 'Aplikasi memerlukan izin untuk mengakses kamera perangkat agar dapat memindai barcode secara langsung.'}
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => startCamera(cameraFacing)}
-                  className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover active:scale-95 text-white font-bold text-xs shadow-soft transition-all flex items-center gap-2 cursor-pointer"
-                >
-                  <Camera className="w-4 h-4" />
-                  <span>
-                    {cameraPermissionState === 'denied' ? 'Coba Izinkan Kamera Lagi' : 'Izinkan Akses Kamera'}
-                  </span>
-                </button>
-
-                {cameraError && (
-                  <p className="text-[10px] text-amber-300 bg-amber-950/70 px-3 py-1 rounded-full border border-amber-800/70">
-                    {cameraError}
-                  </p>
-                )}
-              </div>
-            )
-          ) : (
-            /* TAB 2: MODE GALERI FOTO */
-            <div className="absolute inset-0 bg-gradient-to-b from-gray-950 via-gray-900 to-black flex flex-col items-center justify-center text-gray-300 px-6 text-center">
-              {galleryPermissionState === 'idle' ? (
-                /* Permintaan Izin Akses Galeri */
-                <div className="space-y-3 flex flex-col items-center">
-                  <div className="w-12 h-12 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center">
-                    <ShieldCheck className="w-6 h-6" />
-                  </div>
-
-                  <div>
-                    <h3 className="text-sm font-bold text-white">Izin Akses Galeri Foto</h3>
-                    <p className="text-[11px] text-gray-400 mt-1 max-w-xs leading-relaxed">
-                      Izinkan aplikasi untuk membuka galeri foto perangkat Anda guna memilih gambar barcode belanjaan.
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleRequestGalleryAccess}
-                    className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover active:scale-95 text-white font-bold text-xs shadow-soft transition-all flex items-center gap-2 cursor-pointer"
-                  >
-                    <ImageIcon className="w-4 h-4" />
-                    <span>Izinkan &amp; Buka Galeri</span>
-                  </button>
-                </div>
-              ) : (
-                /* Area Pemilihan Foto Galeri */
-                <div
-                  onClick={() => galleryInputRef.current?.click()}
-                  className="w-full h-full flex flex-col items-center justify-center p-6 text-center cursor-pointer hover:bg-slate-800/40 transition-colors group"
-                >
-                  <div className="w-14 h-14 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform">
-                    <ImageIcon className="w-7 h-7" />
-                  </div>
-                  <h4 className="text-sm font-bold text-white mb-1">
-                    Pilih Foto dari Galeri
-                  </h4>
-                  <p className="text-[11px] text-gray-400 max-w-xs mb-3">
-                    Ketuk untuk membuka album foto dan memindai gambar barcode yang tersimpan.
-                  </p>
-                  <button
-                    type="button"
-                    className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-soft flex items-center gap-1.5 pointer-events-none"
-                  >
-                    <ImageIcon className="w-3.5 h-3.5" />
-                    <span>Buka Galeri Foto</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Loading Indicator saat membaca Barcode dari Foto */}
+          {/* Loading Indicator saat membaca Barcode */}
           {isDecodingPhoto && (
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm z-30 flex flex-col items-center justify-center text-white space-y-2">
+            <div className="absolute inset-0 bg-black/85 backdrop-blur-sm z-30 flex flex-col items-center justify-center text-white space-y-2">
               <Loader2 className="w-7 h-7 text-blue-400 animate-spin" />
-              <p className="text-xs font-bold text-white">Membaca Barcode dari Gambar...</p>
+              <p className="text-xs font-bold text-white">Membaca Barcode dari Foto...</p>
             </div>
           )}
         </div>
