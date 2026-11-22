@@ -29,7 +29,7 @@ interface ProfilePageProps {
 }
 
 export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
-  const { userProfile, updateUserProfile } = useStore();
+  const { userProfile, updateUserProfile, isEditingProfile, setIsEditingProfile } = useStore();
 
   const [isEditing, setIsEditing] = useState(false);
   const [fullName, setFullName] = useState(userProfile.fullName);
@@ -108,6 +108,12 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
     setBio(userProfile.bio);
     setCurrency(userProfile.currency || 'ID Rupiah Indonesia (Rp - IDR)');
   }, [userProfile]);
+
+  useEffect(() => {
+    return () => {
+      setIsEditingProfile(false);
+    };
+  }, [setIsEditingProfile]);
 
   const handleClearCacheAndStorage = async () => {
     try {
@@ -251,6 +257,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
       currency,
     });
     setIsEditing(false);
+    setIsEditingProfile(false);
     setOldPassword('');
     setNewPassword('');
     setConfirmPassword('');
@@ -298,6 +305,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
                 handleSaveProfile();
               } else {
                 setIsEditing(true);
+                setIsEditingProfile(true);
               }
             }}
             className={`flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
@@ -484,7 +492,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
                         setNewPassword(e.target.value);
                         if (passwordError) setPasswordError(null);
                       }}
-                      placeholder="Kata sandi baru (kosongkan jika tidak diubah)"
+                      placeholder="Kata sandi baru"
                       className="w-full text-xs px-2.5 py-1.5 pr-8 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary font-mono"
                     />
                     <button
@@ -534,6 +542,16 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
                 )}
               </div>
             </div>
+
+            {/* Tombol Simpan di bagian bawah form Edit Profil */}
+            <button
+              type="button"
+              onClick={handleSaveProfile}
+              className="w-full py-2.5 px-3 rounded-xl bg-primary hover:bg-primary-hover active:scale-98 text-white font-bold text-xs shadow-soft transition-all flex items-center justify-center gap-1.5 cursor-pointer mt-2"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>Simpan Profil &amp; Pengaturan</span>
+            </button>
           </div>
         )}
 
@@ -561,8 +579,11 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
         </div>
       </div>
 
-      {/* Card 2: MATA UANG BELANJA */}
-      <div className="bg-card dark:bg-slate-800/90 rounded-2xl p-3.5 border border-border dark:border-slate-700 shadow-soft space-y-1.5">
+      {/* Sembunyikan section lainnya saat sedang edit profil agar tidak bisa scroll ke bawah */}
+      {!isEditing && (
+        <>
+          {/* Card 2: MATA UANG BELANJA */}
+          <div className="bg-card dark:bg-slate-800/90 rounded-2xl p-3.5 border border-border dark:border-slate-700 shadow-soft space-y-1.5">
         <label className="text-[10px] font-black tracking-wider text-text-secondary dark:text-slate-400 uppercase flex items-center gap-1">
           <Globe className="w-3 h-3" />
           <span>Mata Uang Belanja :</span>
@@ -742,6 +763,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
             onClick={() => {
               showToast('Mode ganti akun diaktifkan. Silakan perbarui data profil.');
               setIsEditing(true);
+              setIsEditingProfile(true);
             }}
             className="py-2.5 px-3 rounded-xl border border-blue-300 dark:border-blue-800 bg-blue-50/60 dark:bg-blue-950/40 text-primary dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60 font-bold text-xs flex items-center justify-center gap-1.5 transition-all min-h-[42px] cursor-pointer"
           >
@@ -765,6 +787,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
           </button>
         </div>
       </div>
+      </>
+      )}
 
       {/* iOS Instructions Modal */}
       {showIOSModal && (

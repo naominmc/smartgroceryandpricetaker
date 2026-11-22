@@ -36,6 +36,8 @@ interface AppState {
   setUsername: (name: string) => void;
   userProfile: UserProfile;
   updateUserProfile: (data: Partial<UserProfile>) => void;
+  isEditingProfile: boolean;
+  setIsEditingProfile: (val: boolean) => void;
 
   // Payment method
   selectedPaymentMethod: string;
@@ -170,6 +172,8 @@ export const useStore = create<AppState>((set, get) => {
     },
 
     userProfile: initialProfile,
+    isEditingProfile: false,
+    setIsEditingProfile: (val) => set({ isEditingProfile: val }),
     updateUserProfile: (data) => {
       set((state) => {
         const nextProfile = { ...state.userProfile, ...data };

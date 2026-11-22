@@ -29,6 +29,7 @@ export const App: React.FC = () => {
     toggleThemeMode,
     isSoundEnabled,
     toggleSound,
+    isEditingProfile,
   } = useStore();
   const [isInitialized, setIsInitialized] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -236,7 +237,12 @@ export const App: React.FC = () => {
         </header>
 
         {/* Content Area with Safe-Area Padding */}
-        <div id="app-scroll-container" className="flex-1 px-4 pt-3 pb-safe overflow-y-auto overscroll-contain">
+        <div
+          id="app-scroll-container"
+          className={`flex-1 px-4 pt-3 pb-safe overscroll-contain ${
+            isEditingProfile ? 'overflow-hidden' : 'overflow-y-auto'
+          }`}
+        >
           {activeTab === 'shopping' && <ShoppingPage />}
           {activeTab === 'history' && <HistoryPage />}
           {activeTab === 'budget' && <BudgetPage />}

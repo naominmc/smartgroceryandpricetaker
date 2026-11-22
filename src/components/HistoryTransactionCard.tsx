@@ -39,14 +39,12 @@ export const HistoryTransactionCard: React.FC<HistoryTransactionCardProps> = ({ 
                 </div>
               </div>
 
-              {transaction.location && (
-                <div className="flex items-start gap-1 min-w-0">
-                  <span className="text-gray-300 dark:text-slate-600 font-bold">•</span>
-                  <span className="text-primary dark:text-blue-400 font-bold uppercase tracking-tight text-[11px] leading-tight break-words">
-                    {transaction.location.toUpperCase()}
-                  </span>
-                </div>
-              )}
+              <div className="flex items-start gap-1 min-w-0">
+                <span className="text-gray-300 dark:text-slate-600 font-bold">•</span>
+                <span className="text-primary dark:text-blue-400 font-bold uppercase tracking-tight text-[11px] leading-tight break-words">
+                  {((transaction.location && transaction.location.trim()) ? transaction.location.trim() : 'LOTTE MART GROCERY - PURI INDAH').toUpperCase()}
+                </span>
+              </div>
             </div>
             <div className="text-xs font-semibold text-text-main dark:text-slate-100 mt-1">
               {transaction.items.length} jenis barang dibeli

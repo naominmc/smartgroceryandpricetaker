@@ -142,6 +142,7 @@ export async function seedInitialDataIfNeeded() {
       id: `tx-history-${prevPeriod}-01`,
       period: prevPeriod,
       purchasedAt: prevDate.toISOString(),
+      location: 'LOTTE MART GROCERY - PURI INDAH',
       budgetLimitSnapshot: 1200000,
       grossTotal: 255000,
       discountTotal: 15000,
