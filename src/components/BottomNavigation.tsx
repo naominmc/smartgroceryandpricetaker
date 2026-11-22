@@ -65,7 +65,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
                     : 'text-text-secondary dark:text-slate-400 hover:text-text-main dark:hover:text-slate-200 font-medium'
                 }`}
                 aria-current={isActive ? 'page' : undefined}
-                title={isBlocked ? 'Simpan profil terlebih dahulu' : item.label}
+                title={isBlocked ? t('saveProfileFirst', language) : item.label}
               >
                 <div className="relative">
                   {item.id === 'profile' && userProfile.avatarUrl ? (

@@ -4,6 +4,8 @@ import type { CartItem } from '../types';
 import { calculateItemSubtotals } from '../utils/calculations';
 import { formatRupiah } from '../utils/currency';
 import { PriceComparison } from './PriceComparison';
+import { useStore } from '../store/useStore';
+import { t, translateCategory } from '../utils/i18n';
 
 interface GroceryItemCardProps {
   item: CartItem;
@@ -22,6 +24,7 @@ export const GroceryItemCard: React.FC<GroceryItemCardProps> = ({
   onDelete,
   onToggleStatus,
 }) => {
+  const { language } = useStore();
   const calc = calculateItemSubtotals(item.quantity, item.unitPrice, item.discounts);
   const isCompleted = item.status === 'completed';
 
@@ -39,7 +42,19 @@ export const GroceryItemCard: React.FC<GroceryItemCardProps> = ({
           type="button"
           onClick={() => onToggleStatus(item.id)}
           className="mt-0.5 text-gray-300 dark:text-slate-600 hover:text-primary active:scale-95 transition-transform flex-shrink-0 min-h-[44px] min-w-[36px] flex items-center justify-center"
-          aria-label={isCompleted ? 'Tandai belum dibeli' : 'Tandai sudah masuk troli'}
+          aria-label={
+            isCompleted
+              ? language === 'zh'
+                ? '标记为未买'
+                : language === 'en'
+                ? 'Mark unbought'
+                : 'Tandai belum dibeli'
+              : language === 'zh'
+              ? '标记为已入购物车'
+              : language === 'en'
+              ? 'Mark in cart'
+              : 'Tandai sudah masuk troli'
+          }
         >
           {isCompleted ? (
             <CheckCircle2 className="w-5 h-5 text-success dark:text-emerald-400 fill-green-50 dark:fill-emerald-950" />
@@ -52,11 +67,11 @@ export const GroceryItemCard: React.FC<GroceryItemCardProps> = ({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
             <span className="text-[10px] font-semibold text-primary dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 px-2 py-0.5 rounded-md">
-              {item.categorySnapshot}
+              {translateCategory(item.categorySnapshot, language)}
             </span>
             {item.discounts.length > 0 && (
               <span className="text-[10px] font-bold text-danger dark:text-rose-300 bg-red-50 dark:bg-rose-950/70 border border-red-100 dark:border-rose-900 px-1.5 py-0.5 rounded-md">
-                Diskon {item.discounts.join('% + ')}% (Hemat {formatRupiah(calc.discountAmount)})
+                {language === 'zh' ? '折扣' : language === 'en' ? 'Discount' : 'Diskon'} {item.discounts.join('% + ')}% ({t('savingLabel', language, { amount: formatRupiah(calc.discountAmount) })})
               </span>
             )}
           </div>
@@ -96,8 +111,8 @@ export const GroceryItemCard: React.FC<GroceryItemCardProps> = ({
             type="button"
             onClick={() => onEdit(item)}
             className="p-2 text-gray-400 dark:text-slate-400 hover:text-primary dark:hover:text-blue-400 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 active:scale-95 transition-colors min-h-[44px] min-w-[40px] flex items-center justify-center"
-            title="Edit barang"
-            aria-label="Edit barang"
+            title={language === 'zh' ? '编辑商品' : language === 'en' ? 'Edit item' : 'Edit barang'}
+            aria-label={language === 'zh' ? '编辑商品' : language === 'en' ? 'Edit item' : 'Edit barang'}
           >
             <Edit2 className="w-4 h-4" />
           </button>
@@ -105,8 +120,8 @@ export const GroceryItemCard: React.FC<GroceryItemCardProps> = ({
             type="button"
             onClick={() => onDelete(item.id)}
             className="p-2 text-gray-400 dark:text-slate-400 hover:text-danger dark:hover:text-rose-400 rounded-lg hover:bg-red-50 dark:hover:bg-rose-950 active:scale-95 transition-colors min-h-[44px] min-w-[40px] flex items-center justify-center"
-            title="Hapus barang"
-            aria-label="Hapus barang"
+            title={language === 'zh' ? '删除商品' : language === 'en' ? 'Delete item' : 'Hapus barang'}
+            aria-label={language === 'zh' ? '删除商品' : language === 'en' ? 'Delete item' : 'Hapus barang'}
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -143,7 +158,7 @@ export const GroceryItemCard: React.FC<GroceryItemCardProps> = ({
 
         {/* Final Item Subtotal */}
         <div className="text-right">
-          <span className="text-[10px] text-text-secondary dark:text-slate-400 block">Total Item:</span>
+          <span className="text-[10px] text-text-secondary dark:text-slate-400 block">{t('totalItem', language)}</span>
           <span className="text-base font-extrabold text-primary dark:text-blue-400">
             {formatRupiah(calc.finalSubtotal)}
           </span>

@@ -20,6 +20,8 @@ import {
 import type { SupermarketCatalogItem, ProductCategory } from '../types';
 import { PRODUCT_CATEGORIES } from '../types';
 import { formatRupiah, getActiveCurrency } from '../utils/currency';
+import { useStore } from '../store/useStore';
+import { t, translateCategory } from '../utils/i18n';
 
 interface ScannedProductItem extends SupermarketCatalogItem {
   isCustom?: boolean;
@@ -43,6 +45,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
   onClose,
   onAddToCart,
 }) => {
+  const { language } = useStore();
   const [detectedItem, setDetectedItem] = useState<ScannedProductItem | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [isDecodingPhoto, setIsDecodingPhoto] = useState(false);
@@ -271,8 +274,8 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
               <Scan className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="font-bold text-sm text-white">Scanner Barcode Supermarket</h2>
-              <p className="text-[10px] text-gray-400">Ambil foto langsung atau pilih dari galeri</p>
+              <h2 className="font-bold text-sm text-white">{t('scanBarcodeTitle', language)}</h2>
+              <p className="text-[10px] text-gray-400">{t('scanBarcodeDesc', language)}</p>
             </div>
           </div>
           <button
@@ -296,11 +299,11 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
             </div>
 
             <h3 className="text-sm font-extrabold text-white mb-0.5">
-              Ambil Foto / Dari Galeri
+              {t('takePhotoOrGallery', language)}
             </h3>
 
             <p className="text-[11px] text-gray-300 max-w-xs mb-3 leading-relaxed">
-              Ketuk untuk memotret kemasan barcode atau memilih foto dari galeri HP Anda.
+              {t('photoScanPrompt', language)}
             </p>
 
             <button
@@ -308,7 +311,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
               className="px-5 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-soft flex items-center gap-2 pointer-events-none transition-all"
             >
               <Camera className="w-3.5 h-3.5" />
-              <span>Buka Kamera / Galeri</span>
+              <span>{t('openCameraOrGallery', language)}</span>
             </button>
           </div>
 
@@ -316,7 +319,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
           {isDecodingPhoto && (
             <div className="absolute inset-0 bg-black/85 backdrop-blur-sm z-30 flex flex-col items-center justify-center text-white space-y-2">
               <Loader2 className="w-7 h-7 text-blue-400 animate-spin" />
-              <p className="text-xs font-bold text-white">Membaca Barcode dari Foto...</p>
+              <p className="text-xs font-bold text-white">{t('readingBarcodeFromPhoto', language)}</p>
             </div>
           )}
         </div>
@@ -386,7 +389,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
               </div>
 
               <div className="text-right flex-shrink-0">
-                <span className="text-[10px] text-gray-500 dark:text-slate-400 block">Harga Satuan:</span>
+                <span className="text-[10px] text-gray-500 dark:text-slate-400 block">{t('unitPriceLabel', language)}:</span>
                 {detectedItem.isCustom ? (
                   <div className="flex items-center gap-1 justify-end mt-0.5">
                     <span className="text-xs font-bold text-primary dark:text-blue-400">{getActiveCurrency().symbol}</span>
@@ -411,7 +414,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
             {/* Stepper Kuantitas & Subtotal */}
             <div className="flex items-center justify-between bg-white dark:bg-slate-750 p-2.5 rounded-xl border border-emerald-200 dark:border-slate-700">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-gray-600 dark:text-slate-300">Kuantitas:</span>
+                <span className="text-xs font-semibold text-gray-600 dark:text-slate-300">{t('quantityLabel', language)}:</span>
                 <div className="flex items-center bg-gray-100 dark:bg-slate-700 rounded-lg p-0.5 border border-gray-200 dark:border-slate-600">
                   <button
                     type="button"
@@ -433,7 +436,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
               </div>
 
               <div className="text-right">
-                <span className="text-[10px] text-gray-500 dark:text-slate-400 block">Subtotal:</span>
+                <span className="text-[10px] text-gray-500 dark:text-slate-400 block">{t('subtotalLabel', language)}:</span>
                 <span className="text-sm font-extrabold text-emerald-700 dark:text-emerald-400">
                   {formatRupiah(
                     (detectedItem.isCustom
@@ -451,7 +454,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 onClick={() => setDetectedItem(null)}
                 className="flex-1 py-2.5 px-3 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 font-semibold text-xs text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-750 min-h-[44px] cursor-pointer"
               >
-                Scan Ulang
+                {t('rescanBtn', language)}
               </button>
               <button
                 type="button"
@@ -460,7 +463,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 className="flex-[1.5] py-2.5 px-3 rounded-xl bg-primary hover:bg-primary-hover active:scale-95 text-white font-bold text-xs shadow-soft transition-all flex items-center justify-center gap-1.5 min-h-[44px] cursor-pointer"
               >
                 <ShoppingBag className="w-4 h-4" />
-                <span>{isAdding ? 'Memasukkan...' : 'Masukkan ke Troli'}</span>
+                <span>{isAdding ? t('processing', language) : t('addToCartBtn', language)}</span>
               </button>
             </div>
           </div>
@@ -469,13 +472,13 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
             {/* Input Manual Pencarian Barcode atau Nama */}
             <div className="space-y-1.5">
               <label className="block text-xs font-bold text-gray-700 dark:text-slate-300">
-                Ketik Barcode atau Nama Produk
+                {t('typeBarcodeOrName', language)}
               </label>
 
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Contoh: 8998866200213, Indomie, Ultra Milk..."
+                  placeholder={t('typeBarcodePlaceholder', language)}
                   value={manualInput}
                   onChange={(e) => handleManualSearch(e.target.value)}
                   className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium text-gray-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary min-h-[44px]"
@@ -489,9 +492,9 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-[11px] font-bold text-gray-600 dark:text-slate-300 flex items-center gap-1">
                   <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                  Katalog Barcode Supermarket (Siap Scan):
+                  {t('readyToScanCatalog', language)}:
                 </span>
-                <span className="text-[10px] text-gray-400 dark:text-slate-500">Sentuh untuk simulasi</span>
+                <span className="text-[10px] text-gray-400 dark:text-slate-500">{t('tapToSimulate', language)}</span>
               </div>
 
               <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto pr-1">

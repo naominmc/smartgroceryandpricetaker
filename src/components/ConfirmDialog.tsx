@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
+import { useStore } from '../store/useStore';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -16,13 +17,17 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   isOpen,
   title,
   message,
-  confirmLabel = 'Lanjutkan',
-  cancelLabel = 'Batal',
+  confirmLabel,
+  cancelLabel,
   isDangerous = false,
   onConfirm,
   onCancel,
 }) => {
+  const { language } = useStore();
   if (!isOpen) return null;
+
+  const defaultConfirmLabel = confirmLabel || (language === 'zh' ? '确定' : language === 'en' ? 'Continue' : 'Lanjutkan');
+  const defaultCancelLabel = cancelLabel || (language === 'zh' ? '取消' : language === 'en' ? 'Cancel' : 'Batal');
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
@@ -54,7 +59,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             onClick={onCancel}
             className="flex-1 py-2.5 px-3 rounded-xl border border-gray-300 dark:border-slate-700 font-semibold text-xs text-text-main dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 transition-all min-h-[44px]"
           >
-            {cancelLabel}
+            {defaultCancelLabel}
           </button>
           <button
             type="button"
@@ -65,10 +70,11 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                 : 'bg-primary hover:bg-primary-hover'
             }`}
           >
-            {confirmLabel}
+            {defaultConfirmLabel}
           </button>
         </div>
       </div>
     </div>
   );
 };
+

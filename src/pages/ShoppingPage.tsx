@@ -324,9 +324,11 @@ export const ShoppingPage: React.FC = () => {
       <div className="flex items-center justify-between pt-1">
         <div>
           <div className="flex items-center gap-1.5 text-xs text-text-secondary dark:text-slate-400 font-medium">
-            <span>{formatPeriodLabel(currentPeriod)}</span>
+            <span>{formatPeriodLabel(currentPeriod, language)}</span>
           </div>
-          <h1 className="text-xl font-extrabold text-text-main dark:text-slate-100 tracking-tight">Belanja Bulanan</h1>
+          <h1 className="text-xl font-extrabold text-text-main dark:text-slate-100 tracking-tight">
+            {language === 'zh' ? '月度购物清单' : language === 'en' ? 'Monthly Shopping' : 'Belanja Bulanan'}
+          </h1>
         </div>
 
         {/* Network & Offline Status Indicator */}
@@ -397,7 +399,7 @@ export const ShoppingPage: React.FC = () => {
               </div>
             ) : (
               <div className="text-xs font-extrabold text-text-main dark:text-slate-100 truncate flex items-center gap-1 uppercase">
-                <span>{(sessionLocation || 'Pilih Supermarket...').toUpperCase()}</span>
+                <span>{(sessionLocation || t('selectSupermarket', language)).toUpperCase()}</span>
                 <ChevronRight className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 flex-shrink-0" />
               </div>
             )}
@@ -456,7 +458,7 @@ export const ShoppingPage: React.FC = () => {
 
                 <span className="text-[11px] text-text-secondary dark:text-slate-400 font-semibold truncate">
                   | {t('totalSpent', language)}: <strong className="text-text-main dark:text-slate-100 font-black">{formatRupiah(totals.finalTotal)}</strong>
-                  <span className="text-[10px] ml-0.5 opacity-80">({totals.totalQuantity} unit)</span>
+                  <span className="text-[10px] ml-0.5 opacity-80">({t('unitsCount', language, { qty: totals.totalQuantity })})</span>
                 </span>
               </div>
             </div>
@@ -469,7 +471,7 @@ export const ShoppingPage: React.FC = () => {
                     type="button"
                     onClick={() => setIsClearCartConfirmOpen(true)}
                     className="p-1.5 text-danger dark:text-rose-400 hover:bg-red-50 dark:hover:bg-rose-950/70 rounded-xl transition-all cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center"
-                    title="Kosongkan Seluruh Troli"
+                    title={t('clearCartBtn', language)}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -478,10 +480,10 @@ export const ShoppingPage: React.FC = () => {
                     type="button"
                     onClick={() => setIsCheckoutDialogOpen(true)}
                     className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs px-2.5 py-1.5 rounded-xl shadow-soft transition-all flex items-center gap-1 cursor-pointer min-h-[36px]"
-                    title="Checkout Sekarang"
+                    title={t('checkoutBtn', language)}
                   >
                     <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                    <span>Checkout</span>
+                    <span>{t('checkoutBtn', language)}</span>
                   </button>
                 </>
               )}
@@ -491,7 +493,7 @@ export const ShoppingPage: React.FC = () => {
                 type="button"
                 onClick={() => setIsManualExpanded(true)}
                 className="px-2 py-1.5 text-text-secondary dark:text-slate-400 hover:text-text-main dark:hover:text-slate-100 bg-gray-100/80 dark:bg-slate-700/80 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl transition-all flex items-center gap-0.5 text-[10px] font-bold cursor-pointer min-h-[36px]"
-                title="Buka detail lengkap anggaran"
+                title={t('detail', language)}
               >
                 <span>{t('detail', language)}</span>
                 <ChevronDown className="w-3.5 h-3.5" />
@@ -503,13 +505,13 @@ export const ShoppingPage: React.FC = () => {
           <div className="space-y-2.5">
             <div className="flex items-center justify-between px-1">
               <span className="text-[10px] font-bold text-text-secondary dark:text-slate-400 uppercase tracking-wider">
-                Ringkasan Anggaran &amp; Checkout
+                {t('summaryCheckout', language)}
               </span>
               <button
                 type="button"
                 onClick={() => setIsManualExpanded(false)}
                 className="flex items-center gap-1 text-[11px] font-bold text-primary dark:text-blue-400 hover:underline cursor-pointer bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-lg border border-blue-100 dark:border-blue-900"
-                title="Perkecil kartu agar tidak menutupi layar"
+                title={t('minimize', language)}
               >
                 <span>{t('minimize', language)}</span>
                 <ChevronUp className="w-3.5 h-3.5" />
@@ -530,7 +532,7 @@ export const ShoppingPage: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-[10px] text-text-secondary dark:text-slate-400 block font-medium">
-                      Total Tagihan ({totals.totalQuantity} unit):
+                      {t('totalBeforeDiscount', language, { qty: totals.totalQuantity })}
                     </span>
                     <span className="text-lg font-extrabold text-primary dark:text-blue-400">
                       {formatRupiah(totals.finalTotal)}
@@ -542,10 +544,10 @@ export const ShoppingPage: React.FC = () => {
                       type="button"
                       onClick={() => setIsClearCartConfirmOpen(true)}
                       className="inline-flex items-center gap-1 text-[11px] font-bold text-danger dark:text-rose-400 hover:bg-red-50 dark:hover:bg-rose-950/70 px-2.5 py-2 rounded-xl transition-all min-h-[44px]"
-                      title="Kosongkan Seluruh Troli"
+                      title={t('clearCartBtn', language)}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
-                      <span>Kosongkan</span>
+                      <span>{t('clearCartBtn', language)}</span>
                     </button>
 
                     <button
@@ -554,7 +556,7 @@ export const ShoppingPage: React.FC = () => {
                       className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-soft transition-all min-h-[44px] flex items-center gap-1.5"
                     >
                       <Check className="w-4 h-4 stroke-[2.5]" />
-                      <span>Checkout</span>
+                      <span>{t('checkoutBtn', language)}</span>
                     </button>
                   </div>
                 </div>
@@ -570,10 +572,10 @@ export const ShoppingPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-xs font-bold text-text-main dark:text-slate-100">
               <Sparkles className="w-4 h-4 text-amber-500 fill-amber-400" />
-              <span>Rekomendasi dari Riwayat Belanja</span>
+              <span>{t('recommendationsTitle', language)}</span>
             </div>
             <span className="text-[10px] text-text-secondary dark:text-slate-400 font-medium">
-              Beli lagi dengan 1 klik
+              {t('recommendationsSubtitle', language)}
             </span>
           </div>
 
@@ -615,7 +617,7 @@ export const ShoppingPage: React.FC = () => {
                   </div>
                   <div className="flex-shrink-0 pl-1 border-l border-gray-200 dark:border-slate-700">
                     <span className="text-[10px] font-bold text-primary dark:text-blue-300 bg-blue-50 dark:bg-blue-900/50 px-2 py-1 rounded-lg">
-                      {inCart ? '+1' : '+ Beli'}
+                      {inCart ? '+1' : t('buyAgain', language)}
                     </span>
                   </div>
                 </button>
@@ -628,25 +630,25 @@ export const ShoppingPage: React.FC = () => {
       {/* Items Section Header & Actions (Scan Barcode & Manual Add) */}
       <div className="flex items-center justify-between pt-1">
         <div className="flex items-center gap-2">
-          <h2 className="font-bold text-sm text-text-main dark:text-slate-100">Isi Troli</h2>
+          <h2 className="font-bold text-sm text-text-main dark:text-slate-100">{t('shoppingBagTitle', language)}</h2>
           <span className="text-xs bg-gray-200/70 dark:bg-slate-700 text-text-secondary dark:text-slate-300 font-semibold px-2 py-0.5 rounded-full">
-            {cartItems.length} barang
+            {t('itemsBadge', language, { count: cartItems.length })}
           </span>
           {totals.completedCount > 0 && (
             <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-              ({totals.completedCount} tercentang)
+              {t('checkedBadge', language, { count: totals.completedCount })}
             </span>
           )}
         </div>
-</div>
+      </div>
 
       {/* Grocery Items List */}
       {cartItems.length === 0 ? (
         <EmptyState
           icon={ShoppingCart}
-          title="Troli Masih Kosong"
-          description="Pindai barcode kemasan barang supermarket atau tambahkan barang secara manual."
-          actionLabel="📷 Scan Barcode Sekarang"
+          title={t('emptyCartTitle', language)}
+          description={t('emptyCartDesc', language)}
+          actionLabel={t('scanBarcodeNow', language)}
           onAction={openScanner}
         />
       ) : (
@@ -669,7 +671,7 @@ export const ShoppingPage: React.FC = () => {
       {cartItems.length > 0 && (
         <div className="bg-card/95 dark:bg-slate-800/95 backdrop-blur-md rounded-card p-4 border border-border dark:border-slate-700 shadow-float mt-4 space-y-3">
           <div className="flex items-center justify-between text-xs text-text-secondary dark:text-slate-400">
-            <span>Total Sebelum Diskon ({totals.totalQuantity} unit):</span>
+            <span>{t('totalBeforeDiscount', language, { qty: totals.totalQuantity })}</span>
             <span className="font-semibold text-text-main dark:text-slate-200">{formatRupiah(totals.grossTotal)}</span>
           </div>
 
@@ -677,7 +679,7 @@ export const ShoppingPage: React.FC = () => {
             <div className="flex items-center justify-between text-xs text-success dark:text-emerald-400 font-semibold">
               <span className="flex items-center gap-1">
                 <TrendingDown className="w-3.5 h-3.5" />
-                Penghematan Promo Diskon:
+                {t('discountSavingsPromo', language)}
               </span>
               <span>-{formatRupiah(totals.discountTotal)}</span>
             </div>
@@ -687,7 +689,7 @@ export const ShoppingPage: React.FC = () => {
           <div className="flex items-center justify-between text-xs pt-1 border-t border-gray-100/80 dark:border-slate-700">
             <span className="text-gray-500 dark:text-slate-400 flex items-center gap-1">
               <CreditCard className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-              Sumber Pembayaran:
+              {t('paymentSourceShort', language)}
             </span>
             <span className="font-bold text-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 px-2 py-0.5 rounded-lg border border-blue-100 dark:border-blue-900">
               {selectedPaymentMethod}
@@ -697,7 +699,7 @@ export const ShoppingPage: React.FC = () => {
           <div className="flex items-center justify-between border-t border-gray-100 dark:border-slate-700 pt-2">
             <div>
               <span className="text-[11px] text-text-secondary dark:text-slate-400 block font-medium">
-                Total Akhir Belanja:
+                {t('finalTotalCheckout', language)}
               </span>
               <span className="text-xl font-extrabold text-primary dark:text-blue-400">
                 {formatRupiah(totals.finalTotal)}
@@ -710,7 +712,7 @@ export const ShoppingPage: React.FC = () => {
               className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs px-4 py-3 rounded-xl shadow-soft transition-all min-h-[48px] flex items-center gap-1.5"
             >
               <Check className="w-4 h-4 stroke-[2.5]" />
-              <span>Selesaikan Belanja</span>
+              <span>{t('finishShoppingNow', language)}</span>
             </button>
           </div>
         </div>
@@ -720,9 +722,9 @@ export const ShoppingPage: React.FC = () => {
       {isEditingBudget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="w-full max-w-[360px] bg-white dark:bg-slate-900 rounded-card-lg p-5 shadow-modal animate-slide-up border dark:border-slate-800">
-            <h3 className="font-bold text-base text-text-main dark:text-slate-100 mb-1">Atur Batas Anggaran Bulanan</h3>
+            <h3 className="font-bold text-base text-text-main dark:text-slate-100 mb-1">{t('setMonthlyBudgetModal', language)}</h3>
             <p className="text-xs text-text-secondary dark:text-slate-400 mb-4">
-              Masukkan pagu maksimal belanja untuk bulan {formatPeriodLabel(currentPeriod)}.
+              {t('setMonthlyBudgetDesc', language, { period: formatPeriodLabel(currentPeriod, language) })}
             </p>
 
             <div className="space-y-1.5 mb-4">
@@ -741,7 +743,10 @@ export const ShoppingPage: React.FC = () => {
               </div>
               {newBudgetInput && (
                 <p className="text-[11px] text-text-secondary dark:text-slate-400 font-semibold px-0.5">
-                  Nilai: <strong className="text-primary dark:text-blue-400">{formatRupiah(parseInt(newBudgetInput || '0', 10))}</strong>
+                  {language === 'zh' ? '当前金额: ' : language === 'en' ? 'Value: ' : 'Nilai: '}
+                  <strong className="text-primary dark:text-blue-400">
+                    {formatRupiah(parseInt(newBudgetInput || '0', 10))}
+                  </strong>
                 </p>
               )}
             </div>
@@ -752,14 +757,14 @@ export const ShoppingPage: React.FC = () => {
                 onClick={() => setIsEditingBudget(false)}
                 className="flex-1 py-2.5 border border-gray-300 dark:border-slate-700 rounded-xl text-xs font-semibold text-text-main dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 min-h-[44px]"
               >
-                Batal
+                {t('cancelBtn', language)}
               </button>
               <button
                 type="button"
                 onClick={handleSaveBudgetLimit}
                 className="flex-1 py-2.5 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary-hover shadow-soft min-h-[44px]"
               >
-                Simpan Limit
+                {t('saveLimitBtn', language)}
               </button>
             </div>
           </div>
@@ -787,10 +792,10 @@ export const ShoppingPage: React.FC = () => {
       {/* Delete Single Item Confirmation Dialog */}
       <ConfirmDialog
         isOpen={!!itemToDelete}
-        title="Hapus Barang Belanja?"
-        message={`Apakah Anda yakin ingin menghapus "${itemToDelete?.nameSnapshot}" dari troli belanja?`}
-        confirmLabel="Ya, Hapus"
-        cancelLabel="Batal"
+        title={t('deleteItemTitle', language)}
+        message={t('deleteItemMsg', language, { name: itemToDelete?.nameSnapshot || '' })}
+        confirmLabel={t('deleteItemConfirmBtn', language)}
+        cancelLabel={t('cancelBtn', language)}
         isDangerous={true}
         onConfirm={handleConfirmDeleteItem}
         onCancel={() => setItemToDelete(null)}
@@ -799,10 +804,10 @@ export const ShoppingPage: React.FC = () => {
       {/* Clear Entire Cart Confirmation Dialog */}
       <ConfirmDialog
         isOpen={isClearCartConfirmOpen}
-        title="Kosongkan Seluruh Troli?"
-        message={`⚠️ Peringatan: Seluruh ${cartItems.length} jenis barang di dalam troli akan dihapus sekaligus. Tindakan ini tidak dapat dibatalkan!`}
-        confirmLabel="Ya, Kosongkan Troli"
-        cancelLabel="Batal"
+        title={t('clearCartTitle', language)}
+        message={t('clearCartMsg', language, { count: cartItems.length })}
+        confirmLabel={t('clearCartConfirmBtn', language)}
+        cancelLabel={t('cancelBtn', language)}
         isDangerous={true}
         onConfirm={handleConfirmClearCart}
         onCancel={() => setIsClearCartConfirmOpen(false)}
@@ -811,12 +816,14 @@ export const ShoppingPage: React.FC = () => {
       {/* Checkout Confirmation Dialog */}
       <ConfirmDialog
         isOpen={isCheckoutDialogOpen}
-        title="Selesaikan Belanja Sekarang?"
-        message={`Lokasi: ${sessionLocation}. Total tagihan kasir adalah ${formatRupiah(
-          totals.finalTotal
-        )} (${cartItems.length} jenis barang). Pembayaran dicatat menggunakan ${selectedPaymentMethod}. Transaksi akan disimpan ke riwayat dan keranjang belanja dikosongkan.`}
-        confirmLabel="Ya, Selesai Belanja"
-        cancelLabel="Kembali ke Troli"
+        title={t('checkoutConfirmTitle', language)}
+        message={t('checkoutConfirmMsg', language, {
+          total: formatRupiah(totals.finalTotal),
+          count: cartItems.length,
+          payment: selectedPaymentMethod,
+        })}
+        confirmLabel={t('checkoutConfirmBtn', language)}
+        cancelLabel={t('backToCartBtn', language)}
         onConfirm={handleConfirmCheckout}
         onCancel={() => setIsCheckoutDialogOpen(false)}
       />
@@ -831,8 +838,8 @@ export const ShoppingPage: React.FC = () => {
             type="button"
             onClick={() => openAddItemSheet(null)}
             className="w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 active:scale-90 text-white shadow-xl shadow-blue-600/35 border-2 border-white/90 dark:border-slate-800 flex items-center justify-center transition-all cursor-pointer group"
-            title="Tambah Barang Belanja"
-            aria-label="Tambah Barang"
+            title={t('addItemSimple', language)}
+            aria-label={t('addItemSimple', language)}
           >
             <Plus className="w-7 h-7 stroke-[3] text-white transition-transform group-hover:rotate-90 group-hover:scale-110 duration-200" />
           </button>

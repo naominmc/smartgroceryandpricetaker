@@ -155,9 +155,15 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
       } catch {}
 
       await calculateStorage();
-      showToast('Cache peramban berhasil dibersihkan! Penyimpanan lebih lega 🧹');
+      showToast(t('cacheClearedToast', language));
     } catch (err: any) {
-      showToast('Gagal membersihkan cache: ' + (err.message || 'Error'));
+      showToast(
+        language === 'zh'
+          ? '清理缓存失败：' + (err.message || 'Error')
+          : language === 'en'
+          ? 'Failed to clear cache: ' + (err.message || 'Error')
+          : 'Gagal membersihkan cache: ' + (err.message || 'Error')
+      );
     } finally {
       setIsClearingCache(false);
     }
@@ -174,21 +180,39 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
     const outcome = await pwaService.install();
     if (outcome === 'installed') {
       setIsPwaInstalled(true);
-      showToast('Aplikasi sudah terpasang di perangkat Anda! 🎉');
+      showToast(t('appAlreadyInstalled', language));
     } else if (outcome === 'accepted') {
       setIsPwaInstalled(true);
-      showToast('PWA berhasil dipasang ke layar utama! 📱');
+      showToast(
+        language === 'zh'
+          ? 'PWA 已成功安装到主屏幕！📱'
+          : language === 'en'
+          ? 'PWA successfully installed to home screen! 📱'
+          : 'PWA berhasil dipasang ke layar utama! 📱'
+      );
     } else if (outcome === 'ios') {
       setShowIOSModal(true);
     } else {
-      showToast('Buka menu browser Anda lalu pilih "Tambahkan ke Layar Utama" / "Install App" 💡');
+      showToast(
+        language === 'zh'
+          ? '请打开浏览器菜单并选择“添加到主屏幕”/“安装应用”💡'
+          : language === 'en'
+          ? 'Open browser menu and select "Add to Home Screen" / "Install App" 💡'
+          : 'Buka menu browser Anda lalu pilih "Tambahkan ke Layar Utama" / "Install App" 💡'
+      );
     }
   };
 
   const handleRestorePWABanner = () => {
     pwaService.setDismissed(false);
     setIsPwaDismissed(false);
-    showToast('Notifikasi PWA di beranda belanja diaktifkan kembali! ✨');
+    showToast(
+      language === 'zh'
+        ? '购物主页上的 PWA 提示已重新开启！✨'
+        : language === 'en'
+        ? 'PWA notification on home banner reactivated! ✨'
+        : 'Notifikasi PWA di beranda belanja diaktifkan kembali! ✨'
+    );
   };
 
   useEffect(() => {
@@ -208,14 +232,26 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
-        showToast('⚠️ Ukuran foto maksimal 2MB!');
+        showToast(
+          language === 'zh'
+            ? '⚠️ 照片大小不能超过 2MB！'
+            : language === 'en'
+            ? '⚠️ Photo size must not exceed 2MB!'
+            : '⚠️ Ukuran foto maksimal 2MB!'
+        );
         return;
       }
       const reader = new FileReader();
       reader.onload = (event) => {
         const base64 = event.target?.result as string;
         updateUserProfile({ avatarUrl: base64 });
-        showToast('Foto profil Instagram berhasil diperbarui! 📸');
+        showToast(
+          language === 'zh'
+            ? '个人资料照片已更新！📸'
+            : language === 'en'
+            ? 'Profile photo updated! 📸'
+            : 'Foto profil Instagram berhasil diperbarui! 📸'
+        );
       };
       reader.readAsDataURL(file);
     }
@@ -223,13 +259,25 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
 
   const handleRemoveAvatar = () => {
     updateUserProfile({ avatarUrl: '' });
-    showToast('Foto profil dikembalikan ke inisial nama.');
+    showToast(
+      language === 'zh'
+        ? '头像已恢复为姓名首字母。'
+        : language === 'en'
+        ? 'Profile picture reset to initial.'
+        : 'Foto profil dikembalikan ke inisial nama.'
+    );
   };
 
   const handleSaveProfile = () => {
     const cleanUsername = username.trim().replace(/^@/, '');
     if (!cleanUsername) {
-      showToast('⚠️ Username tidak boleh kosong!');
+      showToast(
+        language === 'zh'
+          ? '⚠️ 用户名不能为空！'
+          : language === 'en'
+          ? '⚠️ Username cannot be empty!'
+          : '⚠️ Username tidak boleh kosong!'
+      );
       return;
     }
 
@@ -246,27 +294,63 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
 
     if (isAttemptingPasswordChange) {
       if (!oldPassword) {
-        setPasswordError('Masukkan kata sandi sebelumnya untuk verifikasi!');
+        setPasswordError(
+          language === 'zh'
+            ? '请输入原密码进行验证！'
+            : language === 'en'
+            ? 'Enter previous password for verification!'
+            : 'Masukkan kata sandi sebelumnya untuk verifikasi!'
+        );
         return;
       }
       if (oldPassword !== currentActivePassword) {
-        setPasswordError('Kata sandi sebelumnya salah! Verifikasi gagal.');
+        setPasswordError(
+          language === 'zh'
+            ? '原密码错误！验证失败。'
+            : language === 'en'
+            ? 'Previous password incorrect! Verification failed.'
+            : 'Kata sandi sebelumnya salah! Verifikasi gagal.'
+        );
         return;
       }
       if (!newPassword) {
-        setPasswordError('Masukkan kata sandi baru!');
+        setPasswordError(
+          language === 'zh'
+            ? '请输入新密码！'
+            : language === 'en'
+            ? 'Enter new password!'
+            : 'Masukkan kata sandi baru!'
+        );
         return;
       }
       if (newPassword.length < 6) {
-        setPasswordError('Kata sandi baru minimal 6 karakter!');
+        setPasswordError(
+          language === 'zh'
+            ? '新密码至少6个字符！'
+            : language === 'en'
+            ? 'New password must be at least 6 characters!'
+            : 'Kata sandi baru minimal 6 karakter!'
+        );
         return;
       }
       if (newPassword === oldPassword) {
-        setPasswordError('Kata sandi baru tidak boleh sama dengan kata sandi sebelumnya!');
+        setPasswordError(
+          language === 'zh'
+            ? '新密码不能与原密码相同！'
+            : language === 'en'
+            ? 'New password cannot be the same as previous password!'
+            : 'Kata sandi baru tidak boleh sama dengan kata sandi sebelumnya!'
+        );
         return;
       }
       if (newPassword !== confirmPassword) {
-        setPasswordError('Konfirmasi kata sandi baru tidak cocok!');
+        setPasswordError(
+          language === 'zh'
+            ? '新密码确认不匹配！'
+            : language === 'en'
+            ? 'New password confirmation does not match!'
+            : 'Konfirmasi kata sandi baru tidak cocok!'
+        );
         return;
       }
 
@@ -291,7 +375,15 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
     setPasswordError(null);
     showToast(
       isAttemptingPasswordChange
-        ? 'Kata sandi & profil berhasil diperbarui! ✨'
+        ? language === 'zh'
+          ? '密码与资料已成功更新！✨'
+          : language === 'en'
+          ? 'Password & profile updated successfully! ✨'
+          : 'Kata sandi & profil berhasil diperbarui! ✨'
+        : language === 'zh'
+        ? '资料与设置已成功保存！✨'
+        : language === 'en'
+        ? 'Profile & settings saved successfully! ✨'
         : 'Profil & Pengaturan berhasil disimpan! ✨'
     );
   };
@@ -302,10 +394,10 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
       <div className="flex items-center justify-between pt-1">
         <div>
           <div className="flex items-center gap-1.5 text-xs text-text-secondary dark:text-slate-400 font-medium">
-            <span>Akun Saya</span>
+            <span>{t('myAccount', language)}</span>
           </div>
           <h1 className="text-xl font-extrabold text-text-main dark:text-slate-100 tracking-tight">
-            Profil &amp; Pengaturan
+            {t('profileAndSettings', language)}
           </h1>
         </div>
       </div>
@@ -322,7 +414,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
       <div className="bg-card dark:bg-slate-800/90 rounded-2xl p-4 border border-border dark:border-slate-700 shadow-soft space-y-3.5 relative">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-black tracking-wider text-text-secondary dark:text-slate-400 uppercase">
-            Nama Pengguna &amp; Akun
+            {t('userProfileCardTitle', language)}
           </span>
 
           <button
@@ -344,12 +436,12 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
             {isEditing ? (
               <>
                 <Save className="w-3 h-3" />
-                <span>Simpan</span>
+                <span>{t('saveBtn', language)}</span>
               </>
             ) : (
               <>
                 <Edit3 className="w-3 h-3" />
-                <span>Edit Profil</span>
+                <span>{t('editProfileBtn', language)}</span>
               </>
             )}
           </button>
@@ -379,7 +471,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-primary hover:bg-primary-hover active:scale-95 text-white flex items-center justify-center shadow-md border-2 border-white dark:border-slate-900 transition-all cursor-pointer"
-              title="Ganti Foto Profil (Pilih Foto)"
+              title={language === 'zh' ? '更换头像 (选择照片)' : language === 'en' ? 'Change Profile Picture' : 'Ganti Foto Profil (Pilih Foto)'}
             >
               <Camera className="w-3 h-3" />
             </button>
@@ -398,7 +490,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
               <div className="space-y-1.5">
                 <div>
                   <label className="text-[10px] text-text-secondary dark:text-slate-400 font-semibold block">
-                    Nama Lengkap:
+                    {t('fullNameLabel', language)}
                   </label>
                   <input
                     type="text"
@@ -410,7 +502,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
                 </div>
                 <div>
                   <label className="text-[10px] text-text-secondary dark:text-slate-400 font-semibold block">
-                    Username:
+                    {t('usernameLabel', language)}
                   </label>
                   <div className="relative">
                     <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-bold">@</span>
@@ -446,12 +538,12 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
         {isEditing && (
           <div className="pt-1 border-t border-gray-100 dark:border-slate-700/80">
             <label className="text-[10px] text-text-secondary dark:text-slate-400 font-semibold block mb-0.5">
-              Bio / Deskripsi Profil:
+              {t('bioLabel', language)}
             </label>
             <textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
-              placeholder="Deskripsi singkat profil Anda..."
+              placeholder={t('bioPlaceholder', language)}
               rows={2}
               className="w-full text-xs px-2.5 py-1.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary resize-none"
             />
@@ -461,7 +553,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
                 onClick={handleRemoveAvatar}
                 className="text-[10px] text-danger dark:text-rose-400 font-semibold hover:underline mt-1 cursor-pointer block"
               >
-                Hapus foto profil khusus
+                {t('removeCustomAvatar', language)}
               </button>
             )}
 
@@ -470,11 +562,11 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
               <div className="flex items-center justify-between">
                 <label className="text-[10px] text-text-secondary dark:text-slate-400 font-semibold flex items-center gap-1">
                   <Lock className="w-3 h-3 text-primary dark:text-blue-400" />
-                  <span>Ganti Kata Sandi (Opsional):</span>
+                  <span>{t('changePasswordOptional', language)}</span>
                 </label>
                 <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-0.5">
                   <ShieldCheck className="w-3 h-3" />
-                  <span>Terenkripsi</span>
+                  <span>{t('encryptedBadge', language)}</span>
                 </span>
               </div>
 
@@ -482,7 +574,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
                 {/* 1. Kata Sandi Sebelumnya (Verifikasi Ril) */}
                 <div>
                   <label className="text-[9px] text-text-secondary dark:text-slate-400 font-semibold block mb-0.5">
-                    Kata Sandi Sebelumnya:
+                    {t('oldPasswordLabel', language)}
                   </label>
                   <div className="relative">
                     <input
@@ -492,7 +584,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
                         setOldPassword(e.target.value);
                         if (passwordError) setPasswordError(null);
                       }}
-                      placeholder="Masukkan kata sandi lama / sebelumnya"
+                      placeholder={t('oldPasswordPlaceholder', language)}
                       className="w-full text-xs px-2.5 py-1.5 pr-8 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary font-mono"
                     />
                     <button
@@ -509,7 +601,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
                 {/* 2. Kata Sandi Baru */}
                 <div>
                   <label className="text-[9px] text-text-secondary dark:text-slate-400 font-semibold block mb-0.5">
-                    Kata Sandi Baru:
+                    {t('newPasswordLabel', language)}
                   </label>
                   <div className="relative">
                     <input
@@ -519,7 +611,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
                         setNewPassword(e.target.value);
                         if (passwordError) setPasswordError(null);
                       }}
-                      placeholder="Kata sandi baru"
+                      placeholder={t('newPasswordPlaceholder', language)}
                       className="w-full text-xs px-2.5 py-1.5 pr-8 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary font-mono"
                     />
                     <button
@@ -537,7 +629,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
                 {(newPassword || oldPassword) && (
                   <div className="animate-fade-in">
                     <label className="text-[9px] text-text-secondary dark:text-slate-400 font-semibold block mb-0.5">
-                      Konfirmasi Kata Sandi Baru:
+                      {t('confirmNewPasswordLabel', language)}
                     </label>
                     <div className="relative">
                       <input
@@ -547,7 +639,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
                           setConfirmPassword(e.target.value);
                           if (passwordError) setPasswordError(null);
                         }}
-                        placeholder="Ulangi kata sandi baru"
+                        placeholder={t('confirmNewPasswordPlaceholder', language)}
                         className="w-full text-xs px-2.5 py-1.5 pr-8 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary font-mono"
                       />
                       <button
@@ -577,7 +669,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
               className="w-full py-2.5 px-3 rounded-xl bg-primary hover:bg-primary-hover active:scale-98 text-white font-bold text-xs shadow-soft transition-all flex items-center justify-center gap-1.5 cursor-pointer mt-2"
             >
               <Save className="w-3.5 h-3.5" />
-              <span>Simpan Profil &amp; Pengaturan</span>
+              <span>{t('saveProfileAndSettings', language)}</span>
             </button>
           </div>
         )}
@@ -595,13 +687,13 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
           <div className="flex items-center justify-between text-[10px] text-text-secondary dark:text-slate-400 pt-0.5">
             <span className="flex items-center gap-1">
               <Clock className="w-3 h-3 text-gray-400 dark:text-slate-500" />
-              WAKTU MASUK: <strong className="font-semibold text-text-main dark:text-slate-300">{userProfile.loginTime}</strong>
+              {t('loginTimeLabel', language)}: <strong className="font-semibold text-text-main dark:text-slate-300">{userProfile.loginTime}</strong>
             </span>
           </div>
 
           <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-            <span>Akun Google Terhubung (Google OAuth Verified)</span>
+            <span>{t('googleOAuthVerified', language)}</span>
           </div>
         </div>
       </div>
@@ -676,7 +768,13 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
           onChange={(e) => {
             setCurrency(e.target.value);
             updateUserProfile({ currency: e.target.value });
-            showToast(`Mata uang diatur ke ${e.target.value}`);
+            showToast(
+              language === 'zh'
+                ? `货币已设置为 ${e.target.value}`
+                : language === 'en'
+                ? `Currency set to ${e.target.value}`
+                : `Mata uang diatur ke ${e.target.value}`
+            );
           }}
           className="w-full text-xs font-bold py-2.5 px-3 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-h-[42px]"
         >
@@ -696,12 +794,12 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-black tracking-wider text-text-secondary dark:text-slate-400 uppercase flex items-center gap-1.5">
             <Smartphone className="w-3.5 h-3.5 text-primary dark:text-blue-400" />
-            <span>Perangkat &amp; Aplikasi</span>
+            <span>{t('deviceAndApp', language)}</span>
           </span>
           {isPwaInstalled && (
             <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200/60 dark:border-emerald-800/60 px-2 py-0.5 rounded-full flex items-center gap-1">
               <Check className="w-3 h-3 text-emerald-500" />
-              <span>Terpasang</span>
+              <span>{t('installed', language)}</span>
             </span>
           )}
         </div>
@@ -709,10 +807,10 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
         <div className="flex items-center justify-between gap-3 pt-0.5">
           <div className="min-w-0 flex-1">
             <h4 className="text-xs sm:text-sm font-bold text-text-main dark:text-slate-100 leading-tight">
-              Pasang Aplikasi (PWA)
+              {t('installAppPwa', language)}
             </h4>
             <p className="text-[10.5px] text-text-secondary dark:text-slate-400 mt-0.5 leading-snug">
-              Akses cepat tanpa browser di Komputer &amp; HP
+              {t('pwaQuickAccess', language)}
             </p>
           </div>
 
@@ -720,24 +818,24 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
             type="button"
             onClick={handleInstallPWA}
             className="px-3.5 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/70 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-primary dark:text-blue-300 border border-blue-200 dark:border-blue-800 font-bold text-xs flex items-center gap-1.5 shadow-soft transition-all cursor-pointer flex-shrink-0 min-h-[38px] active:scale-95"
-            title="Pasang Aplikasi PWA"
+            title={t('installAppPwa', language)}
           >
             <Smartphone className="w-3.5 h-3.5" />
-            <span>Pasang App</span>
+            <span>{t('installAppBtn', language)}</span>
           </button>
         </div>
 
         {isPwaDismissed && (
           <div className="pt-2 border-t border-gray-100 dark:border-slate-700/80 flex items-center justify-between text-[10.5px]">
             <span className="text-text-secondary dark:text-slate-400">
-              Banner di beranda belanja sedang disembunyikan
+              {t('pwaBannerHidden', language)}
             </span>
             <button
               type="button"
               onClick={handleRestorePWABanner}
               className="text-primary dark:text-blue-400 font-bold hover:underline cursor-pointer"
             >
-              Aktifkan Kembali
+              {t('reactivate', language)}
             </button>
           </div>
         )}
@@ -748,37 +846,43 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
         <div className="flex items-center justify-between">
           <span className="text-[10.5px] font-black tracking-wider text-text-secondary dark:text-slate-400 uppercase flex items-center gap-1.5">
             <Trash2 className="w-3.5 h-3.5 text-danger dark:text-rose-400" />
-            <span>Baru Saja Dihapus (Recycle Bin)</span>
+            <span>{t('recentlyDeletedSection', language)}</span>
           </span>
 
           <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-red-50 dark:bg-rose-950/70 border border-red-200/60 dark:border-rose-900/60 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-            <span>{deletedTransactions.length} Struk</span>
+            <span>{deletedTransactions.length} {language === 'zh' ? '张收据' : language === 'en' ? 'Receipts' : 'Struk'}</span>
           </span>
         </div>
 
         <p className="text-[11px] text-text-secondary dark:text-slate-400 leading-snug">
-          Struk yang dihapus tersimpan di sini selama <strong>30 hari</strong> sebelum terhapus permanen. Anda dapat memulihkannya kembali ke Riwayat kapan saja.
+          {t('recycleBinNote', language)}
         </p>
 
         {deletedTransactions.length === 0 ? (
           <div className="bg-gray-50/80 dark:bg-slate-900/60 rounded-xl p-4 text-center border border-dashed border-gray-200 dark:border-slate-750">
             <p className="text-xs font-semibold text-text-secondary dark:text-slate-400">
-              Tidak ada struk di tempat sampah 🍃
+              {t('noTrashItems', language)}
             </p>
           </div>
         ) : (
           <div className="space-y-3 pt-1">
             {deletedTransactions.map((tx) => {
               const txDate = new Date(tx.purchasedAt);
-              const dateStr = txDate.toLocaleDateString('id-ID', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-              });
-              const timeStr = `pukul ${txDate.toLocaleTimeString('id-ID', {
-                hour: '2-digit',
-                minute: '2-digit',
-              }).replace(':', '.')}`;
+              const dateStr = txDate.toLocaleDateString(
+                language === 'zh' ? 'zh-CN' : language === 'en' ? 'en-US' : 'id-ID',
+                {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                }
+              );
+              const timeStr = `${t('atTime', language)} ${txDate.toLocaleTimeString(
+                language === 'zh' ? 'zh-CN' : language === 'en' ? 'en-US' : 'id-ID',
+                {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }
+              )}`;
               const daysRemaining = tx.deletedAt
                 ? Math.max(1, 30 - Math.floor((Date.now() - new Date(tx.deletedAt).getTime()) / (1000 * 60 * 60 * 24)))
                 : 30;
@@ -797,7 +901,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
                     </div>
 
                     <span className="text-[10px] font-extrabold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/70 border border-amber-200 dark:border-amber-900 px-2 py-0.5 rounded-full whitespace-nowrap">
-                      Sisa {daysRemaining} hari
+                      {t('daysRemaining', language, { days: daysRemaining })}
                     </span>
                   </div>
 
@@ -812,7 +916,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
                   {/* Pricing row */}
                   <div className="flex items-center justify-between text-xs pt-1.5 border-t border-gray-100 dark:border-slate-800">
                     <span className="text-[11px] text-text-secondary dark:text-slate-400 font-medium">
-                      {tx.items?.length || 0} jenis barang
+                      {tx.items?.length || 0} {language === 'zh' ? '种商品' : language === 'en' ? 'items' : 'jenis barang'}
                     </span>
                     <span className="font-extrabold text-sm text-text-main dark:text-slate-100">
                       {formatRupiah(tx.finalTotal)}
@@ -827,7 +931,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
                       className="flex-1 py-2 px-3 rounded-xl bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-primary dark:text-blue-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-blue-200 dark:border-blue-900/60 min-h-[36px] active:scale-95"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
-                      <span>Pulihkan</span>
+                      <span>{t('restoreBtn', language)}</span>
                     </button>
 
                     <button
@@ -836,7 +940,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
                       className="py-2 px-3.5 rounded-xl text-danger dark:text-rose-400 hover:bg-red-50 dark:hover:bg-rose-950/60 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-red-200 dark:border-rose-900/60 min-h-[36px] active:scale-95"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
-                      <span>Hapus Permanen</span>
+                      <span>{t('permanentDeleteBtn', language)}</span>
                     </button>
                   </div>
                 </div>
@@ -847,15 +951,15 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
               <button
                 type="button"
                 onClick={async () => {
-                  if (window.confirm('Hapus seluruh struk di tempat sampah secara permanen?')) {
+                  if (window.confirm(language === 'zh' ? '确定要永久清空废纸篓中的所有收据吗？' : language === 'en' ? 'Permanently delete all receipts in the recycle bin?' : 'Hapus seluruh struk di tempat sampah secara permanen?')) {
                     const ids = deletedTransactions.map((t) => t.id);
                     await Promise.all(ids.map((id) => db.transactions.delete(id)));
-                    showToast('Semua struk di tempat sampah telah dikosongkan.');
+                    showToast(language === 'zh' ? '废纸篓已全部清空。' : language === 'en' ? 'All receipts in the trash have been cleared.' : 'Semua struk di tempat sampah telah dikosongkan.');
                   }
                 }}
                 className="w-full text-center text-[11px] font-bold text-danger dark:text-rose-400 hover:underline pt-1 cursor-pointer block"
               >
-                Kosongkan Semua Sampah
+                {t('clearAllTrashBtn', language)}
               </button>
             )}
           </div>
@@ -867,12 +971,12 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-black tracking-wider text-text-secondary dark:text-slate-400 uppercase flex items-center gap-1.5">
             <HardDrive className="w-3.5 h-3.5 text-primary dark:text-blue-400" />
-            <span>Penyimpanan &amp; Cache Aplikasi</span>
+            <span>{t('storageCacheTitle', language)}</span>
           </span>
 
           <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200/60 dark:border-emerald-800/60 px-2 py-0.5 rounded-full flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Optimal</span>
+            <span>{t('storageOptimal', language)}</span>
           </span>
         </div>
 
@@ -881,7 +985,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
           <div className="flex items-end justify-between">
             <div>
               <span className="text-[10px] text-text-secondary dark:text-slate-400 font-semibold block">
-                Penyimpanan Terpakai:
+                {t('storageUsedLabel', language)}
               </span>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-lg font-black text-primary dark:text-blue-400 tracking-tight">
@@ -895,7 +999,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
 
             <div className="text-right">
               <span className="text-[10px] text-text-secondary dark:text-slate-400 font-semibold block">
-                Kuota Perangkat:
+                {t('deviceQuota', language)}
               </span>
               <span className="text-xs font-extrabold text-text-main dark:text-slate-200">
                 {storageInfo.quotaGb} GB
@@ -912,8 +1016,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
           </div>
 
           <div className="flex items-center justify-between text-[10px] text-text-secondary dark:text-slate-400">
-            <span>Database offline Dexie &amp; Cache Peramban</span>
-            <span className="font-semibold">{storageInfo.percent}% terpakai</span>
+            <span>{t('storageDbNote', language)}</span>
+            <span className="font-semibold">{storageInfo.percent}% {language === 'zh' ? '已使用' : language === 'en' ? 'used' : 'terpakai'}</span>
           </div>
         </div>
 
@@ -921,10 +1025,10 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
         <div className="flex items-center justify-between gap-2 pt-1 border-t border-gray-100 dark:border-slate-700/80">
           <div className="min-w-0 flex-1">
             <h4 className="text-xs font-bold text-text-main dark:text-slate-100 leading-tight">
-              Bersihkan Cache &amp; Reset Data
+              {t('clearCacheReset', language)}
             </h4>
             <p className="text-[10px] text-text-secondary dark:text-slate-400 mt-0.5 line-clamp-1">
-              Hapus cache lokal peramban &amp; segarkan data
+              {t('clearCacheDesc', language)}
             </p>
           </div>
 
@@ -933,10 +1037,10 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
             onClick={handleClearCacheAndStorage}
             disabled={isClearingCache}
             className="px-3 py-1.5 rounded-xl border border-red-200 dark:border-rose-900/60 bg-red-50/60 dark:bg-rose-950/40 hover:bg-red-100 dark:hover:bg-rose-900/60 active:scale-95 text-danger dark:text-rose-400 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer flex-shrink-0 disabled:opacity-50"
-            title="Bersihkan cache lokal"
+            title={t('clearCacheBtn', language)}
           >
             <Trash2 className="w-3.5 h-3.5" />
-            <span>{isClearingCache ? 'Membersihkan...' : 'Bersihkan'}</span>
+            <span>{isClearingCache ? t('clearing', language) : t('clearCacheBtn', language)}</span>
           </button>
         </div>
       </div>
@@ -949,7 +1053,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
           className="w-full py-3 px-4 rounded-xl border border-red-200 dark:border-rose-900/60 bg-red-50/70 dark:bg-rose-950/40 text-danger dark:text-rose-400 hover:bg-red-100 dark:hover:bg-rose-900/60 active:scale-98 font-bold text-xs shadow-soft flex items-center justify-center gap-2 transition-all min-h-[44px] cursor-pointer"
         >
           <LogOut className="w-4 h-4" />
-          <span>Keluar dari Akun</span>
+          <span>{t('logoutBarBtn', language)}</span>
         </button>
       </div>
       </>
@@ -965,10 +1069,10 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
               </div>
               <div className="min-w-0 flex-1">
                 <h3 className="font-extrabold text-sm sm:text-base text-text-main dark:text-slate-100">
-                  Konfirmasi Keluar
+                  {t('logoutConfirmTitle', language)}
                 </h3>
                 <p className="text-xs text-text-secondary dark:text-slate-400 mt-1 leading-relaxed">
-                  Yakin mau keluar? Anda akan dialihkan kembali ke halaman login utama.
+                  {t('logoutConfirmDesc', language)}
                 </p>
               </div>
             </div>
@@ -979,7 +1083,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
                 onClick={() => setShowLogoutConfirm(false)}
                 className="py-2.5 px-3 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-750 font-bold text-xs flex items-center justify-center transition-all cursor-pointer min-h-[42px]"
               >
-                Batal
+                {t('cancelBtn', language)}
               </button>
 
               <button
@@ -993,7 +1097,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
                 className="py-2.5 px-3 rounded-xl bg-danger hover:bg-red-700 active:scale-98 text-white font-extrabold text-xs shadow-soft flex items-center justify-center gap-1.5 transition-all cursor-pointer min-h-[42px]"
               >
                 <LogOut className="w-3.5 h-3.5" />
-                <span>Ya, Keluar</span>
+                <span>{t('yesLogoutBtn', language)}</span>
               </button>
             </div>
           </div>
@@ -1006,7 +1110,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
           <div className="w-full max-w-[360px] bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5 shadow-modal animate-slide-up">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-bold text-sm text-text-main dark:text-slate-100">
-                Pasang di iPhone / iPad
+                {language === 'zh' ? '在 iPhone / iPad 上安装' : language === 'en' ? 'Install on iPhone / iPad' : 'Pasang di iPhone / iPad'}
               </h3>
               <button
                 type="button"
@@ -1018,14 +1122,18 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
             </div>
             <ol className="space-y-2 text-xs text-text-secondary dark:text-slate-300 mb-4 list-decimal list-inside">
               <li>
-                Ketuk tombol <strong className="text-primary dark:text-blue-400">Share</strong> (ikon kotak panah atas) di Safari.
+                {language === 'zh' ? '在 Safari 浏览器中点击 ' : language === 'en' ? 'Tap the ' : 'Ketuk tombol '}
+                <strong className="text-primary dark:text-blue-400">Share / {language === 'zh' ? '分享' : 'Bagikan'}</strong>
+                {language === 'zh' ? ' 按钮 (向上箭头图标)。' : language === 'en' ? ' button (box with upward arrow) in Safari.' : ' (ikon kotak panah atas) di Safari.'}
               </li>
               <li>
-                Gulir ke bawah dan pilih{' '}
-                <strong className="text-text-main dark:text-slate-100">Tambahkan ke Layar Utama (Add to Home Screen)</strong>.
+                {language === 'zh' ? '向下滚动并选择 ' : language === 'en' ? 'Scroll down and select ' : 'Gulir ke bawah dan pilih '}
+                <strong className="text-text-main dark:text-slate-100">{language === 'zh' ? '添加到主屏幕 (Add to Home Screen)' : language === 'en' ? 'Add to Home Screen' : 'Tambahkan ke Layar Utama (Add to Home Screen)'}</strong>.
               </li>
               <li>
-                Ketuk <strong className="text-primary dark:text-blue-400">Tambah (Add)</strong> di pojok kanan atas.
+                {language === 'zh' ? '在右上角点击 ' : language === 'en' ? 'Tap ' : 'Ketuk '}
+                <strong className="text-primary dark:text-blue-400">{language === 'zh' ? '添加 (Add)' : language === 'en' ? 'Add' : 'Tambah (Add)'}</strong>
+                {language === 'zh' ? '。' : language === 'en' ? ' in the top right corner.' : ' di pojok kanan atas.'}
               </li>
             </ol>
             <button
@@ -1033,7 +1141,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
               onClick={() => setShowIOSModal(false)}
               className="w-full bg-primary hover:bg-primary-hover active:scale-98 text-white font-bold py-2.5 rounded-xl text-xs min-h-[42px] cursor-pointer"
             >
-              Mengerti
+              {language === 'zh' ? '我知道了' : language === 'en' ? 'Got it' : 'Mengerti'}
             </button>
           </div>
         </div>
@@ -1049,21 +1157,24 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
               </div>
               <div>
                 <h3 className="font-extrabold text-sm text-text-main dark:text-slate-100">
-                  Pulihkan Struk Belanja?
+                  {t('restoreReceiptTitle', language)}
                 </h3>
                 <span className="text-[10px] text-text-secondary dark:text-slate-400 font-medium">
-                  Konfirmasi Pengembalian
+                  {t('restoreConfirmSub', language)}
                 </span>
               </div>
             </div>
 
             <p className="text-xs text-text-secondary dark:text-slate-300 leading-relaxed">
-              Struk belanja dari <strong className="text-text-main dark:text-slate-100">{txToRestore.location || 'LOTTE MART GROCERY'}</strong> senilai <strong className="text-primary dark:text-blue-400">{formatRupiah(txToRestore.finalTotal)}</strong> akan dipulihkan kembali ke daftar Riwayat transaksi aktif Anda.
+              {t('restoreReceiptBody', language, {
+                location: txToRestore.location || 'LOTTE MART GROCERY',
+                amount: formatRupiah(txToRestore.finalTotal),
+              })}
             </p>
 
             <div className="bg-blue-50/80 dark:bg-blue-950/40 p-2.5 rounded-xl border border-blue-100 dark:border-blue-900/60 text-[11px] text-blue-800 dark:text-blue-300 flex items-start gap-1.5 font-medium">
               <span className="flex-shrink-0">💡</span>
-              <span>Struk ini akan kembali dihitung ke dalam ringkasan belanja dan histori pengeluaran.</span>
+              <span>{t('restoreReceiptTip', language)}</span>
             </div>
 
             <div className="flex gap-2 pt-1">
@@ -1072,7 +1183,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
                 onClick={() => setTxToRestore(null)}
                 className="flex-1 py-2.5 px-3 rounded-xl border border-gray-300 dark:border-slate-700 text-text-main dark:text-slate-200 font-bold text-xs hover:bg-gray-50 dark:hover:bg-slate-800 min-h-[42px] cursor-pointer"
               >
-                Batal
+                {t('cancelBtn', language)}
               </button>
               <button
                 type="button"
@@ -1082,12 +1193,12 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
                     deletedAt: undefined,
                   });
                   syncService.notifyChange();
-                  showToast('Struk berhasil dipulihkan ke Riwayat! 🎉');
+                  showToast(language === 'zh' ? '收据已成功恢复至历史记录！🎉' : language === 'en' ? 'Receipt successfully restored to History! 🎉' : 'Struk berhasil dipulihkan ke Riwayat! 🎉');
                   setTxToRestore(null);
                 }}
                 className="flex-1 py-2.5 px-3 rounded-xl bg-primary hover:bg-primary-hover active:scale-95 text-white font-bold text-xs shadow-soft min-h-[42px] cursor-pointer"
               >
-                Ya, Pulihkan
+                {t('yesRestoreBtn', language)}
               </button>
             </div>
           </div>
@@ -1104,21 +1215,24 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
               </div>
               <div>
                 <h3 className="font-extrabold text-sm text-text-main dark:text-slate-100">
-                  Hapus Struk Permanen?
+                  {t('deletePermanentTitle', language)}
                 </h3>
                 <span className="text-[10px] text-danger dark:text-rose-400 font-bold">
-                  Tidak Dapat Dibatalkan
+                  {t('cannotUndo', language)}
                 </span>
               </div>
             </div>
 
             <p className="text-xs text-text-secondary dark:text-slate-300 leading-relaxed">
-              Apakah Anda yakin ingin menghapus struk belanja dari <strong className="text-text-main dark:text-slate-100">{txToDeletePermanent.location || 'LOTTE MART GROCERY'}</strong> senilai <strong className="text-text-main dark:text-slate-100">{formatRupiah(txToDeletePermanent.finalTotal)}</strong>?
+              {t('deletePermanentBody', language, {
+                location: txToDeletePermanent.location || 'LOTTE MART GROCERY',
+                amount: formatRupiah(txToDeletePermanent.finalTotal),
+              })}
             </p>
 
             <div className="bg-red-50/80 dark:bg-rose-950/40 p-2.5 rounded-xl border border-red-200/80 dark:border-rose-900/60 text-[11px] text-rose-800 dark:text-rose-300 flex items-start gap-1.5 font-semibold">
               <span className="flex-shrink-0">⚠️</span>
-              <span>Data struk ini akan dihapus selamanya dari memori lokal dan tidak bisa dikembalikan lagi jika tidak sengaja kepencet!</span>
+              <span>{t('deletePermanentWarning', language)}</span>
             </div>
 
             <div className="flex gap-2 pt-1">
@@ -1127,19 +1241,19 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
                 onClick={() => setTxToDeletePermanent(null)}
                 className="flex-1 py-2.5 px-3 rounded-xl border border-gray-300 dark:border-slate-700 text-text-main dark:text-slate-200 font-bold text-xs hover:bg-gray-50 dark:hover:bg-slate-800 min-h-[42px] cursor-pointer"
               >
-                Batal
+                {t('cancelBtn', language)}
               </button>
               <button
                 type="button"
                 onClick={async () => {
                   await db.transactions.delete(txToDeletePermanent.id);
                   syncService.notifyChange();
-                  showToast('Struk telah dihapus permanen.');
+                  showToast(language === 'zh' ? '收据已永久删除。' : language === 'en' ? 'Receipt has been permanently deleted.' : 'Struk telah dihapus permanen.');
                   setTxToDeletePermanent(null);
                 }}
                 className="flex-1 py-2.5 px-3 rounded-xl bg-danger hover:bg-red-700 active:scale-95 text-white font-bold text-xs shadow-soft min-h-[42px] cursor-pointer"
               >
-                Hapus Permanen
+                {t('deletePermanentBtn', language)}
               </button>
             </div>
           </div>

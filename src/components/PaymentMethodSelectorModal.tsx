@@ -5,6 +5,7 @@ import { useStore } from '../store/useStore';
 import { db } from '../db/database';
 import { syncService } from '../services/syncService';
 import { soundService } from '../utils/sound';
+import { t } from '../utils/i18n';
 
 interface PaymentMethodSelectorModalProps {
   isOpen: boolean;
@@ -15,7 +16,7 @@ export const PaymentMethodSelectorModal: React.FC<PaymentMethodSelectorModalProp
   isOpen,
   onClose,
 }) => {
-  const { selectedPaymentMethod, setSelectedPaymentMethod, username } = useStore();
+  const { selectedPaymentMethod, setSelectedPaymentMethod, username, language } = useStore();
   const [selectedMethod, setSelectedMethod] = useState(selectedPaymentMethod);
 
   useEffect(() => {
@@ -64,10 +65,10 @@ export const PaymentMethodSelectorModal: React.FC<PaymentMethodSelectorModalProp
             </div>
             <div>
               <h3 className="font-extrabold text-sm sm:text-base text-text-main dark:text-slate-100">
-                Pilih Akun Bank / Pembayaran
+                {t('selectPaymentTitle', language)}
               </h3>
               <p className="text-[11px] text-text-secondary dark:text-slate-400">
-                Penyimpanan dana belanja {username}
+                {t('userStorageDesc', language, { username })}
               </p>
             </div>
           </div>
@@ -136,26 +137,30 @@ export const PaymentMethodSelectorModal: React.FC<PaymentMethodSelectorModalProp
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <h4 className="font-extrabold text-xs sm:text-[13px] text-text-main dark:text-slate-100 truncate">
-                        {acc.name}
+                        {acc.id === 'cash' ? (language === 'zh' ? '现金钱包 / Cash' : language === 'en' ? 'Cash Wallet' : acc.name) : acc.name}
                       </h4>
                       {isBCA && (
                         <span className="text-[9px] font-extrabold bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 px-1.5 py-0.5 rounded-full">
-                          Utama
+                          {t('primaryBadge', language)}
                         </span>
                       )}
                       {(isVisa || isMastercard) && (
                         <span className="text-[9px] font-bold bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 px-1.5 py-0.5 rounded-full">
-                          Debit/Kredit
+                          {t('debitCreditBadge', language)}
                         </span>
                       )}
                       {isAlipay && (
                         <span className="text-[9px] font-bold bg-sky-50 dark:bg-sky-950/70 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 px-1.5 py-0.5 rounded-full">
-                          Global Pay
+                          {t('globalPayBadge', language)}
                         </span>
                       )}
                     </div>
                     <p className="text-[11px] text-text-secondary dark:text-slate-400 mt-0.5 truncate font-mono">
-                      {acc.accountNumber}
+                      {acc.id === 'cash'
+                        ? (language === 'zh' ? '钱包内的现金' : language === 'en' ? 'Physical cash in wallet' : acc.accountNumber)
+                        : acc.id === 'alipay'
+                        ? (language === 'zh' ? '跨境支付 / 扫码支付' : language === 'en' ? 'International / QR Pay' : acc.accountNumber)
+                        : acc.accountNumber}
                     </p>
                   </div>
                 </div>
@@ -177,7 +182,7 @@ export const PaymentMethodSelectorModal: React.FC<PaymentMethodSelectorModalProp
         {/* Security & Sync Banner */}
         <div className="bg-blue-50/70 dark:bg-blue-950/40 p-3 rounded-2xl border border-blue-100 dark:border-blue-900/60 flex items-center gap-2.5 text-[11.5px] text-blue-800 dark:text-blue-300 leading-snug">
           <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-          <span>Pengeluaran belanja otomatis tersinkronisasi ke rekening &amp; riwayat belanja aktif.</span>
+          <span>{t('paymentAutoAllocated', language)}</span>
         </div>
 
         {/* Confirm Button */}
@@ -186,7 +191,7 @@ export const PaymentMethodSelectorModal: React.FC<PaymentMethodSelectorModalProp
           onClick={handleConfirm}
           className="w-full bg-primary hover:bg-primary-hover active:scale-98 text-white font-extrabold py-3 rounded-xl text-xs sm:text-sm min-h-[46px] cursor-pointer shadow-soft transition-all"
         >
-          Konfirmasi Pilihan ({selectedMethod.split(' ')[0]})
+          {t('confirmPaymentSelection', language)} ({selectedMethod.split(' ')[0]})
         </button>
       </div>
     </div>

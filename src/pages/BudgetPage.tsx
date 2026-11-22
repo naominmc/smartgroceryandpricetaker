@@ -52,12 +52,12 @@ export const BudgetPage: React.FC = () => {
   const handleSaveBudget = async (e: React.FormEvent) => {
     e.preventDefault();
     if (budgetLimitInput.includes('-')) {
-      alert('Batas anggaran tidak boleh bernilai negatif!');
+      alert(language === 'zh' ? '预算上限不能为负数！' : language === 'en' ? 'Budget limit cannot be negative!' : 'Batas anggaran tidak boleh bernilai negatif!');
       return;
     }
     const parsed = parseInt(budgetLimitInput.replace(/\D/g, ''), 10) || 0;
     if (parsed < 0) {
-      alert('Batas anggaran tidak boleh bernilai negatif!');
+      alert(language === 'zh' ? '预算上限不能为负数！' : language === 'en' ? 'Budget limit cannot be negative!' : 'Batas anggaran tidak boleh bernilai negatif!');
       return;
     }
     await groceryService.setBudget(currentPeriod, parsed);
@@ -157,7 +157,7 @@ export const BudgetPage: React.FC = () => {
             </div>
             {budgetLimitInput && (
               <p className="text-[11px] text-text-secondary dark:text-slate-400 font-semibold px-0.5">
-                Nilai:{' '}
+                {language === 'zh' ? '当前金额: ' : language === 'en' ? 'Value: ' : 'Nilai: '}
                 <strong className="text-primary dark:text-blue-400">
                   {formatRupiah(parseInt(budgetLimitInput || '0', 10))}
                 </strong>
@@ -332,7 +332,7 @@ export const BudgetPage: React.FC = () => {
 
         {historicalPeriods.length === 0 ? (
           <p className="text-xs text-text-secondary dark:text-slate-400 italic text-center py-2">
-            Belum ada arsip riwayat bulan sebelumnya.
+            {language === 'zh' ? '暂无上个月的历史存档。' : language === 'en' ? 'No history archive from previous months yet.' : 'Belum ada arsip riwayat bulan sebelumnya.'}
           </p>
         ) : (
           <div className="space-y-2">

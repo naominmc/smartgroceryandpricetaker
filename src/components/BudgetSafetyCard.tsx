@@ -2,6 +2,8 @@ import React from 'react';
 import { ShieldCheck, AlertTriangle, AlertOctagon, TrendingDown, Edit3 } from 'lucide-react';
 import { formatRupiah } from '../utils/currency';
 import type { BudgetStatus } from '../types';
+import { useStore } from '../store/useStore';
+import { t } from '../utils/i18n';
 
 interface BudgetSafetyCardProps {
   budgetStatus: BudgetStatus;
@@ -16,7 +18,17 @@ export const BudgetSafetyCard: React.FC<BudgetSafetyCardProps> = ({
   totalSavings,
   onEditBudget,
 }) => {
-  const { limit, activeTotal, remaining, percentage, level, message, excessAmount } = budgetStatus;
+  const { language } = useStore();
+  const { limit, activeTotal, remaining, percentage, level, excessAmount } = budgetStatus;
+
+  const localizedMessage =
+    level === 'safe'
+      ? t('statusSafeMsg', language)
+      : level === 'warning'
+      ? t('statusWarningMsg', language)
+      : level === 'danger'
+      ? t('statusDangerMsg', language)
+      : t('statusExceededMsg', language, { amount: formatRupiah(excessAmount) });
 
   // Determine color scheme based on level
   let theme = {
@@ -66,7 +78,7 @@ export const BudgetSafetyCard: React.FC<BudgetSafetyCardProps> = ({
           className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${theme.badgeBg}`}
         >
           <StatusIcon className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="truncate">{message}</span>
+          <span className="truncate">{localizedMessage}</span>
         </div>
 
         {onEditBudget && (
@@ -74,10 +86,10 @@ export const BudgetSafetyCard: React.FC<BudgetSafetyCardProps> = ({
             type="button"
             onClick={onEditBudget}
             className="flex items-center gap-1 text-[11px] font-medium text-text-secondary dark:text-slate-400 hover:text-primary dark:hover:text-blue-400 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors min-h-[36px]"
-            title="Ubah Anggaran"
+            title={t('setLimit', language)}
           >
             <Edit3 className="w-3.5 h-3.5" />
-            <span>Atur Batas</span>
+            <span>{t('setLimit', language)}</span>
           </button>
         )}
       </div>
@@ -86,19 +98,19 @@ export const BudgetSafetyCard: React.FC<BudgetSafetyCardProps> = ({
       <div className="grid grid-cols-2 gap-3 mb-3">
         <div>
           <span className="text-[11px] font-medium text-text-secondary dark:text-slate-400 block">
-            Total Belanja di Troli
+            {t('activeCartSpending', language)}
           </span>
           <span className="text-xl font-extrabold text-text-main dark:text-slate-100 tracking-tight">
             {formatRupiah(activeTotal)}
           </span>
           <span className="text-[11px] text-text-secondary dark:text-slate-400 block mt-0.5">
-            {itemCount} barang dalam troli
+            {t('activeCartItems', language, { count: itemCount })}
           </span>
         </div>
 
         <div className="text-right">
           <span className="text-[11px] font-medium text-text-secondary dark:text-slate-400 block">
-            {level === 'exceeded' ? 'Kelebihan Anggaran' : 'Sisa Saldo Aman'}
+            {level === 'exceeded' ? t('overBudgetCap', language) : t('safeBalance', language)}
           </span>
           <span
             className={`text-xl font-extrabold tracking-tight ${
@@ -110,7 +122,7 @@ export const BudgetSafetyCard: React.FC<BudgetSafetyCardProps> = ({
             {level === 'exceeded' ? `+${formatRupiah(excessAmount)}` : formatRupiah(remaining)}
           </span>
           <span className="text-[11px] text-text-secondary dark:text-slate-400 block mt-0.5">
-            dari limit {formatRupiah(limit)}
+            {t('fromLimit', language, { limit: formatRupiah(limit) })}
           </span>
         </div>
       </div>
@@ -118,7 +130,7 @@ export const BudgetSafetyCard: React.FC<BudgetSafetyCardProps> = ({
       {/* Dynamic Animated Progress Bar */}
       <div className="space-y-1 mb-3">
         <div className="flex justify-between items-center text-[11px] font-semibold text-text-secondary dark:text-slate-400">
-          <span>Penggunaan Anggaran</span>
+          <span>{t('budgetUsage', language)}</span>
           <span className={theme.accentText}>{percentage}%</span>
         </div>
         <div className="w-full bg-gray-100 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden">
@@ -134,7 +146,7 @@ export const BudgetSafetyCard: React.FC<BudgetSafetyCardProps> = ({
         <div className="flex items-center justify-between text-xs bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-100/70 dark:border-emerald-800/60 rounded-xl px-2.5 py-1.5 mt-2">
           <span className="flex items-center gap-1 text-emerald-800 dark:text-emerald-300 font-medium">
             <TrendingDown className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            Total Hemat Diskon:
+            {t('discountSavings', language)}
           </span>
           <span className="font-bold text-emerald-700 dark:text-emerald-300">{formatRupiah(totalSavings)}</span>
         </div>

@@ -3,25 +3,34 @@ import { Calendar, ChevronDown, ChevronUp, CheckCircle2, Trash2 } from 'lucide-r
 import type { PurchaseTransaction } from '../types';
 import { formatRupiah } from '../utils/currency';
 import { db } from '../db/database';
+import { useStore } from '../store/useStore';
+import { t, translateCategory } from '../utils/i18n';
 
 interface HistoryTransactionCardProps {
   transaction: PurchaseTransaction;
 }
 
 export const HistoryTransactionCard: React.FC<HistoryTransactionCardProps> = ({ transaction }) => {
+  const { language } = useStore();
   const [isExpanded, setIsExpanded] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const txDate = new Date(transaction.purchasedAt);
-  const dateFormatted = txDate.toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-  const timeFormatted = `pukul ${txDate.toLocaleTimeString('id-ID', {
-    hour: '2-digit',
-    minute: '2-digit',
-  }).replace(':', '.')}`;
+  const dateFormatted = txDate.toLocaleDateString(
+    language === 'zh' ? 'zh-CN' : language === 'en' ? 'en-US' : 'id-ID',
+    {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }
+  );
+  const timeFormatted = `${t('atTime', language)} ${txDate.toLocaleTimeString(
+    language === 'zh' ? 'zh-CN' : language === 'en' ? 'en-US' : 'id-ID',
+    {
+      hour: '2-digit',
+      minute: '2-digit',
+    }
+  )}`;
 
   return (
     <div className="bg-card dark:bg-slate-800/90 rounded-card p-4 border border-border dark:border-slate-700 shadow-soft transition-all duration-200">
@@ -49,7 +58,7 @@ export const HistoryTransactionCard: React.FC<HistoryTransactionCardProps> = ({ 
               </div>
             </div>
             <div className="text-xs font-semibold text-text-main dark:text-slate-100 mt-1">
-              {transaction.items.length} jenis barang dibeli
+              {t('itemsBought', language, { count: transaction.items.length })}
             </div>
           </div>
         </div>
@@ -61,7 +70,7 @@ export const HistoryTransactionCard: React.FC<HistoryTransactionCardProps> = ({ 
             </span>
             {transaction.discountTotal > 0 && (
               <span className="text-[10px] font-bold text-success dark:text-emerald-400 block">
-                Hemat {formatRupiah(transaction.discountTotal)}
+                {t('savedAmount', language, { amount: formatRupiah(transaction.discountTotal) })}
               </span>
             )}
           </div>
@@ -70,7 +79,7 @@ export const HistoryTransactionCard: React.FC<HistoryTransactionCardProps> = ({ 
             type="button"
             onClick={() => setShowDeleteModal(true)}
             className="p-1 rounded-lg text-gray-400 hover:text-danger hover:bg-red-50 dark:hover:bg-rose-950/60 transition-colors cursor-pointer mt-0.5"
-            title="Hapus Struk ke Sampah (Recycle Bin)"
+            title={t('deleteReceiptTitle', language)}
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -81,7 +90,7 @@ export const HistoryTransactionCard: React.FC<HistoryTransactionCardProps> = ({ 
       <div className="mt-2.5 text-[11px] text-gray-700 dark:text-slate-200 bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 px-2.5 py-1.5 rounded-lg flex flex-wrap items-center justify-between gap-1">
         {transaction.budgetLimitSnapshot > 0 && (
           <div>
-            <span>Snapshot Batas: </span>
+            <span>{language === 'zh' ? '预算上限快照: ' : language === 'en' ? 'Limit Snapshot: ' : 'Snapshot Batas: '}</span>
             <span className="font-extrabold text-gray-900 dark:text-slate-100">
               {formatRupiah(transaction.budgetLimitSnapshot)} (
               {((transaction.finalTotal / transaction.budgetLimitSnapshot) * 100).toFixed(1)}%)
@@ -99,7 +108,7 @@ export const HistoryTransactionCard: React.FC<HistoryTransactionCardProps> = ({ 
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full mt-3 pt-2 border-t border-gray-100 dark:border-slate-700 flex items-center justify-center gap-1 text-xs font-semibold text-text-secondary dark:text-slate-400 hover:text-primary dark:hover:text-blue-400 transition-colors min-h-[40px]"
       >
-        <span>{isExpanded ? 'Sembunyikan Rincian' : 'Lihat Rincian Item'}</span>
+        <span>{isExpanded ? t('closeDetails', language) : t('viewDetails', language, { count: transaction.items.length })}</span>
         {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
       </button>
 
@@ -114,11 +123,11 @@ export const HistoryTransactionCard: React.FC<HistoryTransactionCardProps> = ({ 
               <div className="flex-1 min-w-0 pr-2">
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <span className="text-[9px] font-semibold text-gray-500 dark:text-slate-300 bg-gray-200/60 dark:bg-slate-600 px-1.5 py-0.2 rounded">
-                    {item.categorySnapshot}
+                    {translateCategory(item.categorySnapshot, language)}
                   </span>
                   {item.discounts.length > 0 && (
                     <span className="text-[9px] font-bold text-danger dark:text-rose-300 bg-red-50 dark:bg-rose-950/70 px-1 rounded">
-                      Diskon -{item.discounts.join('% -')}%
+                      {language === 'zh' ? '折扣' : language === 'en' ? 'Discount' : 'Diskon'} -{item.discounts.join('% -')}%
                     </span>
                   )}
                 </div>
@@ -136,7 +145,7 @@ export const HistoryTransactionCard: React.FC<HistoryTransactionCardProps> = ({ 
                 </span>
                 {item.discountAmount > 0 && (
                   <span className="text-[10px] text-success dark:text-emerald-400 block">
-                    Hemat {formatRupiah(item.discountAmount)}
+                    {t('savedAmount', language, { amount: formatRupiah(item.discountAmount) })}
                   </span>
                 )}
               </div>
@@ -146,15 +155,15 @@ export const HistoryTransactionCard: React.FC<HistoryTransactionCardProps> = ({ 
           {/* Totals Summary */}
           <div className="bg-blue-50/50 dark:bg-blue-950/40 p-2.5 rounded-xl border border-blue-100 dark:border-blue-900/60 text-xs space-y-1">
             <div className="flex justify-between text-gray-600 dark:text-slate-400">
-              <span>Total Kotor Sebelum Diskon:</span>
+              <span>{t('grossSubtotalLabel', language)}</span>
               <span className="text-gray-900 dark:text-slate-200">{formatRupiah(transaction.grossTotal)}</span>
             </div>
             <div className="flex justify-between text-success dark:text-emerald-400 font-medium">
-              <span>Total Penghematan Diskon:</span>
+              <span>{t('discountSavingsLabel', language)}</span>
               <span>-{formatRupiah(transaction.discountTotal)}</span>
             </div>
             <div className="flex justify-between text-primary dark:text-blue-400 font-bold text-sm pt-1 border-t border-blue-200/50 dark:border-blue-800/40">
-              <span>Total Akhir Dibayar:</span>
+              <span>{t('finalPaidLabel', language)}</span>
               <span>{formatRupiah(transaction.finalTotal)}</span>
             </div>
           </div>
@@ -171,10 +180,10 @@ export const HistoryTransactionCard: React.FC<HistoryTransactionCardProps> = ({ 
               </div>
               <div className="min-w-0 flex-1">
                 <h3 className="font-extrabold text-sm sm:text-base text-text-main dark:text-slate-100">
-                  Hapus Struk Transaksi?
+                  {t('deleteReceiptTitle', language)}
                 </h3>
                 <p className="text-xs text-text-secondary dark:text-slate-400 mt-1 leading-relaxed">
-                  Struk akan dipindahkan ke <strong>Sampah (Recycle Bin)</strong> selama <strong>30 hari</strong> dan dapat dipulihkan kapan saja melalui menu <strong>Profil &gt; Baru Saja Dihapus</strong>.
+                  {t('deleteReceiptDesc', language)}
                 </p>
               </div>
             </div>
@@ -185,7 +194,7 @@ export const HistoryTransactionCard: React.FC<HistoryTransactionCardProps> = ({ 
                 onClick={() => setShowDeleteModal(false)}
                 className="py-2.5 px-3 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-750 font-bold text-xs flex items-center justify-center transition-all cursor-pointer min-h-[42px]"
               >
-                Batal
+                {t('cancelBtn', language)}
               </button>
 
               <button
@@ -200,7 +209,7 @@ export const HistoryTransactionCard: React.FC<HistoryTransactionCardProps> = ({ 
                 className="py-2.5 px-3 rounded-xl bg-danger hover:bg-red-700 active:scale-98 text-white font-extrabold text-xs shadow-soft flex items-center justify-center gap-1.5 transition-all cursor-pointer min-h-[42px]"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span>Pindahkan ke Sampah</span>
+                <span>{t('moveToTrashBtn', language)}</span>
               </button>
             </div>
           </div>

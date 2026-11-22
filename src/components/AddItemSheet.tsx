@@ -12,6 +12,7 @@ import { DiscountEditor } from './DiscountEditor';
 import { calculateItemSubtotals } from '../utils/calculations';
 import { formatRupiah, getActiveCurrency } from '../utils/currency';
 import { useStore } from '../store/useStore';
+import { t, translateCategory } from '../utils/i18n';
 
 const SEARCH_HISTORY_KEY = 'smart_grocery_product_search_history';
 
@@ -66,6 +67,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
   onSave,
   editingItem,
 }) => {
+  const { language } = useStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customUnit, setCustomUnit] = useState(false);
 
@@ -275,10 +277,10 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
             </div>
             <div>
               <h2 className="font-bold text-base text-text-main dark:text-slate-100">
-                {editingItem ? 'Edit Barang Belanja' : 'Tambah Barang ke Troli'}
+                {editingItem ? t('editItemTitle', language) : t('addItemSheetTitle', language)}
               </h2>
               <p className="text-[11px] text-text-secondary dark:text-slate-400">
-                Pencatatan langsung saat belanja di supermarket
+                {t('sheetSubtitle', language)}
               </p>
             </div>
           </div>
@@ -286,7 +288,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
             type="button"
             onClick={onClose}
             className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 min-h-[44px] min-w-[44px] flex items-center justify-center"
-            aria-label="Tutup"
+            aria-label={t('cancelBtn', language)}
           >
             <X className="w-5 h-5" />
           </button>
@@ -299,10 +301,10 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
             <div className="bg-gradient-to-r from-blue-50 to-amber-50 dark:from-slate-800 dark:to-slate-800/80 px-3 py-2 rounded-2xl border border-blue-200/70 dark:border-slate-700 flex items-center justify-between gap-2 shadow-2xs">
               <div className="min-w-0 flex-1">
                 <span className="text-[11.5px] font-extrabold text-gray-800 dark:text-slate-100 block leading-tight truncate">
-                  Malas Ketik Harga Manual?
+                  {t('quickFillHeader', language)}
                 </span>
                 <span className="text-[10px] text-gray-500 dark:text-slate-400 whitespace-nowrap truncate block">
-                  Scan barcode kemasan untuk isi otomatis
+                  {t('quickFillScan', language)}
                 </span>
               </div>
               <button
@@ -313,7 +315,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
                 }}
                 className="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold text-[11px] px-2.5 py-1.5 rounded-xl shadow-xs transition-all whitespace-nowrap flex-shrink-0 flex items-center gap-1 min-h-[32px] cursor-pointer"
               >
-                <span>Scan Barcode</span>
+                <span>{t('scanBarcodeBtn', language)}</span>
                 <span>📷</span>
               </button>
             </div>
@@ -325,10 +327,10 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
               <div className="flex items-center justify-between text-xs font-bold text-amber-900 dark:text-amber-200">
                 <span className="flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
-                  Rekomendasi dari Riwayat:
+                  {t('recommendationsHistory', language)}
                 </span>
                 <span className="text-[10px] text-amber-700 dark:text-amber-400 font-normal">
-                  Klik untuk isi otomatis
+                  {t('clickToAutofill', language)}
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pr-0.5 no-scrollbar">
@@ -369,10 +371,10 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
                   type="button"
                   onClick={handleClearAllHistory}
                   className="text-[10px] font-bold text-danger dark:text-rose-400 hover:text-red-700 flex items-center gap-0.5 hover:underline cursor-pointer"
-                  title="Hapus semua riwayat nama produk"
+                  title={language === 'zh' ? '清除所有商品名称历史' : language === 'en' ? 'Clear all product name history' : 'Hapus semua riwayat nama produk'}
                 >
                   <Trash2 className="w-2.5 h-2.5" />
-                  <span>Hapus Riwayat</span>
+                  <span>{language === 'zh' ? '清除历史' : language === 'en' ? 'Clear History' : 'Hapus Riwayat'}</span>
                 </button>
               )}
             </div>
@@ -382,7 +384,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
                 type="text"
                 autoComplete="off"
                 spellCheck={false}
-                placeholder="Contoh: Beras Ramos 5kg, Telur Ayam"
+                placeholder={language === 'zh' ? '例如: 茉莉香米 5kg, 鸡蛋' : language === 'en' ? 'e.g. Jasmine Rice 5kg, Eggs' : 'Contoh: Beras Ramos 5kg, Telur Ayam'}
                 {...register('name')}
                 onFocus={() => setIsHistoryOpen(true)}
                 onBlur={() => {
@@ -408,7 +410,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
                 <div className="px-3 py-2 bg-gray-50 dark:bg-slate-750 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between">
                   <span className="text-[10px] font-bold text-text-secondary dark:text-slate-400 uppercase tracking-wider flex items-center gap-1">
                     <History className="w-3 h-3 text-primary dark:text-blue-400" />
-                    <span>Riwayat Pencarian</span>
+                    <span>{language === 'zh' ? '搜索历史' : language === 'en' ? 'Search History' : 'Riwayat Pencarian'}</span>
                   </span>
                   <button
                     type="button"
@@ -416,7 +418,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
                     className="text-[10.5px] font-bold text-danger dark:text-rose-400 hover:text-red-700 flex items-center gap-1 transition-colors cursor-pointer px-1.5 py-0.5 rounded-lg hover:bg-red-50 dark:hover:bg-rose-950/50"
                   >
                     <Trash2 className="w-3 h-3" />
-                    <span>Hapus Semua</span>
+                    <span>{language === 'zh' ? '全部清空' : language === 'en' ? 'Clear All' : 'Hapus Semua'}</span>
                   </button>
                 </div>
 
@@ -467,14 +469,14 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
 
           {/* Kategori */}
           <div>
-            <label className="block text-xs font-bold text-text-main dark:text-slate-200 mb-1">Kategori</label>
+            <label className="block text-xs font-bold text-text-main dark:text-slate-200 mb-1">{t('categoryLabel', language)}</label>
             <select
               {...register('category')}
               className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm min-h-[44px] bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 cursor-pointer"
             >
               {PRODUCT_CATEGORIES.map((cat) => (
                 <option key={cat} value={cat}>
-                  {cat}
+                  {translateCategory(cat, language)}
                 </option>
               ))}
             </select>
@@ -484,7 +486,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-text-main dark:text-slate-200 mb-1">
-                Kuantitas <span className="text-danger">*</span>
+                {t('quantityLabel', language)} <span className="text-danger">*</span>
               </label>
               <input
                 type="number"
@@ -506,12 +508,12 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-text-main dark:text-slate-200 mb-1">Satuan</label>
+              <label className="block text-xs font-bold text-text-main dark:text-slate-200 mb-1">{t('unitLabel', language)}</label>
               {customUnit ? (
                 <div className="flex gap-1">
                   <input
                     type="text"
-                    placeholder="Satuan khusus..."
+                    placeholder={t('customUnitPlaceholder', language)}
                     {...register('unit')}
                     className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 text-sm min-h-[44px]"
                   />
@@ -523,7 +525,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
                     }}
                     className="px-2 text-xs text-primary dark:text-blue-400 underline whitespace-nowrap min-h-[44px]"
                   >
-                    Batal
+                    {t('cancelBtn', language)}
                   </button>
                 </div>
               ) : (
@@ -544,7 +546,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
                       {unit}
                     </option>
                   ))}
-                  <option value="custom">+ Satuan Lainnya...</option>
+                  <option value="custom">{t('customUnitPrompt', language)}</option>
                 </select>
               )}
             </div>
@@ -553,7 +555,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
           {/* Harga Satuan */}
           <div>
             <label className="block text-xs font-bold text-text-main dark:text-slate-200 mb-1">
-              Harga Satuan ({getActiveCurrency().symbol}) <span className="text-danger">*</span>
+              {t('unitPriceLabel', language)} ({getActiveCurrency().symbol}) <span className="text-danger">*</span>
             </label>
             <div className="relative">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-sm text-gray-400">
@@ -619,7 +621,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
               <Sparkles className="w-4 h-4 text-primary dark:text-blue-400" />
               <div>
                 <span className="text-[11px] font-semibold text-text-secondary dark:text-slate-400 block">
-                  Estimasi Total Item:
+                  {t('estimateItemTotal', language)}
                 </span>
                 <span className="text-xs text-gray-500 dark:text-slate-300">
                   {watchedQty} {watch('unit')} × {formatRupiah(watchedPrice)}
@@ -633,7 +635,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
               </span>
               {liveCalc.discountAmount > 0 && (
                 <span className="text-[10px] font-semibold text-success dark:text-emerald-400 block">
-                  Hemat {formatRupiah(liveCalc.discountAmount)}
+                  {t('savingLabel', language, { amount: formatRupiah(liveCalc.discountAmount) })}
                 </span>
               )}
             </div>
@@ -647,10 +649,10 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
               className="w-full bg-primary hover:bg-primary-hover active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl shadow-float transition-all disabled:opacity-50 min-h-[48px] flex items-center justify-center text-sm cursor-pointer"
             >
               {isSubmitting
-                ? 'Menyimpan...'
+                ? t('savingSubtotal', language)
                 : editingItem
-                ? 'Simpan Perubahan'
-                : 'Tambahkan ke Troli Belanja'}
+                ? t('saveChangesBtn', language)
+                : t('addToCartBtn', language)}
             </button>
           </div>
         </form>

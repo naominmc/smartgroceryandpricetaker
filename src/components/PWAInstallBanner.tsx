@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { X, Smartphone, AlertCircle, EyeOff, Clock } from 'lucide-react';
 import { pwaService } from '../utils/pwa';
+import { useStore } from '../store/useStore';
+import { t } from '../utils/i18n';
 
 export const PWAInstallBanner: React.FC = () => {
+  const { language } = useStore();
   const [isStandalone, setIsStandalone] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [showIOSModal, setShowIOSModal] = useState(false);
@@ -65,10 +68,10 @@ export const PWAInstallBanner: React.FC = () => {
             </div>
             <div className="min-w-0">
               <h4 className="font-bold text-xs leading-tight truncate">
-                Pasang di Layar Utama (PWA)
+                {t('pwaBannerTitle', language)}
               </h4>
               <p className="text-[10px] text-blue-100 truncate">
-                Bisa dibuka cepat saat dorong troli tanpa internet
+                {t('pwaBannerDesc', language)}
               </p>
             </div>
           </div>
@@ -79,7 +82,7 @@ export const PWAInstallBanner: React.FC = () => {
               onClick={handleInstallClick}
               className="bg-white text-primary hover:bg-blue-50 active:scale-95 font-bold text-xs px-3 py-1.5 rounded-lg shadow-sm transition-all min-h-[36px] cursor-pointer"
             >
-              Pasang
+              {t('installBtn', language)}
             </button>
             <button
               type="button"
@@ -104,7 +107,7 @@ export const PWAInstallBanner: React.FC = () => {
               </div>
               <div className="min-w-0 flex-1">
                 <h3 className="text-xs font-bold text-text-main dark:text-slate-100 leading-tight">
-                  Sembunyikan Notifikasi PWA?
+                  {t('hidePwaPromptTitle', language)}
                 </h3>
               </div>
             </div>
@@ -116,7 +119,7 @@ export const PWAInstallBanner: React.FC = () => {
                 className="w-full py-2.5 px-3 rounded-xl bg-red-50 dark:bg-rose-950/40 text-danger dark:text-rose-400 hover:bg-red-100 dark:hover:bg-rose-900/50 font-bold text-xs border border-red-200 dark:border-rose-900/60 transition-all flex items-center justify-center gap-1.5 cursor-pointer min-h-[40px]"
               >
                 <EyeOff className="w-3.5 h-3.5" />
-                <span>Jangan Munculkan Lagi</span>
+                <span>{t('dontShowAgain', language)}</span>
               </button>
 
               <button
@@ -125,12 +128,12 @@ export const PWAInstallBanner: React.FC = () => {
                 className="w-full py-2 px-3 rounded-xl bg-gray-100 dark:bg-slate-800 text-text-secondary dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700 font-semibold text-xs border border-gray-200 dark:border-slate-700 transition-all flex items-center justify-center gap-1.5 cursor-pointer min-h-[38px]"
               >
                 <Clock className="w-3.5 h-3.5" />
-                <span>Tutup Sementara Saja</span>
+                <span>{t('closeTemporary', language)}</span>
               </button>
             </div>
 
             <p className="text-[9.5px] text-center text-text-secondary dark:text-slate-500">
-              *Aplikasi tetap bisa dipasang kapan saja lewat menu <strong>Profil</strong>.
+              {language === 'zh' ? '*该应用仍可随时通过“个人资料”菜单进行安装。' : language === 'en' ? '*The app can still be installed anytime via the Profile menu.' : '*Aplikasi tetap bisa dipasang kapan saja lewat menu Profil.'}
             </p>
           </div>
         </div>
@@ -142,7 +145,7 @@ export const PWAInstallBanner: React.FC = () => {
           <div className="w-full max-w-[360px] bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5 shadow-modal animate-slide-up">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-bold text-sm text-text-main dark:text-slate-100">
-                Pasang di iPhone / iPad
+                {language === 'zh' ? '在 iPhone / iPad 上安装' : language === 'en' ? 'Install on iPhone / iPad' : 'Pasang di iPhone / iPad'}
               </h3>
               <button
                 type="button"
@@ -154,14 +157,18 @@ export const PWAInstallBanner: React.FC = () => {
             </div>
             <ol className="space-y-2 text-xs text-text-secondary dark:text-slate-300 mb-4 list-decimal list-inside">
               <li>
-                Ketuk tombol <strong className="text-primary dark:text-blue-400">Share</strong> (ikon kotak panah atas) di bilah Safari.
+                {language === 'zh' ? '在 Safari 浏览器中点击 ' : language === 'en' ? 'Tap the ' : 'Ketuk tombol '}
+                <strong className="text-primary dark:text-blue-400">Share / {language === 'zh' ? '分享' : 'Bagikan'}</strong>
+                {language === 'zh' ? ' 按钮 (向上箭头图标)。' : language === 'en' ? ' button (box with upward arrow) in Safari.' : ' (ikon kotak panah atas) di Safari.'}
               </li>
               <li>
-                Gulir ke bawah dan pilih{' '}
-                <strong className="text-text-main dark:text-slate-100">Tambahkan ke Layar Utama (Add to Home Screen)</strong>.
+                {language === 'zh' ? '向下滚动并选择 ' : language === 'en' ? 'Scroll down and select ' : 'Gulir ke bawah dan pilih '}
+                <strong className="text-text-main dark:text-slate-100">{language === 'zh' ? '添加到主屏幕 (Add to Home Screen)' : language === 'en' ? 'Add to Home Screen' : 'Tambahkan ke Layar Utama (Add to Home Screen)'}</strong>.
               </li>
               <li>
-                Ketuk <strong className="text-primary dark:text-blue-400">Tambah (Add)</strong> di pojok kanan atas.
+                {language === 'zh' ? '在右上角点击 ' : language === 'en' ? 'Tap ' : 'Ketuk '}
+                <strong className="text-primary dark:text-blue-400">{language === 'zh' ? '添加 (Add)' : language === 'en' ? 'Add' : 'Tambah (Add)'}</strong>
+                {language === 'zh' ? '。' : language === 'en' ? ' in the top right corner.' : ' di pojok kanan atas.'}
               </li>
             </ol>
             <button
@@ -169,7 +176,7 @@ export const PWAInstallBanner: React.FC = () => {
               onClick={() => setShowIOSModal(false)}
               className="w-full bg-primary hover:bg-primary-hover active:scale-98 text-white font-bold py-2.5 rounded-xl text-xs min-h-[42px] cursor-pointer"
             >
-              Mengerti
+              {language === 'zh' ? '我知道了' : language === 'en' ? 'Got it' : 'Mengerti'}
             </button>
           </div>
         </div>

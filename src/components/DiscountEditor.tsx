@@ -2,6 +2,8 @@ import React from 'react';
 import { Plus, Trash2, Tag, Percent } from 'lucide-react';
 import { calculateTieredDiscount } from '../utils/discount';
 import { formatRupiah } from '../utils/currency';
+import { useStore } from '../store/useStore';
+import { t } from '../utils/i18n';
 
 interface DiscountEditorProps {
   basePrice: number;
@@ -14,6 +16,7 @@ export const DiscountEditor: React.FC<DiscountEditorProps> = ({
   discounts,
   onChange,
 }) => {
+  const { language } = useStore();
   const result = calculateTieredDiscount(basePrice, discounts);
 
   const handleAddTier = () => {
@@ -45,7 +48,7 @@ export const DiscountEditor: React.FC<DiscountEditorProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-xs font-semibold text-text-main dark:text-slate-200">
           <Tag className="w-3.5 h-3.5 text-primary dark:text-blue-400" />
-          <span>Diskon Promosi (Bisa Bertingkat)</span>
+          <span>{t('tierDiscountTitle', language)}</span>
         </div>
         <button
           type="button"
@@ -53,7 +56,7 @@ export const DiscountEditor: React.FC<DiscountEditorProps> = ({
           className="inline-flex items-center gap-1 text-xs font-semibold text-primary dark:text-blue-400 hover:text-primary-hover px-2.5 py-1 bg-blue-50 dark:bg-blue-950/70 hover:bg-blue-100 rounded-lg transition-colors min-h-[36px]"
         >
           <Plus className="w-3.5 h-3.5" />
-          <span>+ Tahap Diskon</span>
+          <span>{t('addTierBtn', language)}</span>
         </button>
       </div>
 
@@ -75,7 +78,7 @@ export const DiscountEditor: React.FC<DiscountEditorProps> = ({
             onClick={() => onChange([])}
             className="text-[11px] font-medium px-2 py-1 bg-red-50 dark:bg-rose-950/70 text-danger dark:text-rose-300 border border-red-200 dark:border-rose-900 rounded-md hover:bg-red-100 transition-colors active:scale-95 min-h-[32px]"
           >
-            Hapus Semua
+            {t('clearAllDiscounts', language)}
           </button>
         )}
       </div>
@@ -83,7 +86,7 @@ export const DiscountEditor: React.FC<DiscountEditorProps> = ({
       {/* Discount Tiers List */}
       {discounts.length === 0 ? (
         <p className="text-xs text-text-secondary dark:text-slate-400 italic">
-          Belum ada diskon diterapkan untuk barang ini.
+          {t('noDiscountsApplied', language)}
         </p>
       ) : (
         <div className="space-y-2">
@@ -129,20 +132,26 @@ export const DiscountEditor: React.FC<DiscountEditorProps> = ({
       {discounts.length > 0 && basePrice > 0 && (
         <div className="bg-blue-50/70 dark:bg-blue-950/40 p-2.5 rounded-xl border border-blue-200/80 dark:border-blue-900/60 text-xs space-y-1.5">
           <div className="flex justify-between items-center text-gray-600 dark:text-slate-300">
-            <span>Harga Awal Kotor:</span>
+            <span>{t('grossPriceLabel', language)}</span>
             <span className="font-semibold">{formatRupiah(basePrice)}</span>
           </div>
 
           {result.tiers.length > 1 && (
             <div className="border-t border-blue-200/50 dark:border-blue-800/40 pt-1 space-y-1">
-              {result.tiers.map((t) => (
-                <div key={t.tierIndex} className="flex justify-between text-[11px] text-gray-500 dark:text-slate-400">
+              {result.tiers.map((tr) => (
+                <div key={tr.tierIndex} className="flex justify-between text-[11px] text-gray-500 dark:text-slate-400">
                   <span>
-                    Tahap {t.tierIndex} (-{t.discountPercent}%):
+                    {language === 'zh'
+                      ? `第 ${tr.tierIndex} 阶段`
+                      : language === 'en'
+                      ? `Tier ${tr.tierIndex}`
+                      : `Tahap ${tr.tierIndex}`}{' '}
+                    (-{tr.discountPercent}%):
                   </span>
                   <span>
-                    {formatRupiah(t.beforeTierPrice)} → {formatRupiah(t.afterTierPrice)} (hemat{' '}
-                    {formatRupiah(t.savedAmount)})
+                    {formatRupiah(tr.beforeTierPrice)} → {formatRupiah(tr.afterTierPrice)} (
+                    {language === 'zh' ? '省 ' : language === 'en' ? 'save ' : 'hemat '}
+                    {formatRupiah(tr.savedAmount)})
                   </span>
                 </div>
               ))}
@@ -152,13 +161,13 @@ export const DiscountEditor: React.FC<DiscountEditorProps> = ({
           <div className="flex justify-between items-center text-success dark:text-emerald-400 font-semibold border-t border-blue-200/60 dark:border-blue-800/40 pt-1">
             <span className="flex items-center gap-1">
               <Percent className="w-3.5 h-3.5" />
-              Diskon Efektif ({result.effectiveDiscountPercent}%):
+              {t('effectiveDiscountLabel', language, { pct: result.effectiveDiscountPercent })}
             </span>
-            <span>Hemat {formatRupiah(result.totalSavings)}</span>
+            <span>{t('savingLabel', language, { amount: formatRupiah(result.totalSavings) })}</span>
           </div>
 
           <div className="flex justify-between items-center text-text-main dark:text-slate-100 font-bold text-sm pt-0.5">
-            <span>Harga Akhir:</span>
+            <span>{t('finalPriceLabel', language)}</span>
             <span className="text-primary dark:text-blue-400">{formatRupiah(result.finalPrice)}</span>
           </div>
         </div>

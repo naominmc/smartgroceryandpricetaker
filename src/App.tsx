@@ -52,7 +52,9 @@ export const App: React.FC = () => {
     if (method.includes('GoPay') || method.includes('QRIS')) return 'GoPay';
     if (method.includes('Mandiri')) return 'Mandiri';
     if (method.includes('Blu')) return 'Blu BCA';
-    if (method.includes('Tunai') || method.includes('Cash')) return 'Tunai';
+    if (method.includes('Tunai') || method.includes('Cash')) {
+      return language === 'zh' ? '现金' : language === 'en' ? 'Cash' : 'Tunai';
+    }
     if (method.includes('BCA')) return 'BCA';
     return method.replace('Bank ', '').split(' ')[0] || 'Bank';
   };
@@ -174,7 +176,11 @@ export const App: React.FC = () => {
         <div className="text-center space-y-3">
           <div className="w-14 h-14 rounded-full border-4 border-primary border-t-transparent animate-spin mx-auto" />
           <p className="text-xs font-bold text-primary dark:text-blue-400">
-            Menyiapkan Troli Belanja {username}...
+            {language === 'zh'
+              ? `正在准备 ${username} 的购物车...`
+              : language === 'en'
+              ? `Preparing ${username}'s Shopping Cart...`
+              : `Menyiapkan Troli Belanja ${username}...`}
           </p>
         </div>
       </div>
@@ -227,7 +233,7 @@ export const App: React.FC = () => {
                     ? 'bg-gradient-to-tr from-amber-400 via-rose-500 via-indigo-500 to-emerald-400 animate-spin-outline'
                     : 'bg-gradient-to-br from-amber-300 via-orange-400 to-indigo-500'
                 }`}
-                title="Tarik ke bawah atau klik logo untuk refresh"
+                title={language === 'zh' ? '下拉或点击标志以刷新' : language === 'en' ? 'Pull down or click logo to refresh' : 'Tarik ke bawah atau klik logo untuk refresh'}
               >
                 <div className="w-full h-full bg-white/95 dark:bg-slate-900 rounded-[14px] overflow-hidden flex items-center justify-center">
                   <img

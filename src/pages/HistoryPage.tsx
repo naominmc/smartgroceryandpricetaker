@@ -23,25 +23,26 @@ import { formatPeriodLabel, getPreviousMonthPeriod } from '../utils/priceCompari
 import { useStore } from '../store/useStore';
 import { t } from '../utils/i18n';
 
-const MONTH_OPTIONS = [
-  { value: '01', label: 'Januari' },
-  { value: '02', label: 'Februari' },
-  { value: '03', label: 'Maret' },
-  { value: '04', label: 'April' },
-  { value: '05', label: 'Mei' },
-  { value: '06', label: 'Juni' },
-  { value: '07', label: 'Juli' },
-  { value: '08', label: 'Agustus' },
-  { value: '09', label: 'September' },
-  { value: '10', label: 'Oktober' },
-  { value: '11', label: 'November' },
-  { value: '12', label: 'Desember' },
+const getMonthOptions = (lang: string) => [
+  { value: '01', label: lang === 'zh' ? '1月' : lang === 'en' ? 'January' : 'Januari' },
+  { value: '02', label: lang === 'zh' ? '2月' : lang === 'en' ? 'February' : 'Februari' },
+  { value: '03', label: lang === 'zh' ? '3月' : lang === 'en' ? 'March' : 'Maret' },
+  { value: '04', label: lang === 'zh' ? '4月' : lang === 'en' ? 'April' : 'April' },
+  { value: '05', label: lang === 'zh' ? '5月' : lang === 'en' ? 'May' : 'Mei' },
+  { value: '06', label: lang === 'zh' ? '6月' : lang === 'en' ? 'June' : 'Juni' },
+  { value: '07', label: lang === 'zh' ? '7月' : lang === 'en' ? 'July' : 'Juli' },
+  { value: '08', label: lang === 'zh' ? '8月' : lang === 'en' ? 'August' : 'Agustus' },
+  { value: '09', label: lang === 'zh' ? '9月' : lang === 'en' ? 'September' : 'September' },
+  { value: '10', label: lang === 'zh' ? '10月' : lang === 'en' ? 'October' : 'Oktober' },
+  { value: '11', label: lang === 'zh' ? '11月' : lang === 'en' ? 'November' : 'November' },
+  { value: '12', label: lang === 'zh' ? '12月' : lang === 'en' ? 'December' : 'Desember' },
 ];
 
 const DAY_OPTIONS = Array.from({ length: 31 }, (_, i) => String(i + 1));
 
 export const HistoryPage: React.FC = () => {
   const { language } = useStore();
+  const MONTH_OPTIONS = useMemo(() => getMonthOptions(language), [language]);
   const [selectedDay, setSelectedDay] = useState<string>('all');
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [selectedYear, setSelectedYear] = useState<string>('all');
@@ -180,28 +181,49 @@ export const HistoryPage: React.FC = () => {
   // Period label for summary
   const summaryLabel = useMemo(() => {
     if (isThisWeekFilter) {
-      return `Minggu Ini (${startOfWeek.getDate()} - ${endOfWeek.getDate()} ${MONTH_OPTIONS[now.getMonth()].label})`;
+      const monthObj = MONTH_OPTIONS[now.getMonth()];
+      return language === 'zh'
+        ? `本周 (${startOfWeek.getDate()} - ${endOfWeek.getDate()} ${monthObj?.label || ''})`
+        : language === 'en'
+        ? `This Week (${startOfWeek.getDate()} - ${endOfWeek.getDate()} ${monthObj?.label || ''})`
+        : `Minggu Ini (${startOfWeek.getDate()} - ${endOfWeek.getDate()} ${monthObj?.label || ''})`;
     }
     if (selectedDay !== 'all' && selectedMonth !== 'all' && selectedYear !== 'all') {
       const monthObj = MONTH_OPTIONS.find((m) => m.value === selectedMonth);
-      return `${parseInt(selectedDay, 10)} ${monthObj?.label || selectedMonth} ${selectedYear}`;
+      return language === 'zh'
+        ? `${selectedYear}年${monthObj?.label || selectedMonth}${selectedDay}日`
+        : language === 'en'
+        ? `${monthObj?.label || selectedMonth} ${selectedDay}, ${selectedYear}`
+        : `${parseInt(selectedDay, 10)} ${monthObj?.label || selectedMonth} ${selectedYear}`;
     }
     if (selectedMonth !== 'all' && selectedYear !== 'all') {
       const monthObj = MONTH_OPTIONS.find((m) => m.value === selectedMonth);
-      return `${monthObj?.label || selectedMonth} ${selectedYear}`;
+      return language === 'zh'
+        ? `${selectedYear}年${monthObj?.label || selectedMonth}`
+        : language === 'en'
+        ? `${monthObj?.label || selectedMonth} ${selectedYear}`
+        : `${monthObj?.label || selectedMonth} ${selectedYear}`;
     }
     if (selectedMonth !== 'all') {
       const monthObj = MONTH_OPTIONS.find((m) => m.value === selectedMonth);
-      return `Bulan ${monthObj?.label || selectedMonth}`;
+      return language === 'zh'
+        ? `${monthObj?.label || selectedMonth}`
+        : language === 'en'
+        ? `Month of ${monthObj?.label || selectedMonth}`
+        : `Bulan ${monthObj?.label || selectedMonth}`;
     }
     if (selectedYear !== 'all') {
-      return `Tahun ${selectedYear}`;
+      return language === 'zh'
+        ? `${selectedYear}年`
+        : language === 'en'
+        ? `Year ${selectedYear}`
+        : `Tahun ${selectedYear}`;
     }
     if (distinctPeriods.length > 0) {
       return formatPeriodLabel(distinctPeriods[0], language);
     }
-    return 'Seluruh Periode';
-  }, [isThisWeekFilter, startOfWeek, endOfWeek, selectedDay, selectedMonth, selectedYear, distinctPeriods]);
+    return language === 'zh' ? '所有历史时期' : language === 'en' ? 'All Periods' : 'Seluruh Periode';
+  }, [isThisWeekFilter, startOfWeek, endOfWeek, selectedDay, selectedMonth, selectedYear, distinctPeriods, MONTH_OPTIONS, now, language]);
 
   // Month-over-month comparison when month and year are selected
   const hasMonthYearSelected = selectedMonth !== 'all' && selectedYear !== 'all';
@@ -225,10 +247,16 @@ export const HistoryPage: React.FC = () => {
       a.download = `smart-grocery-backup-${new Date().toISOString().split('T')[0]}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      setBackupStatus({ type: 'success', message: 'Data cadangan berhasil diunduh!' });
+      setBackupStatus({
+        type: 'success',
+        message: language === 'zh' ? '备份数据下载成功！' : language === 'en' ? 'Backup data successfully downloaded!' : 'Data cadangan berhasil diunduh!',
+      });
       setTimeout(() => setBackupStatus(null), 4000);
     } catch (err: any) {
-      setBackupStatus({ type: 'error', message: 'Gagal mengekspor data: ' + err.message });
+      setBackupStatus({
+        type: 'error',
+        message: (language === 'zh' ? '导出数据失败: ' : language === 'en' ? 'Failed to export data: ' : 'Gagal mengekspor data: ') + err.message,
+      });
     }
   };
 
@@ -239,10 +267,16 @@ export const HistoryPage: React.FC = () => {
     try {
       const text = await file.text();
       await groceryService.importBackup(text);
-      setBackupStatus({ type: 'success', message: 'Data cadangan berhasil dipulihkan!' });
+      setBackupStatus({
+        type: 'success',
+        message: language === 'zh' ? '备份数据恢复成功！' : language === 'en' ? 'Backup data restored successfully!' : 'Data cadangan berhasil dipulihkan!',
+      });
       setTimeout(() => setBackupStatus(null), 4000);
     } catch (err: any) {
-      setBackupStatus({ type: 'error', message: 'File tidak valid: ' + err.message });
+      setBackupStatus({
+        type: 'error',
+        message: (language === 'zh' ? '文件无效: ' : language === 'en' ? 'Invalid file: ' : 'File tidak valid: ') + err.message,
+      });
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
@@ -254,7 +288,7 @@ export const HistoryPage: React.FC = () => {
       <div className="flex items-center justify-between pt-1">
         <div>
           <span className="text-xs text-text-secondary dark:text-slate-400 font-medium block">
-            Arsip Transaksi Selesai
+            {t('archiveCompleted', language)}
           </span>
           <h1 className="text-xl font-extrabold text-text-main dark:text-slate-100 tracking-tight">
             {t('historyTitle', language)}
@@ -267,10 +301,10 @@ export const HistoryPage: React.FC = () => {
             type="button"
             onClick={handleExportBackup}
             className="p-2 text-primary dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-800 border border-blue-200 dark:border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1 transition-colors min-h-[40px]"
-            title="Ekspor Backup JSON"
+            title={language === 'zh' ? '导出 JSON 备份' : language === 'en' ? 'Export JSON Backup' : 'Ekspor Backup JSON'}
           >
             <Download className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Cadangkan</span>
+            <span className="hidden sm:inline">{t('backupBtn', language)}</span>
           </button>
         </div>
       </div>
@@ -298,22 +332,22 @@ export const HistoryPage: React.FC = () => {
         <div className="bg-card dark:bg-slate-800/90 rounded-card p-4 border border-border dark:border-slate-700 shadow-soft space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-text-secondary dark:text-slate-400">
-              Ringkasan {summaryLabel}
+              {t('summaryOf', language, { label: summaryLabel })}
             </span>
             <span className="text-[11px] bg-blue-50 dark:bg-blue-950/80 text-primary dark:text-blue-300 font-bold px-2 py-0.5 rounded-full">
-              {filteredTransactions.length} transaksi selesai
+              {t('transactionsCompleted', language, { count: filteredTransactions.length })}
             </span>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <span className="text-[11px] text-text-secondary dark:text-slate-400 block">Total Pengeluaran</span>
+              <span className="text-[11px] text-text-secondary dark:text-slate-400 block">{t('totalSpending', language)}</span>
               <span className="text-lg font-extrabold text-primary dark:text-blue-400">
                 {formatRupiah(periodTotalSpending)}
               </span>
             </div>
             <div className="text-right">
-              <span className="text-[11px] text-text-secondary dark:text-slate-400 block">Hemat dari Promo</span>
+              <span className="text-[11px] text-text-secondary dark:text-slate-400 block">{t('promoSavings', language)}</span>
               <span className="text-lg font-extrabold text-success dark:text-emerald-400">
                 {formatRupiah(periodTotalSavings)}
               </span>
@@ -324,7 +358,10 @@ export const HistoryPage: React.FC = () => {
           {hasMonthYearSelected && prevTotalSpending > 0 && spendingPctChange !== null && (
             <div className="border-t border-gray-100 dark:border-slate-700 pt-2 flex items-center justify-between text-xs">
               <span className="text-text-secondary dark:text-slate-400">
-                Vs {formatPeriodLabel(prevPeriod, language)} ({formatRupiah(prevTotalSpending)}):
+                {t('monthVs', language, {
+                  period: formatPeriodLabel(prevPeriod, language),
+                  amount: formatRupiah(prevTotalSpending),
+                })}
               </span>
               <span
                 className={`font-bold flex items-center gap-1 ${
@@ -334,12 +371,12 @@ export const HistoryPage: React.FC = () => {
                 {spendingDiff > 0 ? (
                   <>
                     <TrendingUp className="w-3.5 h-3.5" />
-                    <span>Naik {spendingPctChange}%</span>
+                    <span>{t('spendingUp', language, { pct: spendingPctChange })}</span>
                   </>
                 ) : (
                   <>
                     <TrendingDown className="w-3.5 h-3.5" />
-                    <span>Turun {Math.abs(Number(spendingPctChange))}%</span>
+                    <span>{t('spendingDown', language, { pct: Math.abs(Number(spendingPctChange)) })}</span>
                   </>
                 )}
               </span>
@@ -354,7 +391,7 @@ export const HistoryPage: React.FC = () => {
         <div className="relative">
           <input
             type="text"
-            placeholder="Cari nama barang, kategori, atau toko..."
+            placeholder={t('searchReceiptPlaceholder', language)}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-8 pr-7 py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50/60 dark:bg-slate-900/60 text-xs font-medium text-text-main dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary min-h-[40px]"
@@ -364,7 +401,7 @@ export const HistoryPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setSearchQuery('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs p-1"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs p-1 cursor-pointer"
             >
               ✕
             </button>
@@ -375,7 +412,7 @@ export const HistoryPage: React.FC = () => {
         <div className="flex items-center justify-between text-xs pt-0.5">
           <span className="text-[11px] font-bold text-text-secondary dark:text-slate-400 flex items-center gap-1.5">
             <Filter className="w-3.5 h-3.5 text-primary dark:text-blue-400" />
-            <span>Pilih Waktu Belanja:</span>
+            <span>{t('filterDateLabel', language)}</span>
           </span>
 
           <div className="flex items-center gap-1.5">
@@ -392,10 +429,10 @@ export const HistoryPage: React.FC = () => {
                 }
               }}
               className="text-[10.5px] font-bold text-primary dark:text-blue-300 bg-blue-50 dark:bg-blue-950/80 hover:bg-blue-100 dark:hover:bg-blue-900/50 px-2.5 py-1 rounded-lg border border-blue-200/80 dark:border-blue-800/80 flex items-center gap-1 transition-colors cursor-pointer"
-              title="Buka Kalender"
+              title={t('calendarBtn', language)}
             >
               <Calendar className="w-3 h-3" />
-              <span>Kalender</span>
+              <span>{t('calendarBtn', language)}</span>
             </button>
 
             {/* Hidden native date input for showPicker */}
@@ -412,16 +449,16 @@ export const HistoryPage: React.FC = () => {
                 type="button"
                 onClick={handleResetDateFilter}
                 className="text-[10.5px] font-bold text-rose-600 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/80 hover:bg-rose-100 dark:hover:bg-rose-900/50 px-2 py-1 rounded-lg border border-rose-200/80 dark:border-rose-800/80 flex items-center gap-1 transition-colors cursor-pointer"
-                title="Reset Waktu"
+                title={t('resetBtn', language)}
               >
                 <RotateCcw className="w-2.5 h-2.5" />
-                <span>Reset</span>
+                <span>{t('resetBtn', language)}</span>
               </button>
             )}
           </div>
         </div>
 
-        {/* 3 Selectors: Tanggal, Bulan, Tahun (Indikator Transparan / Bening, Bukan Pilihan di Dropdown) */}
+        {/* 3 Selectors: Tanggal, Bulan, Tahun */}
         <div className="grid grid-cols-3 gap-1.5">
           {/* Tanggal Selector */}
           <div className="relative">
@@ -438,7 +475,7 @@ export const HistoryPage: React.FC = () => {
               }`}
             >
               <option value="all" disabled hidden>
-                Tanggal
+                {t('dayLabel', language)}
               </option>
               {DAY_OPTIONS.map((day) => (
                 <option key={day} value={day} className="text-gray-900 dark:text-slate-100 font-medium">
@@ -464,7 +501,7 @@ export const HistoryPage: React.FC = () => {
               }`}
             >
               <option value="all" disabled hidden>
-                Bulan
+                {t('monthLabel', language)}
               </option>
               {MONTH_OPTIONS.map((m) => (
                 <option key={m.value} value={m.value} className="text-gray-900 dark:text-slate-100 font-medium">
@@ -490,7 +527,7 @@ export const HistoryPage: React.FC = () => {
               }`}
             >
               <option value="all" disabled hidden>
-                Tahun
+                {t('yearLabel', language)}
               </option>
               {availableYears.map((yr) => (
                 <option key={yr} value={yr} className="text-gray-900 dark:text-slate-100 font-medium">
@@ -519,7 +556,7 @@ export const HistoryPage: React.FC = () => {
                 : 'bg-gray-100 dark:bg-slate-700/80 text-text-secondary dark:text-slate-300 border-gray-200 dark:border-slate-600 hover:bg-gray-200'
             }`}
           >
-            Hari Ini
+            {t('today', language)}
           </button>
           <button
             type="button"
@@ -535,7 +572,7 @@ export const HistoryPage: React.FC = () => {
                 : 'bg-gray-100 dark:bg-slate-700/80 text-text-secondary dark:text-slate-300 border-gray-200 dark:border-slate-600 hover:bg-gray-200'
             }`}
           >
-            Minggu Ini
+            {t('thisWeek', language)}
           </button>
           <button
             type="button"
@@ -552,7 +589,7 @@ export const HistoryPage: React.FC = () => {
                 : 'bg-gray-100 dark:bg-slate-700/80 text-text-secondary dark:text-slate-300 border-gray-200 dark:border-slate-600 hover:bg-gray-200'
             }`}
           >
-            Bulan Ini
+            {t('thisMonth', language)}
           </button>
           <button
             type="button"
@@ -563,7 +600,7 @@ export const HistoryPage: React.FC = () => {
                 : 'bg-gray-100 dark:bg-slate-700/80 text-text-secondary dark:text-slate-300 border-gray-200 dark:border-slate-600 hover:bg-gray-200'
             }`}
           >
-            Seluruhnya
+            {t('allPeriodsBtn', language)}
           </button>
         </div>
       </div>
@@ -572,11 +609,19 @@ export const HistoryPage: React.FC = () => {
       {filteredTransactions.length === 0 ? (
         <EmptyState
           icon={History}
-          title="Tidak Ada Riwayat"
+          title={t('emptyHistoryTitle', language)}
           description={
             searchQuery
-              ? `Barang "${searchQuery}" tidak ditemukan pada periode riwayat yang dipilih.`
-              : 'Belum ada transaksi belanja yang cocok dengan filter tanggal yang dipilih.'
+              ? (language === 'zh'
+                  ? `未在所选历史记录中找到商品 "${searchQuery}"。`
+                  : language === 'en'
+                  ? `Item "${searchQuery}" was not found in the selected history period.`
+                  : `Barang "${searchQuery}" tidak ditemukan pada periode riwayat yang dipilih.`)
+              : (language === 'zh'
+                  ? '暂无符合所选日期筛选条件的购物交易。'
+                  : language === 'en'
+                  ? 'No transactions match the selected date filter.'
+                  : 'Belum ada transaksi belanja yang cocok dengan filter tanggal yang dipilih.')
           }
         />
       ) : (
