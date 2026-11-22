@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import confetti from 'canvas-confetti';
 import {
@@ -370,8 +370,18 @@ export const ShoppingPage: React.FC = () => {
           </div>
         </button>
 
-        <div className="flex items-center gap-1.5 pl-3 pr-2 py-1.5 bg-gray-50 dark:bg-slate-750 rounded-xl border border-gray-200/80 dark:border-slate-700 flex-shrink-0 ml-auto">
-          <Calendar className="w-3.5 h-3.5 text-primary dark:text-blue-400" />
+        <div
+          onClick={(e) => {
+            const input = e.currentTarget.querySelector('input') as HTMLInputElement | null;
+            if (input && typeof input.showPicker === 'function') {
+              try {
+                input.showPicker();
+              } catch {}
+            }
+          }}
+          className="flex items-center gap-1.5 pl-3 pr-2 py-1.5 bg-gray-50 dark:bg-slate-750 rounded-xl border border-gray-200/80 dark:border-slate-700 flex-shrink-0 ml-auto cursor-pointer"
+        >
+          <Calendar className="w-3.5 h-3.5 text-primary dark:text-blue-400 pointer-events-none" />
           <input
             type="date"
             value={sessionDate}
