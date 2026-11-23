@@ -231,8 +231,8 @@ export const translations = {
     subtotalLabel: 'Subtotal',
     tapToSimulate: 'Sentuh untuk simulasi',
     prevMonthNoData: 'Bulan lalu: Belum ada data',
-    prevMonthUp: '+{diff} • Naik {pct}% (Bulan lalu {amount})',
-    prevMonthDown: '-{diff} • Turun {pct}% (Bulan lalu {amount})',
+    prevMonthUp: '+{diff} • Naik {pct}% (Bln lalu {amount})',
+    prevMonthDown: '-{diff} • Turun {pct}% (Bln lalu {amount})',
     prevMonthStable: '= Stabil ({amount})',
 
     // Recycle bin
@@ -358,7 +358,7 @@ export const translations = {
     // Safety Messages
     statusSafeMsg: 'Anggaran masih aman',
     statusWarningMsg: 'Hati-hati, anggaran mulai menipis.',
-    statusDangerMsg: 'Peringatan Waspada: Belanja mendekati batas saldo dompet.',
+    statusDangerMsg: 'Peringatan: Belanja mendekati batas saldo dompet',
     statusExceededMsg: 'Total belanja melebihi batas saldo dompet! Kurangi kuantitas atau batalkan barang sekunder.',
 
     // History Page
@@ -737,7 +737,7 @@ export const translations = {
     // Safety Messages
     statusSafeMsg: 'Budget is still safe',
     statusWarningMsg: 'Caution, budget is getting low.',
-    statusDangerMsg: 'Caution Alert: Spending is near wallet budget limit.',
+    statusDangerMsg: 'Alert: Spending near budget limit',
     statusExceededMsg: 'Total spending exceeds wallet budget! Reduce quantity or cancel secondary items.',
 
     // History Page
@@ -1116,7 +1116,7 @@ export const translations = {
     // Safety Messages
     statusSafeMsg: '预算仍在安全范围内',
     statusWarningMsg: '注意，预算开始减少。',
-    statusDangerMsg: '注意警报：支出已接近钱包预算限额。',
+    statusDangerMsg: '警报：支出已接近预算限额',
     statusExceededMsg: '总消费超出钱包预算上限！请减少数量或取消次要商品。',
 
     // History Page

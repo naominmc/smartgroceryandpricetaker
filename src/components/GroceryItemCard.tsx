@@ -126,8 +126,8 @@ export const GroceryItemCard: React.FC<GroceryItemCardProps> = ({
             )}
           </div>
 
-          {/* Last month price comparator (strict 1 baris) */}
-          <div className="mt-1.5 flex items-center overflow-x-auto no-scrollbar">
+          {/* Last month price comparator (strict 1 baris utuh tanpa scroll) */}
+          <div className="mt-1 flex items-center">
             <PriceComparison
               currentPrice={item.unitPrice}
               previousPrice={item.previousUnitPrice}

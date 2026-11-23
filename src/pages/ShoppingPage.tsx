@@ -19,6 +19,7 @@ import {
   ChevronDown,
   ChevronUp,
   ShieldCheck,
+  AlertTriangle,
   AlertOctagon,
 } from 'lucide-react';
 import { db } from '../db/database';
@@ -454,26 +455,36 @@ export const ShoppingPage: React.FC = () => {
             {/* Info Sisa Anggaran & Total Belanja */}
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span
-                  className={`inline-flex items-center gap-1 text-[11px] font-extrabold ${
-                    budgetStatus.level === 'exceeded'
-                      ? 'text-danger dark:text-rose-400'
-                      : budgetStatus.level === 'warning' || budgetStatus.level === 'danger'
-                      ? 'text-warning dark:text-amber-400'
-                      : 'text-success dark:text-emerald-400'
-                  }`}
-                >
-                  {budgetStatus.level === 'exceeded' ? (
-                    <AlertOctagon className="w-3.5 h-3.5 flex-shrink-0" />
-                  ) : (
-                    <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
-                  )}
-                  <span>
-                    {budgetStatus.level === 'exceeded'
-                      ? `+${formatRupiah(budgetStatus.excessAmount)}`
-                      : `${t('remainingBudget', language)}: ${formatRupiah(budgetStatus.remaining)}`}
-                  </span>
-                </span>
+                {(() => {
+                  const isRedStatus = budgetStatus.remaining <= 10000 || budgetStatus.level === 'exceeded' || budgetStatus.level === 'danger';
+                  const isWarningStatus = !isRedStatus && budgetStatus.level === 'warning';
+                  return (
+                    <span
+                      className={`inline-flex items-center gap-1 text-[11px] font-extrabold ${
+                        isRedStatus
+                          ? 'text-danger dark:text-rose-400'
+                          : isWarningStatus
+                          ? 'text-warning dark:text-amber-400'
+                          : 'text-success dark:text-emerald-400'
+                      }`}
+                    >
+                      {isRedStatus ? (
+                        budgetStatus.level === 'exceeded' ? (
+                          <AlertOctagon className="w-3.5 h-3.5 flex-shrink-0" />
+                        ) : (
+                          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                        )
+                      ) : (
+                        <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
+                      )}
+                      <span>
+                        {budgetStatus.level === 'exceeded'
+                          ? `+${formatRupiah(budgetStatus.excessAmount)}`
+                          : `${t('remainingBudget', language)}: ${formatRupiah(budgetStatus.remaining)}`}
+                      </span>
+                    </span>
+                  );
+                })()}
 
                 <span className="text-[11px] text-text-secondary dark:text-slate-400 font-semibold truncate">
                   | {t('totalSpent', language)}: <strong className="text-text-main dark:text-slate-100 font-black">{formatRupiah(totals.finalTotal)}</strong>

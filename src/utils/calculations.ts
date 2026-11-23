@@ -111,10 +111,10 @@ export function evaluateBudgetSafety(
   let level: BudgetStatusLevel = 'safe';
   let message = 'Anggaran masih aman';
 
-  if (percentage > 100) {
+  if (percentage > 100 || remaining < 0) {
     level = 'exceeded';
     message = 'Total belanja melebihi batas saldo dompet! Kurangi kuantitas atau batalkan barang sekunder.';
-  } else if (percentage >= 90) {
+  } else if (remaining <= 10000 || percentage >= 90) {
     level = 'danger';
     message = 'Peringatan Waspada: Belanja mendekati batas saldo dompet.';
   } else if (percentage >= 70) {

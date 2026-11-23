@@ -1243,30 +1243,34 @@
       }
 
       // Zone Thresholds
-      if (pct < 70) {
-        badge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-400/25 text-emerald-200 border border-emerald-400/30';
-        badgeIcon.setAttribute('data-lucide', 'shield-check');
-        badgeText.textContent = 'ZONA AMAN';
-        progressFill.className = 'h-full bg-emerald-400 rounded-full transition-all duration-500';
-        adviceText.textContent = 'Dompet aman. Belanja masih terkendali.';
-      } else if (pct < 90) {
-        badge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-400/30 text-amber-200 border border-amber-400/40';
-        badgeIcon.setAttribute('data-lucide', 'alert-triangle');
-        badgeText.textContent = 'ZONA WASPADA';
-        progressFill.className = 'h-full bg-amber-400 rounded-full transition-all duration-500';
-        adviceText.textContent = 'Waspada! Mendekati batas anggaran belanja.';
-      } else if (pct <= 100) {
-        badge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500/30 text-rose-200 border border-rose-500/40';
-        badgeIcon.setAttribute('data-lucide', 'alert-octagon');
-        badgeText.textContent = 'ZONA BAHAYA';
-        progressFill.className = 'h-full bg-rose-500 rounded-full transition-all duration-500';
-        adviceText.textContent = 'Hati-hati! Sisa dompet menipis, prioritaskan barang pokok.';
-      } else {
+      if (pct > 100 || remaining < 0) {
         badge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-600 text-white danger-pulse';
         badgeIcon.setAttribute('data-lucide', 'alert-triangle');
         badgeText.textContent = 'OVERBUDGET!';
         progressFill.className = 'h-full bg-rose-600 rounded-full transition-all duration-500';
+        remElem.className = 'text-[10px] font-medium text-rose-300';
         adviceText.textContent = `Perhatian! Anggaran terlampaui ${formatRp(Math.abs(remaining))}!`;
+      } else if (remaining <= 10000 || pct >= 90) {
+        badge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500/30 text-rose-200 border border-rose-500/40';
+        badgeIcon.setAttribute('data-lucide', 'alert-octagon');
+        badgeText.textContent = 'ZONA BAHAYA';
+        progressFill.className = 'h-full bg-rose-500 rounded-full transition-all duration-500';
+        remElem.className = 'text-[10px] font-medium text-rose-300';
+        adviceText.textContent = 'Peringatan: Belanja mendekati batas saldo dompet.';
+      } else if (pct >= 70) {
+        badge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-400/30 text-amber-200 border border-amber-400/40';
+        badgeIcon.setAttribute('data-lucide', 'alert-triangle');
+        badgeText.textContent = 'ZONA WASPADA';
+        progressFill.className = 'h-full bg-amber-400 rounded-full transition-all duration-500';
+        remElem.className = 'text-[10px] font-medium text-amber-200';
+        adviceText.textContent = 'Waspada! Mendekati batas anggaran belanja.';
+      } else {
+        badge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-400/25 text-emerald-200 border border-emerald-400/30';
+        badgeIcon.setAttribute('data-lucide', 'shield-check');
+        badgeText.textContent = 'ZONA AMAN';
+        progressFill.className = 'h-full bg-emerald-400 rounded-full transition-all duration-500';
+        remElem.className = 'text-[10px] font-medium text-blue-100';
+        adviceText.textContent = 'Dompet aman. Belanja masih terkendali.';
       }
 
       const totalItems = AppState.cart.reduce((s, i) => s + (i.qty || 1), 0);
@@ -1366,7 +1370,7 @@
             </div>
 
             <!-- Price Comparison Tag (strict 1 baris) -->
-            <div class="mt-1.5 flex items-center overflow-x-auto no-scrollbar">
+            <div class="mt-1 flex items-center">
               ${compBadgeHtml}
             </div>
 

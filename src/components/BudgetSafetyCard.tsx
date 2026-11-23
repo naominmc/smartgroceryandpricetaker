@@ -20,13 +20,15 @@ export const BudgetSafetyCard: React.FC<BudgetSafetyCardProps> = ({
 }) => {
   const { language, currency } = useStore();
   const { limit, activeTotal, remaining, percentage, level, excessAmount } = budgetStatus;
+  const isRedLevel = level === 'danger' || level === 'exceeded' || remaining <= 10000;
+  const isYellowLevel = !isRedLevel && level === 'warning';
 
   const localizedMessage =
     level === 'safe'
       ? t('statusSafeMsg', language)
-      : level === 'warning'
+      : isYellowLevel
         ? t('statusWarningMsg', language)
-        : level === 'danger'
+        : isRedLevel && level !== 'exceeded'
           ? t('statusDangerMsg', language)
           : t('statusExceededMsg', language, { amount: formatRupiah(excessAmount) });
 
@@ -39,7 +41,7 @@ export const BudgetSafetyCard: React.FC<BudgetSafetyCardProps> = ({
     accentText: 'text-success dark:text-emerald-400',
   };
 
-  if (level === 'warning') {
+  if (isYellowLevel) {
     theme = {
       badgeBg: 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
       barBg: 'bg-warning',
@@ -47,20 +49,12 @@ export const BudgetSafetyCard: React.FC<BudgetSafetyCardProps> = ({
       cardBorder: 'border-amber-200 dark:border-amber-800/80',
       accentText: 'text-warning dark:text-amber-400',
     };
-  } else if (level === 'danger') {
+  } else if (isRedLevel) {
     theme = {
       badgeBg: 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800',
       barBg: 'bg-danger',
-      icon: AlertTriangle,
+      icon: level === 'exceeded' ? AlertOctagon : AlertTriangle,
       cardBorder: 'border-rose-200 dark:border-rose-800/80',
-      accentText: 'text-danger dark:text-rose-400',
-    };
-  } else if (level === 'exceeded') {
-    theme = {
-      badgeBg: 'bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-200 border-rose-300 dark:border-rose-800 animate-pulse',
-      barBg: 'bg-danger',
-      icon: AlertOctagon,
-      cardBorder: 'border-rose-300 dark:border-rose-800 ring-2 ring-rose-200 dark:ring-rose-900',
       accentText: 'text-danger dark:text-rose-400',
     };
   }
@@ -73,12 +67,12 @@ export const BudgetSafetyCard: React.FC<BudgetSafetyCardProps> = ({
       className={`bg-card dark:bg-slate-800/90 rounded-card p-4 shadow-soft border ${theme.cardBorder} transition-all duration-200 relative overflow-hidden`}
     >
       {/* Top Banner Alert & Edit Budget Button */}
-      <div className="flex items-center justify-between gap-2 mb-3">
+      <div className="flex items-center justify-between gap-1.5 mb-2.5">
         <div
-          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${theme.badgeBg}`}
+          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9.5px] sm:text-[10px] font-bold border whitespace-nowrap flex-nowrap shrink-0 tracking-tight leading-tight ${theme.badgeBg}`}
         >
-          <StatusIcon className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="truncate">{localizedMessage}</span>
+          <StatusIcon className="w-3 h-3 flex-shrink-0" />
+          <span className="whitespace-nowrap">{localizedMessage}</span>
         </div>
 
         {onEditBudget && (
@@ -113,7 +107,7 @@ export const BudgetSafetyCard: React.FC<BudgetSafetyCardProps> = ({
             {level === 'exceeded' ? t('overBudgetCap', language) : t('safeBalance', language)}
           </span>
           <span
-            className={`text-xl font-extrabold tracking-tight ${level === 'exceeded'
+            className={`text-xl font-extrabold tracking-tight ${isRedLevel
                 ? 'text-danger dark:text-rose-400'
                 : 'text-success dark:text-emerald-400'
               }`}
