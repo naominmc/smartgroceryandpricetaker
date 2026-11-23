@@ -266,6 +266,11 @@ class SyncService {
     // Ignore echoes from self unless forced
     if (!force && snapshot.deviceId === this.deviceId) return false;
 
+    // Check revision: NEVER overwrite newer local state with an older remote snapshot!
+    if (!force && snapshot.revision && this.currentRevision && snapshot.revision < this.currentRevision) {
+      return false;
+    }
+
     // Check signature to avoid redundant re-renders
     const signature = this.generateSignature(snapshot);
     if (!force && signature === this.lastAppliedSignature) {
@@ -343,6 +348,11 @@ class SyncService {
    */
   public notifyChange(): void {
     if (this.isApplyingRemote) return; // Do not broadcast mutations caused by receiving a remote snapshot
+
+    this.currentRevision += 1;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('smart_grocery_revision', this.currentRevision.toString());
+    }
 
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);

@@ -272,7 +272,11 @@ export const ShoppingPage: React.FC = () => {
       } else {
         await groceryService.addItemToCart(data);
       }
-      soundService.playSuccess();
+      try {
+        soundService.playSuccess();
+      } catch (e) {
+        // sound optional
+      }
     } catch (err) {
       console.error('Gagal menyimpan barang ke troli:', err);
     }
@@ -560,7 +564,7 @@ export const ShoppingPage: React.FC = () => {
           <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar scroll-smooth">
             {recommendations.slice(0, 10).map((rec) => {
               const inCart = cartItems.some(
-                (ci) => ci.nameSnapshot.toLowerCase() === rec.name.toLowerCase()
+                (ci) => (ci.nameSnapshot || (ci as any).name || '').toLowerCase() === rec.name.toLowerCase()
               );
               return (
                 <button
@@ -568,7 +572,7 @@ export const ShoppingPage: React.FC = () => {
                   type="button"
                   onClick={async () => {
                     const existingItem = cartItems.find(
-                      (ci) => ci.nameSnapshot.toLowerCase() === rec.name.toLowerCase()
+                      (ci) => (ci.nameSnapshot || (ci as any).name || '').toLowerCase() === rec.name.toLowerCase()
                     );
                     if (existingItem) {
                       await groceryService.adjustQuantity(existingItem.id, 1);

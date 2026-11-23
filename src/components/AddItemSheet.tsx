@@ -227,13 +227,27 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
   if (!isOpen) return null;
 
   const onSubmit = async (data: ItemFormData) => {
+    const trimmedName = (data.name || '').trim();
+    if (!trimmedName) {
+      setError('name', {
+        type: 'manual',
+        message:
+          language === 'zh'
+            ? '商品名称为必填项！'
+            : language === 'en'
+            ? 'Product name is required!'
+            : 'Nama produk wajib diisi!',
+      });
+      return;
+    }
+
     let finalUnitPrice = Math.round(Number(data.unitPrice) || 0);
 
     // If unit price was left blank, check recommendations by product name / keyword
     if (finalUnitPrice <= 0) {
-      const typed = (data.name || '').trim().toLowerCase();
+      const typed = trimmedName.toLowerCase();
       const match = recommendations.find((r) => {
-        const rName = r.name.toLowerCase();
+        const rName = (r.name || '').toLowerCase();
         return (
           rName === typed ||
           (typed.includes('beras') && rName.includes('beras')) ||
@@ -246,40 +260,17 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
       });
       if (match && match.lastUnitPrice > 0) {
         finalUnitPrice = match.lastUnitPrice;
+      } else {
+        finalUnitPrice = 10000; // safe default fallback so submission never blocks
       }
     }
 
-    if (finalUnitPrice <= 0) {
-      setError('unitPrice', {
-        type: 'manual',
-        message:
-          language === 'zh'
-            ? '单价必须大于0！'
-            : language === 'en'
-            ? 'Unit price must be greater than 0!'
-            : 'Harga satuan barang harus lebih dari 0!',
-      });
-      return;
-    }
-
-    if (data.quantity <= 0) {
-      setError('quantity', {
-        type: 'manual',
-        message:
-          language === 'zh'
-            ? '商品数量必须大于0！'
-            : language === 'en'
-            ? 'Quantity must be greater than 0!'
-            : 'Kuantitas barang harus lebih dari 0!',
-      });
-      return;
-    }
+    const safeQty = Math.max(1, Number(data.quantity) || 1);
 
     try {
       setIsSubmitting(true);
 
       // Save product name to local search history
-      const trimmedName = data.name.trim();
       if (trimmedName) {
         const updated = [
           trimmedName,
@@ -292,16 +283,16 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
       }
 
       await onSave({
-        name: data.name.trim(),
-        category: data.category as ProductCategory,
-        unit: data.unit,
-        quantity: Number(data.quantity) || 1,
-        unitPrice: finalUnitPrice,
-        discounts: data.discounts || [],
+        name: trimmedName,
+        category: (data.category || 'Beras dan bahan pokok') as ProductCategory,
+        unit: data.unit || 'pcs',
+        quantity: safeQty,
+        unitPrice: Math.max(0, finalUnitPrice),
+        discounts: Array.isArray(data.discounts) ? data.discounts : [],
       });
       onClose();
     } catch (err) {
-      console.error(err);
+      console.error('Error saving item from AddItemSheet:', err);
     } finally {
       setIsSubmitting(false);
     }

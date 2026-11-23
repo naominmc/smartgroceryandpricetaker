@@ -112,6 +112,35 @@ class SoundService {
       }
     } catch {}
   }
+
+  /**
+   * Success notification sound when item is added to cart
+   */
+  public playSuccess(): void {
+    if (!this.isEnabled()) return;
+    try {
+      const ctx = this.getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, now); // D5
+      osc.frequency.setValueAtTime(880.00, now + 0.08); // A5
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.25);
+    } catch {
+      this.pop();
+    }
+  }
+
+  public success(): void {
+    this.playSuccess();
+  }
 }
 
 export const soundService = new SoundService();

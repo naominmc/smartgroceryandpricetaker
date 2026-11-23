@@ -181,39 +181,48 @@ export const groceryService = {
     unitPrice: number;
     discounts: number[];
   }): Promise<CartItem> {
+    const rawName = (data.name || '').trim();
+    const safeName = rawName || 'Barang Belanja';
+
     const { product, previousPrice } = await this.findOrCreateProduct(
-      data.name,
-      data.category,
-      data.unit
+      safeName,
+      data.category || 'Beras dan bahan pokok',
+      data.unit || 'pcs'
     );
 
     const safeUnitPrice = Math.max(0, Math.round(Number(data.unitPrice) || 0));
     const safeQty = Math.max(1, Number(data.quantity) || 1);
 
     // If active item already exists with exact same name and price, increment quantity
-    const allActive = await db.cartItems.toArray();
-    const existing = allActive.find(
-      (c) => c.nameSnapshot.toLowerCase() === data.name.trim().toLowerCase() && c.status === 'active'
-    );
-    if (existing && existing.unitPrice === safeUnitPrice) {
-      const updatedQty = existing.quantity + safeQty;
-      await db.cartItems.update(existing.id, {
-        quantity: updatedQty,
-        updatedAt: new Date().toISOString(),
-      });
-      syncService.notifyChange();
-      return { ...existing, quantity: updatedQty };
+    try {
+      const allActive = await db.cartItems.toArray();
+      const existing = allActive.find(
+        (c) =>
+          (c.nameSnapshot || (c as any).name || '').trim().toLowerCase() === safeName.toLowerCase() &&
+          c.status === 'active'
+      );
+      if (existing && Number(existing.unitPrice) === safeUnitPrice) {
+        const updatedQty = (Number(existing.quantity) || 1) + safeQty;
+        await db.cartItems.update(existing.id, {
+          quantity: updatedQty,
+          updatedAt: new Date().toISOString(),
+        });
+        syncService.notifyChange();
+        return { ...existing, quantity: updatedQty };
+      }
+    } catch (e) {
+      console.warn('Error checking existing cart items:', e);
     }
 
     const newItem: CartItem = {
       id: `cart-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
-      productId: product.id,
-      nameSnapshot: data.name.trim(),
-      categorySnapshot: data.category,
-      unit: data.unit,
+      productId: product?.id || `prod-${Date.now()}`,
+      nameSnapshot: safeName,
+      categorySnapshot: data.category || 'Beras dan bahan pokok',
+      unit: data.unit || 'pcs',
       quantity: safeQty,
       unitPrice: safeUnitPrice,
-      discounts: data.discounts || [],
+      discounts: Array.isArray(data.discounts) ? data.discounts : [],
       previousUnitPrice: previousPrice,
       status: 'active',
       createdAt: new Date().toISOString(),
