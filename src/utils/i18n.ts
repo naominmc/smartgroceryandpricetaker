@@ -222,9 +222,9 @@ export const translations = {
     catalogReadyToScan: 'Katalog Barcode Supermarket (Siap Scan):',
     tapToSimulate: 'Sentuh untuk simulasi',
     prevMonthNoData: 'Bulan lalu: Belum ada data',
-    prevMonthUp: 'Naik {pct}% (Bulan lalu {amount})',
-    prevMonthDown: 'Turun {pct}% (Bulan lalu {amount})',
-    prevMonthStable: 'Harga stabil ({amount})',
+    prevMonthUp: '+{diff} • Naik {pct}% (Bulan lalu {amount})',
+    prevMonthDown: '-{diff} • Turun {pct}% (Bulan lalu {amount})',
+    prevMonthStable: '= Stabil ({amount})',
 
     // Recycle bin
     deletedItemsCount: '{count} Struk Terhapus',
@@ -349,8 +349,8 @@ export const translations = {
     // Safety Messages
     statusSafeMsg: 'Anggaran masih aman',
     statusWarningMsg: 'Hati-hati, anggaran mulai menipis.',
-    statusDangerMsg: 'Peringatan! Belanja mendekati batas maksimum.',
-    statusExceededMsg: 'Anggaran terlampaui {amount}.',
+    statusDangerMsg: 'Peringatan Waspada: Belanja mendekati batas saldo dompet.',
+    statusExceededMsg: 'Total belanja melebihi batas saldo dompet! Kurangi kuantitas atau batalkan barang sekunder.',
 
     // History Page
     historyTitle: 'Riwayat Transaksi',
@@ -589,9 +589,9 @@ export const translations = {
     catalogReadyToScan: 'Supermarket Barcode Catalog (Ready to Scan):',
     tapToSimulate: 'Tap to simulate',
     prevMonthNoData: 'Last month: No data yet',
-    prevMonthUp: 'Up {pct}% (Last month {amount})',
-    prevMonthDown: 'Down {pct}% (Last month {amount})',
-    prevMonthStable: 'Stable price ({amount})',
+    prevMonthUp: '+{diff} • Up {pct}% (Last month {amount})',
+    prevMonthDown: '-{diff} • Down {pct}% (Last month {amount})',
+    prevMonthStable: '= Stable ({amount})',
 
     // Recycle bin
     deletedItemsCount: '{count} Deleted Receipts',
@@ -716,8 +716,8 @@ export const translations = {
     // Safety Messages
     statusSafeMsg: 'Budget is still safe',
     statusWarningMsg: 'Caution, budget is getting low.',
-    statusDangerMsg: 'Warning! Spending is near maximum limit.',
-    statusExceededMsg: 'Budget exceeded by {amount}.',
+    statusDangerMsg: 'Caution Alert: Spending is near wallet budget limit.',
+    statusExceededMsg: 'Total spending exceeds wallet budget! Reduce quantity or cancel secondary items.',
 
     // History Page
     historyTitle: 'Shopping History',
@@ -956,9 +956,9 @@ export const translations = {
     catalogReadyToScan: '超市条码目录（随时可扫）：',
     tapToSimulate: '点击模拟扫描',
     prevMonthNoData: '上月：暂无数据',
-    prevMonthUp: '上涨 {pct}% (上月 {amount})',
-    prevMonthDown: '下降 {pct}% (上月 {amount})',
-    prevMonthStable: '价格稳定 ({amount})',
+    prevMonthUp: '+{diff} • 上涨 {pct}% (上月 {amount})',
+    prevMonthDown: '-{diff} • 下降 {pct}% (上月 {amount})',
+    prevMonthStable: '= 价格稳定 ({amount})',
 
     // Recycle bin
     deletedItemsCount: '{count} 张已删除小票',
@@ -1083,8 +1083,8 @@ export const translations = {
     // Safety Messages
     statusSafeMsg: '预算仍在安全范围内',
     statusWarningMsg: '注意，预算开始减少。',
-    statusDangerMsg: '警告！支出接近最高预算限额。',
-    statusExceededMsg: '已超支 {amount}。',
+    statusDangerMsg: '注意警报：支出已接近钱包预算限额。',
+    statusExceededMsg: '总消费超出钱包预算上限！请减少数量或取消次要商品。',
 
     // History Page
     historyTitle: '购物历史',

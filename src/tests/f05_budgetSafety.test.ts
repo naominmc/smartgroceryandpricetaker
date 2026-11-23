@@ -22,13 +22,13 @@ describe('F-05: Budget Safety Cap Evaluation', () => {
     expect(status.message).toBe('Hati-hati, anggaran mulai menipis.');
   });
 
-  it('Belanja Rp900.000 (90%) menunjukkan status kritis / mendekati batas maksimum (merah)', () => {
+  it('Belanja Rp900.000 (90%) menunjukkan status waspada / mendekati batas maksimum', () => {
     const status = evaluateBudgetSafety(limit, 900000);
     expect(status.level).toBe('danger');
     expect(status.percentage).toBe(90);
     expect(status.remaining).toBe(100000);
     expect(status.excessAmount).toBe(0);
-    expect(status.message).toBe('Peringatan! Belanja mendekati batas maksimum.');
+    expect(status.message).toBe('Peringatan Waspada: Belanja mendekati batas saldo dompet.');
   });
 
   it('Belanja Rp1.050.000 menunjukkan kelebihan Rp50.000 (exceeded)', () => {
@@ -37,7 +37,7 @@ describe('F-05: Budget Safety Cap Evaluation', () => {
     expect(status.percentage).toBe(105);
     expect(status.remaining).toBe(-50000);
     expect(status.excessAmount).toBe(50000);
-    expect(status.message).toBe('Anggaran terlampaui Rp50.000.');
+    expect(status.message).toBe('Total belanja melebihi batas saldo dompet! Kurangi kuantitas atau batalkan barang sekunder.');
   });
 
   it('Anggaran nol ditangani dengan aman tanpa pembagian dengan nol', () => {

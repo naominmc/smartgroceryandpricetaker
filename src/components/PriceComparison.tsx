@@ -33,7 +33,11 @@ export const PriceComparison: React.FC<PriceComparisonProps> = ({
       <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-danger dark:text-rose-300 bg-red-50 dark:bg-rose-950/60 px-2 py-0.5 rounded-full border border-red-100 dark:border-rose-900">
         <ArrowUpRight className="w-3.5 h-3.5 text-danger dark:text-rose-400 stroke-[2.5]" />
         <span>
-          {t('prevMonthUp', language, { pct: result.percentageChange, amount: formatRupiah(result.previousPrice || 0) })}
+          {t('prevMonthUp', language, {
+            diff: formatRupiah(result.difference),
+            pct: result.percentageChange,
+            amount: formatRupiah(result.previousPrice || 0),
+          })}
         </span>
       </div>
     );
@@ -44,7 +48,11 @@ export const PriceComparison: React.FC<PriceComparisonProps> = ({
       <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-success dark:text-emerald-300 bg-green-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-green-100 dark:border-emerald-900">
         <ArrowDownRight className="w-3.5 h-3.5 text-success dark:text-emerald-400 stroke-[2.5]" />
         <span>
-          {t('prevMonthDown', language, { pct: result.percentageChange, amount: formatRupiah(result.previousPrice || 0) })}
+          {t('prevMonthDown', language, {
+            diff: formatRupiah(Math.abs(result.difference)),
+            pct: result.percentageChange,
+            amount: formatRupiah(result.previousPrice || 0),
+          })}
         </span>
       </div>
     );

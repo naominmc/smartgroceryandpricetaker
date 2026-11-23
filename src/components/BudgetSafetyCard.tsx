@@ -49,11 +49,11 @@ export const BudgetSafetyCard: React.FC<BudgetSafetyCardProps> = ({
     };
   } else if (level === 'danger') {
     theme = {
-      badgeBg: 'bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800',
-      barBg: 'bg-danger',
-      icon: AlertOctagon,
-      cardBorder: 'border-red-200 dark:border-red-800/80',
-      accentText: 'text-danger dark:text-rose-400',
+      badgeBg: 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+      barBg: 'bg-warning',
+      icon: AlertTriangle,
+      cardBorder: 'border-amber-200 dark:border-amber-800/80',
+      accentText: 'text-warning dark:text-amber-400',
     };
   } else if (level === 'exceeded') {
     theme = {

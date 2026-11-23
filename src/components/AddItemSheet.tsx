@@ -92,6 +92,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
     watch,
     reset,
     setValue,
+    setError,
     formState: { errors },
   } = useForm<ItemFormData>({
     resolver: zodResolver(itemSchema) as any,
@@ -220,11 +221,17 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
 
   const onSubmit = async (data: ItemFormData) => {
     if (data.unitPrice < 0) {
-      alert('Harga satuan barang tidak boleh bernilai negatif!');
+      setError('unitPrice', {
+        type: 'manual',
+        message: 'Harga satuan barang tidak boleh bernilai negatif!',
+      });
       return;
     }
     if (data.quantity <= 0) {
-      alert('Kuantitas barang harus lebih dari 0!');
+      setError('quantity', {
+        type: 'manual',
+        message: 'Kuantitas barang harus lebih dari 0!',
+      });
       return;
     }
     try {

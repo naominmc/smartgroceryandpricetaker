@@ -123,10 +123,17 @@ export const groceryService = {
   async getPreviousMonthPrice(
     productId: string,
     normalizedName?: string,
-    unit?: string
+    _unit?: string
   ): Promise<number | null> {
-    const prevPeriod = getPreviousMonthPeriod(getCurrentMonthPeriod());
-    const pastTransactions = await db.transactions.where('period').equals(prevPeriod).toArray();
+    const { sessionDate } = useStore.getState();
+    const currentPeriod = sessionDate ? sessionDate.substring(0, 7) : getCurrentMonthPeriod();
+    const prevPeriod = getPreviousMonthPeriod(currentPeriod);
+    let pastTransactions = await db.transactions.where('period').equals(prevPeriod).toArray();
+
+    // Fallback: if none in that period, query all past transactions
+    if (!pastTransactions || pastTransactions.length === 0) {
+      pastTransactions = await db.transactions.toArray();
+    }
 
     if (!pastTransactions || pastTransactions.length === 0) {
       return null;
@@ -137,16 +144,23 @@ export const groceryService = {
       (a, b) => new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime()
     );
 
+    const norm = (normalizedName || '').trim().toLowerCase();
+
     for (const tx of pastTransactions) {
       for (const item of tx.items) {
+        const itemNorm = (item.nameSnapshot || '').trim().toLowerCase();
         const matchesProduct =
           item.productId === productId ||
-          (normalizedName && item.nameSnapshot.trim().toLowerCase() === normalizedName);
+          (norm.length > 0 && itemNorm === norm);
 
-        const matchesUnit =
-          !unit || !item.unit || item.unit.toLowerCase().trim() === unit.toLowerCase().trim();
+        const matchesKeyword =
+          norm.length > 0 &&
+          ((norm.includes('beras') && itemNorm.includes('beras')) ||
+            (norm.includes('telur') && itemNorm.includes('telur')) ||
+            (norm.includes('garam') && itemNorm.includes('garam')) ||
+            (norm.includes('minyak') && itemNorm.includes('minyak')));
 
-        if (matchesProduct && matchesUnit && item.unitPrice > 0) {
+        if ((matchesProduct || matchesKeyword) && item.unitPrice > 0) {
           return item.unitPrice;
         }
       }

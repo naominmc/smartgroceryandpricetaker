@@ -27,6 +27,7 @@ export const BudgetPage: React.FC = () => {
   const { username, selectedPaymentMethod, language } = useStore();
   const [currentPeriod] = useState(getCurrentMonthPeriod());
   const [budgetLimitInput, setBudgetLimitInput] = useState('1200000');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
@@ -51,13 +52,26 @@ export const BudgetPage: React.FC = () => {
 
   const handleSaveBudget = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
     if (budgetLimitInput.includes('-')) {
-      alert(language === 'zh' ? '预算上限不能为负数！' : language === 'en' ? 'Budget limit cannot be negative!' : 'Batas anggaran tidak boleh bernilai negatif!');
+      setErrorMessage(
+        language === 'zh'
+          ? '预算上限不能为负数！'
+          : language === 'en'
+          ? 'Budget limit cannot be negative!'
+          : 'Batas anggaran tidak boleh bernilai negatif!'
+      );
       return;
     }
     const parsed = parseInt(budgetLimitInput.replace(/\D/g, ''), 10) || 0;
     if (parsed < 0) {
-      alert(language === 'zh' ? '预算上限不能为负数！' : language === 'en' ? 'Budget limit cannot be negative!' : 'Batas anggaran tidak boleh bernilai negatif!');
+      setErrorMessage(
+        language === 'zh'
+          ? '预算上限不能为负数！'
+          : language === 'en'
+          ? 'Budget limit cannot be negative!'
+          : 'Batas anggaran tidak boleh bernilai negatif!'
+      );
       return;
     }
     await groceryService.setBudget(currentPeriod, parsed);
@@ -161,6 +175,11 @@ export const BudgetPage: React.FC = () => {
                 <strong className="text-primary dark:text-blue-400">
                   {formatRupiah(parseInt(budgetLimitInput || '0', 10))}
                 </strong>
+              </p>
+            )}
+            {errorMessage && (
+              <p className="text-xs text-danger font-semibold px-0.5 animate-fade-in">
+                {errorMessage}
               </p>
             )}
           </div>

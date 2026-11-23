@@ -439,7 +439,7 @@ export const ShoppingPage: React.FC = () => {
                   className={`inline-flex items-center gap-1 text-[11px] font-extrabold ${
                     budgetStatus.level === 'exceeded'
                       ? 'text-danger dark:text-rose-400'
-                      : budgetStatus.level === 'warning'
+                      : budgetStatus.level === 'warning' || budgetStatus.level === 'danger'
                       ? 'text-warning dark:text-amber-400'
                       : 'text-success dark:text-emerald-400'
                   }`}

@@ -113,10 +113,10 @@ export function evaluateBudgetSafety(
 
   if (percentage > 100) {
     level = 'exceeded';
-    message = `Anggaran terlampaui ${formatRupiah(excessAmount)}.`;
+    message = 'Total belanja melebihi batas saldo dompet! Kurangi kuantitas atau batalkan barang sekunder.';
   } else if (percentage >= 90) {
     level = 'danger';
-    message = 'Peringatan! Belanja mendekati batas maksimum.';
+    message = 'Peringatan Waspada: Belanja mendekati batas saldo dompet.';
   } else if (percentage >= 70) {
     level = 'warning';
     message = 'Hati-hati, anggaran mulai menipis.';

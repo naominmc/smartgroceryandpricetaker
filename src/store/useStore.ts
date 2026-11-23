@@ -236,8 +236,9 @@ export const useStore = create<AppState>((set, get) => {
         (window as any).__smart_grocery_notify_sync();
       }
     },
-    sessionDate: new Date().toISOString().split('T')[0],
+    sessionDate: typeof window !== 'undefined' ? (localStorage.getItem('smart_grocery_session_date') || new Date().toISOString().split('T')[0]) : new Date().toISOString().split('T')[0],
     setSessionDate: (d) => {
+      if (typeof window !== 'undefined') localStorage.setItem('smart_grocery_session_date', d);
       set({ sessionDate: d });
       if (typeof window !== 'undefined' && (window as any).__smart_grocery_notify_sync) {
         (window as any).__smart_grocery_notify_sync();
