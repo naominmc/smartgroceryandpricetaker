@@ -177,6 +177,21 @@ export const App: React.FC = () => {
     }
   };
 
+  // Tampilkan Halaman Login / Welcome saat pertama kali membuka web atau saat logout
+  if (!isAuthenticated) {
+    return (
+      <LoginPage
+        onLogin={() => {
+          setActiveTab('shopping');
+          setIsAuthenticated(true);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('smart_grocery_authenticated', 'true');
+          }
+        }}
+      />
+    );
+  }
+
   if (!isInitialized) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-sky-50 to-amber-50 dark:from-slate-900 dark:to-slate-950 flex items-center justify-center p-4">
@@ -191,21 +206,6 @@ export const App: React.FC = () => {
           </p>
         </div>
       </div>
-    );
-  }
-
-  // Tampilkan Halaman Login / Welcome saat pertama kali membuka web atau saat logout
-  if (!isAuthenticated) {
-    return (
-      <LoginPage
-        onLogin={() => {
-          setActiveTab('shopping');
-          setIsAuthenticated(true);
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('smart_grocery_authenticated', 'true');
-          }
-        }}
-      />
     );
   }
 

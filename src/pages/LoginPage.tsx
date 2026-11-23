@@ -23,6 +23,7 @@ import { authService, getLocalAccounts } from '../services/authService';
 import { GoogleAuthModal, type GoogleAccount } from '../components/GoogleAuthModal';
 import { pwaService } from '../utils/pwa';
 import { syncService } from '../services/syncService';
+import { SplashScreen } from '../components/SplashScreen';
 
 interface LoginPageProps {
   onLogin: () => void;
@@ -51,6 +52,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
 
   // Google OAuth Popup & Flow State
   const [isGoogleChooserOpen, setIsGoogleChooserOpen] = useState(false);
@@ -430,21 +432,27 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
   return (
     <div
-      className={`min-h-dvh w-full overflow-y-auto relative flex justify-center items-center p-3 sm:p-6 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] pt-[calc(1.25rem+env(safe-area-inset-top,0px))] transition-colors duration-300 ${
-        isDark ? 'text-slate-100' : 'text-gray-900'
+      className={`min-h-dvh w-full overflow-y-auto relative flex justify-center items-center p-3 sm:p-6 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] pt-[calc(1.25rem+env(safe-area-inset-top,0px))] bg-cover bg-center bg-no-repeat transition-colors duration-300 ${
+        isDark ? 'bg-slate-950 text-slate-100' : 'bg-gray-100 text-gray-900'
       }`}
+      style={{
+        backgroundImage: isDark
+          ? `linear-gradient(135deg, rgba(15, 23, 42, 0.94) 0%, rgba(30, 41, 59, 0.92) 100%), url('/supermarket_bg.jpg')`
+          : `linear-gradient(135deg, rgba(238, 242, 255, 0.88) 0%, rgba(240, 253, 250, 0.82) 100%), url('/supermarket_bg.jpg')`,
+      }}
     >
-      {/* Fixed Fullscreen Background Layer to prevent any white gap on mobile Safari address bar */}
+      {/* Pure Fullscreen Background Layer behind the card (identik dengan tampilan laptop, aman & bersih di mobile Safari iOS) */}
       <div
-        className={`fixed inset-0 w-full h-full -z-10 bg-cover bg-center bg-no-repeat transition-colors duration-300 pointer-events-none ${
-          isDark ? 'bg-slate-950' : 'bg-gray-100'
-        }`}
+        className="fixed inset-0 w-full h-full z-0 bg-cover bg-center bg-no-repeat pointer-events-none transition-colors duration-300"
         style={{
           backgroundImage: isDark
-            ? `linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 0.94) 100%), url('/supermarket_bg.jpg')`
-            : `linear-gradient(135deg, rgba(238, 242, 255, 0.92) 0%, rgba(240, 253, 250, 0.88) 100%), url('/supermarket_bg.jpg')`,
+            ? `linear-gradient(135deg, rgba(15, 23, 42, 0.94) 0%, rgba(30, 41, 59, 0.92) 100%), url('/supermarket_bg.jpg')`
+            : `linear-gradient(135deg, rgba(238, 242, 255, 0.88) 0%, rgba(240, 253, 250, 0.82) 100%), url('/supermarket_bg.jpg')`,
         }}
       />
+
+      {/* Splash Screen Singkat (~1-2 detik) dengan Fade In & Fade Out Halus */}
+      {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
 
       {/* Toast Alert */}
       {toastMessage && (
@@ -455,7 +463,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       )}
 
       {/* Main Viewport Card - Vertically Centered on Mobile & Laptop like ICT Codehub */}
-      <main className="w-full max-w-[420px] max-h-[92dvh] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl text-text-main dark:text-dark-text flex flex-col relative shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] dark:shadow-dark-float rounded-3xl sm:rounded-[36px] overflow-hidden border border-white/60 dark:border-slate-800 transition-colors duration-200 my-auto">
+      <main className="w-full max-w-[420px] max-h-[92dvh] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl text-text-main dark:text-dark-text flex flex-col relative z-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] dark:shadow-dark-float rounded-3xl sm:rounded-[36px] overflow-hidden border border-white/60 dark:border-slate-800 transition-colors duration-200 my-auto">
         
         {/* Top Header Bar dengan Suara, Tema, Logo Center, dan Bahasa di Kanan */}
         <header className="px-4 sm:px-5 pt-3.5 pb-3 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 dark:from-slate-900 dark:via-blue-950 dark:to-indigo-950 text-white shadow-md relative overflow-hidden flex items-center justify-between border-b dark:border-slate-800 flex-shrink-0">
