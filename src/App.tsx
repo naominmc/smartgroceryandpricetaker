@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, seedInitialDataIfNeeded } from './db/database';
+import { db, seedInitialDataIfNeeded, setupDatabaseSyncHooks, cleanupExpiredDeletedTransactions } from './db/database';
 import { useStore } from './store/useStore';
 import { BottomNavigation } from './components/BottomNavigation';
 import { ShoppingPage } from './pages/ShoppingPage';
@@ -142,6 +142,8 @@ export const App: React.FC = () => {
   useEffect(() => {
     async function init() {
       try {
+        setupDatabaseSyncHooks(() => syncService.notifyChange());
+        await cleanupExpiredDeletedTransactions();
         await seedInitialDataIfNeeded();
         syncService.init();
       } catch (err) {

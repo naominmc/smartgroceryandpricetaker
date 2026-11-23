@@ -5,6 +5,7 @@ import { formatRupiah } from '../utils/currency';
 import { db } from '../db/database';
 import { useStore } from '../store/useStore';
 import { t, translateCategory } from '../utils/i18n';
+import { syncService } from '../services/syncService';
 
 interface HistoryTransactionCardProps {
   transaction: PurchaseTransaction;
@@ -207,6 +208,7 @@ export const HistoryTransactionCard: React.FC<HistoryTransactionCardProps> = ({ 
                     isDeleted: true,
                     deletedAt: new Date().toISOString(),
                   });
+                  await syncService.broadcastSnapshot();
                 }}
                 className="py-2.5 px-3 rounded-xl bg-danger hover:bg-red-700 active:scale-98 text-white font-extrabold text-xs shadow-soft flex items-center justify-center gap-1.5 transition-all cursor-pointer min-h-[42px]"
               >

@@ -108,6 +108,12 @@ class SyncService {
     if (typeof window === 'undefined') return;
 
     (window as any).__smart_grocery_notify_sync = () => this.notifyChange();
+    (window as any).syncService = this;
+
+    // Initialize cache reset timestamp if not set
+    if (!localStorage.getItem('smart_grocery_cache_reset_at')) {
+      localStorage.setItem('smart_grocery_cache_reset_at', Date.now().toString());
+    }
 
     // 1. Initialize Local BroadcastChannel for instant multi-tab sync
     if ('BroadcastChannel' in window) {
@@ -384,12 +390,17 @@ class SyncService {
         if (snapshot.data.cacheResetAt > localResetAt) {
           localStorage.setItem('smart_grocery_cache_reset_at', snapshot.data.cacheResetAt.toString());
           if ('caches' in window) {
-            window.caches.keys().then((keys) => Promise.all(keys.map((k) => window.caches.delete(k)))).catch(() => {});
+            try {
+              const keys = await window.caches.keys();
+              await Promise.all(keys.map((k) => window.caches.delete(k)));
+            } catch (e) {
+              console.warn('Remote cache delete error:', e);
+            }
           }
           try {
             sessionStorage.clear();
           } catch {}
-          window.dispatchEvent(new CustomEvent('smart_grocery_cache_cleared'));
+          window.dispatchEvent(new CustomEvent('smart_grocery_cache_cleared', { detail: { remote: true } }));
         }
       }
 

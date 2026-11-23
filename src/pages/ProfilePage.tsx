@@ -26,7 +26,8 @@ import {
 } from 'lucide-react';
 import type { PurchaseTransaction } from '../types';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../db/database';
+import { db, cleanupExpiredDeletedTransactions } from '../db/database';
+import { syncService } from '../services/syncService';
 import { formatRupiah } from '../utils/currency';
 import { useStore } from '../store/useStore';
 import { pwaService } from '../utils/pwa';
@@ -132,6 +133,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
 
   useEffect(() => {
     calculateStorage();
+    cleanupExpiredDeletedTransactions();
     setFullName(userProfile.fullName);
     setUsername(userProfile.username);
     setBio(userProfile.bio);
@@ -141,14 +143,27 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
       calculateStorage();
     };
 
+    const handleRemoteCacheCleared = (e?: any) => {
+      calculateStorage();
+      if (e?.detail?.remote) {
+        showToast(
+          language === 'zh'
+            ? '已与另一台设备同步清除缓存与数据！✨'
+            : language === 'en'
+            ? 'Cache & storage synced and refreshed from other device! ✨'
+            : 'Penyimpanan & cache telah dibersihkan & disegarkan dari perangkat lain! ✨'
+        );
+      }
+    };
+
     window.addEventListener('smart_grocery_remote_sync', handleSyncStorage);
-    window.addEventListener('smart_grocery_cache_cleared', handleSyncStorage);
+    window.addEventListener('smart_grocery_cache_cleared', handleRemoteCacheCleared);
 
     return () => {
       window.removeEventListener('smart_grocery_remote_sync', handleSyncStorage);
-      window.removeEventListener('smart_grocery_cache_cleared', handleSyncStorage);
+      window.removeEventListener('smart_grocery_cache_cleared', handleRemoteCacheCleared);
     };
-  }, [userProfile, storeCurrency]);
+  }, [userProfile, storeCurrency, language]);
 
   useEffect(() => {
     return () => {
@@ -169,8 +184,9 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
       } catch {}
 
       if (typeof window !== 'undefined') {
-        localStorage.setItem('smart_grocery_cache_reset_at', Date.now().toString());
-        syncService.notifyChange();
+        const resetTimestamp = Date.now();
+        localStorage.setItem('smart_grocery_cache_reset_at', resetTimestamp.toString());
+        await syncService.broadcastSnapshot();
       }
 
       await calculateStorage();
@@ -968,7 +984,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
                   if (window.confirm(language === 'zh' ? '确定要永久清空废纸篓中的所有收据吗？' : language === 'en' ? 'Permanently delete all receipts in the recycle bin?' : 'Hapus seluruh struk di tempat sampah secara permanen?')) {
                     const ids = deletedTransactions.map((t) => t.id);
                     await Promise.all(ids.map((id) => db.transactions.delete(id)));
-                    syncService.notifyChange();
+                    await syncService.broadcastSnapshot();
                     showToast(language === 'zh' ? '废纸篓已全部清空。' : language === 'en' ? 'All receipts in the trash have been cleared.' : 'Semua struk di tempat sampah telah dikosongkan.');
                   }
                 }}
@@ -1209,9 +1225,9 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
                   if (target) {
                     await db.transactions.update(target.id, {
                       isDeleted: false,
-                      deletedAt: undefined,
+                      deletedAt: '',
                     });
-                    syncService.notifyChange();
+                    await syncService.broadcastSnapshot();
                     showToast(language === 'zh' ? '收据已成功恢复至历史记录！🎉' : language === 'en' ? 'Receipt successfully restored to History! 🎉' : 'Struk berhasil dipulihkan ke Riwayat! 🎉');
                   }
                 }}
@@ -1275,7 +1291,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
                   setTxToDeletePermanent(null);
                   if (target) {
                     await db.transactions.delete(target.id);
-                    syncService.notifyChange();
+                    await syncService.broadcastSnapshot();
                     showToast(language === 'zh' ? '收据已永久删除。' : language === 'en' ? 'Receipt has been permanently deleted.' : 'Struk telah dihapus permanen.');
                   }
                 }}

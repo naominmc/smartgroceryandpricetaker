@@ -22,11 +22,16 @@ export class GroceryDatabase extends Dexie {
 
 export const db = new GroceryDatabase();
 
+let areSyncHooksSetup = false;
+
 /**
  * Setup Realtime Database Sync Hooks
  * Automatically broadcasts snapshot when cartItems, budgets, or transactions mutate
  */
 export function setupDatabaseSyncHooks(notifyFn: () => void) {
+  if (areSyncHooksSetup) return;
+  areSyncHooksSetup = true;
+
   const tables = [db.cartItems, db.budgets, db.transactions];
   tables.forEach((table) => {
     table.hook('creating', () => {
@@ -39,6 +44,34 @@ export function setupDatabaseSyncHooks(notifyFn: () => void) {
       notifyFn();
     });
   });
+}
+
+/**
+ * Automatically cleans up deleted transactions that have exceeded the 30-day retention period.
+ * Transactions deleted less than 30 days ago are preserved.
+ */
+export async function cleanupExpiredDeletedTransactions(): Promise<number> {
+  try {
+    const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const allDeleted = await db.transactions.filter((t) => Boolean(t.isDeleted)).toArray();
+    const expiredTransactions = allDeleted.filter((t) => {
+      if (!t.deletedAt) return false;
+      const deletedTime = new Date(t.deletedAt).getTime();
+      return !isNaN(deletedTime) && (now - deletedTime >= thirtyDaysMs);
+    });
+
+    if (expiredTransactions.length > 0) {
+      await Promise.all(expiredTransactions.map((t) => db.transactions.delete(t.id)));
+      if (typeof window !== 'undefined' && (window as any).__smart_grocery_notify_sync) {
+        (window as any).__smart_grocery_notify_sync();
+      }
+    }
+    return expiredTransactions.length;
+  } catch (err) {
+    console.warn('Error cleaning up expired deleted transactions:', err);
+    return 0;
+  }
 }
 
 /**
