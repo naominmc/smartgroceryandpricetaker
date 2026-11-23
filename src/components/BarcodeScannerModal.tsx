@@ -274,15 +274,14 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
               <Scan className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="font-bold text-sm text-white">{t('scanBarcodeTitle', language)}</h2>
-              <p className="text-[10px] text-gray-400">{t('scanBarcodeDesc', language)}</p>
+              <h2 className="font-bold text-sm text-white">Barcode Scanner</h2>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="p-2 text-gray-400 hover:text-white rounded-full hover:bg-gray-800 min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
-            aria-label="Tutup"
+            aria-label={language === 'zh' ? '关闭' : language === 'en' ? 'Close' : 'Tutup'}
           >
             <X className="w-5 h-5" />
           </button>
@@ -292,23 +291,15 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
         <div className="relative w-full h-56 bg-gradient-to-b from-gray-950 via-slate-900 to-black flex items-center justify-center p-4 text-center flex-shrink-0">
           <div
             onClick={() => photoInputRef.current?.click()}
-            className="w-full h-full border-2 border-dashed border-blue-400/60 hover:border-blue-400 rounded-3xl flex flex-col items-center justify-center p-4 cursor-pointer hover:bg-white/5 active:scale-[0.99] transition-all group shadow-inner"
+            className="w-full h-full border-2 border-dashed border-blue-400/60 hover:border-blue-400 rounded-3xl flex flex-col items-center justify-center p-4 cursor-pointer hover:bg-white/5 active:scale-[0.99] transition-all group shadow-inner gap-3"
           >
-            <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center mb-2 shadow-lg group-hover:scale-105 transition-transform">
+            <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
               <Camera className="w-6 h-6" />
             </div>
 
-            <h3 className="text-sm font-extrabold text-white mb-0.5">
-              {t('takePhotoOrGallery', language)}
-            </h3>
-
-            <p className="text-[11px] text-gray-300 max-w-xs mb-3 leading-relaxed">
-              {t('photoScanPrompt', language)}
-            </p>
-
             <button
               type="button"
-              className="px-5 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-soft flex items-center gap-2 pointer-events-none transition-all"
+              className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-soft flex items-center gap-2 pointer-events-none transition-all"
             >
               <Camera className="w-3.5 h-3.5" />
               <span>{t('openCameraOrGallery', language)}</span>
@@ -365,7 +356,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                         type="text"
                         value={customName}
                         onChange={(e) => setCustomName(e.target.value)}
-                        placeholder="Nama produk barcode"
+                        placeholder={language === 'zh' ? '条形码商品名称' : language === 'en' ? 'Barcode product name' : 'Nama produk barcode'}
                         className="w-full text-xs font-bold text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-primary"
                       />
                       <select
