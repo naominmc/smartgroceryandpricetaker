@@ -233,7 +233,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       setActiveAuthTab('signin');
       setEmailInput(cleanEmail);
       setPasswordInput('');
-      showToast('Pendaftaran akun Google berhasil! Silakan masuk dengan kata sandi Anda 🚀');
+      showToast('Pendaftaran akun Smart Grocery via Google berhasil! Silakan masuk dengan kata sandi Anda 🚀');
     } catch (err: any) {
       setIsLoading(false);
       if (err?.message === 'USERNAME_EXISTS') {
@@ -912,7 +912,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         </div>
       )}
 
-      {/* 3. Modal Lengkapi Pembuatan Akun Google Baru (Wajib Username & Kata Sandi) */}
+      {/* 3. Modal Lengkapi Pendaftaran Akun Smart Grocery via Shortcut Akun Google */}
       {isGoogleRegisterOpen && selectedGoogleUser && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-xs animate-fade-in"
@@ -947,7 +947,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                     Lengkapi Pembuatan Akun
                   </h3>
                   <p className="text-[11px] text-gray-500 dark:text-slate-400 truncate max-w-[210px]">
-                    {googleRegEmail}
+                    via {googleRegEmail}
                   </p>
                 </div>
               </div>
@@ -962,7 +962,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             </div>
 
             <p className="text-xs text-gray-600 dark:text-slate-300 leading-relaxed">
-              Akun Google ini belum terdaftar. Tentukan username dan kata sandi Anda untuk menyelesaikan pendaftaran:
+              Daftarkan akun Smart Grocery Anda menggunakan shortcut akun Google ini tanpa perlu mengetik ulang email. Tentukan username dan kata sandi baru untuk akun Smart Grocery Anda:
             </p>
 
             <form onSubmit={handleGoogleRegisterSubmit} className="space-y-3">
@@ -997,7 +997,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
               <div>
                 <label className="block text-[11px] font-bold text-gray-700 dark:text-slate-300 mb-1">
-                  Kata Sandi Baru <span className="text-red-500">*</span>
+                  Kata Sandi Akun Smart Grocery <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -1030,9 +1030,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 py-2 px-3 rounded-xl bg-primary hover:bg-blue-600 text-white font-bold text-xs shadow-sm cursor-pointer"
+                  className="flex-1 py-2 px-3 rounded-xl bg-primary hover:bg-blue-600 text-white font-bold text-xs shadow-sm cursor-pointer whitespace-nowrap"
                 >
-                  {isLoading ? t('processing', language) : 'Daftar Akun Google →'}
+                  {isLoading ? t('processing', language) : 'Daftar Akun Smart Grocery →'}
                 </button>
               </div>
             </form>
