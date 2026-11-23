@@ -170,6 +170,9 @@ export const App: React.FC = () => {
   };
 
   const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('sg_just_logged_out', 'true');
+    }
     setActiveTab('shopping');
     setIsAuthenticated(false);
     if (typeof window !== 'undefined') {

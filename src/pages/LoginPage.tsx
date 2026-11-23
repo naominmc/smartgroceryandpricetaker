@@ -52,7 +52,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const justLoggedOut = sessionStorage.getItem('sg_just_logged_out');
+      if (justLoggedOut) {
+        sessionStorage.removeItem('sg_just_logged_out');
+        return false;
+      }
+    }
+    return true;
+  });
 
   // Google OAuth Popup & Flow State
   const [isGoogleChooserOpen, setIsGoogleChooserOpen] = useState(false);
