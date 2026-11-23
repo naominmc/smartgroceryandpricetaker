@@ -1323,6 +1323,10 @@
       emptyBox.classList.add('hidden');
       actionBar.classList.remove('hidden');
 
+      const currentTotalSpent = AppState.cart.reduce((s, i) => s + (i.subtotal || 0), 0);
+      const currentCap = AppState.budgetCap || 1200000;
+      const isCapReached = currentCap > 0 && currentTotalSpent >= currentCap;
+
       container.innerHTML = AppState.cart.map(item => {
         const comp = compareWithLastMonth(item.name, item.unitPrice);
         let compBadgeHtml = '';
@@ -1379,7 +1383,7 @@
                   <i data-lucide="minus" class="w-3 h-3"></i>
                 </button>
                 <span class="w-10 text-center text-xs font-bold font-mono text-slate-800 dark:text-slate-200">${item.qty} ${item.unit || 'pcs'}</span>
-                <button onclick="updateQty('${item.id}', 1)" class="w-7 h-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200">
+                <button ${isCapReached ? 'disabled title="Batas anggaran telah tercapai"' : `onclick="updateQty('${item.id}', 1)"`} class="w-7 h-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200 ${isCapReached ? 'opacity-30 cursor-not-allowed' : ''}">
                   <i data-lucide="plus" class="w-3 h-3"></i>
                 </button>
               </div>
@@ -1406,6 +1410,14 @@
       if (it.qty + delta <= 0) {
         deleteCartItem(id);
         return;
+      }
+      if (delta > 0) {
+        const totalSpent = AppState.cart.reduce((s, i) => s + (i.subtotal || 0), 0);
+        const cap = AppState.budgetCap || 1200000;
+        if (cap > 0 && totalSpent >= cap) {
+          showToast('Batas anggaran telah tercapai! Tidak dapat menambah kuantitas.', 'alert-triangle', 'warning');
+          return;
+        }
       }
       it.qty += delta;
       it.subtotal = (it.finalUnitPrice || it.unitPrice) * it.qty;

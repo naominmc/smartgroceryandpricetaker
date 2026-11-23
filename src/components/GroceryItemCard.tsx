@@ -14,6 +14,7 @@ interface GroceryItemCardProps {
   onEdit: (item: CartItem) => void;
   onDelete: (id: string) => void;
   onToggleStatus: (id: string) => void;
+  isIncreaseDisabled?: boolean;
 }
 
 export const GroceryItemCard: React.FC<GroceryItemCardProps> = ({
@@ -23,6 +24,7 @@ export const GroceryItemCard: React.FC<GroceryItemCardProps> = ({
   onEdit,
   onDelete,
   onToggleStatus,
+  isIncreaseDisabled = false,
 }) => {
   const { language } = useStore();
   const calc = calculateItemSubtotals(item.quantity, item.unitPrice, item.discounts);
@@ -149,8 +151,18 @@ export const GroceryItemCard: React.FC<GroceryItemCardProps> = ({
           <button
             type="button"
             onClick={() => onIncrease(item.id)}
-            className="w-9 h-9 flex items-center justify-center rounded-lg bg-white dark:bg-slate-800 shadow-sm text-text-main dark:text-slate-100 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-transform"
+            disabled={isIncreaseDisabled}
+            className="w-9 h-9 flex items-center justify-center rounded-lg bg-white dark:bg-slate-800 shadow-sm text-text-main dark:text-slate-100 disabled:opacity-30 disabled:cursor-not-allowed disabled:shadow-none hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-transform"
             aria-label="Tambah kuantitas"
+            title={
+              isIncreaseDisabled
+                ? language === 'zh'
+                  ? '已达到预算上限，无法增加数量'
+                  : language === 'en'
+                  ? 'Budget limit reached, cannot increase quantity'
+                  : 'Batas anggaran telah tercapai, tidak dapat menambah kuantitas'
+                : undefined
+            }
           >
             <Plus className="w-4 h-4" />
           </button>

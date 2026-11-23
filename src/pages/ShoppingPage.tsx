@@ -213,6 +213,9 @@ export const ShoppingPage: React.FC = () => {
 
   // Handlers for cart items
   const handleIncreaseQty = async (id: string) => {
+    if (budgetLimit > 0 && totals.finalTotal >= budgetLimit) {
+      return;
+    }
     await groceryService.adjustQuantity(id, 1);
   };
 
@@ -585,6 +588,9 @@ export const ShoppingPage: React.FC = () => {
                       (ci) => (ci.nameSnapshot || (ci as any).name || '').toLowerCase() === rec.name.toLowerCase()
                     );
                     if (existingItem) {
+                      if (budgetLimit > 0 && totals.finalTotal >= budgetLimit) {
+                        return;
+                      }
                       await groceryService.adjustQuantity(existingItem.id, 1);
                       playBeep(1400, 0.04);
                     } else {
@@ -662,6 +668,7 @@ export const ShoppingPage: React.FC = () => {
               onEdit={handleEditItem}
               onDelete={handleDeleteItem}
               onToggleStatus={handleToggleStatus}
+              isIncreaseDisabled={budgetLimit > 0 && totals.finalTotal >= budgetLimit}
             />
           ))}
         </div>

@@ -106,6 +106,10 @@ export const translations = {
     // Profile Card & Edit Profile
     userProfileCardTitle: 'Nama Pengguna & Akun',
     saveProfileBtn: 'Simpan',
+    saveBtn: 'Simpan Profil',
+    encryptedBadge: 'Terenkripsi',
+    filterDateLabel: 'Filter Tanggal',
+    globalPayBadge: 'Global Pay',
     editProfileBtn: 'Edit Profil',
     fullNameLabel: 'Nama Lengkap:',
     usernameLabel: 'Username:',
@@ -481,6 +485,10 @@ export const translations = {
     // Profile Card & Edit Profile
     userProfileCardTitle: 'User & Account Name',
     saveProfileBtn: 'Save',
+    saveBtn: 'Save Profile',
+    encryptedBadge: 'Encrypted',
+    filterDateLabel: 'Filter Date',
+    globalPayBadge: 'Global Pay',
     editProfileBtn: 'Edit Profile',
     fullNameLabel: 'Full Name:',
     usernameLabel: 'Username:',
@@ -856,6 +864,10 @@ export const translations = {
     // Profile Card & Edit Profile
     userProfileCardTitle: '用户名与账户',
     saveProfileBtn: '保存',
+    saveBtn: '保存资料',
+    encryptedBadge: '已加密',
+    filterDateLabel: '日期筛选',
+    globalPayBadge: '全球支付',
     editProfileBtn: '编辑资料',
     fullNameLabel: '全名：',
     usernameLabel: '用户名：',
