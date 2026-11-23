@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Plus, Minus, Edit2, Trash2, CheckCircle2, Circle } from 'lucide-react';
 import type { CartItem } from '../types';
 import { calculateItemSubtotals } from '../utils/calculations';
@@ -15,6 +15,7 @@ interface GroceryItemCardProps {
   onDelete: (id: string) => void;
   onToggleStatus: (id: string) => void;
   isIncreaseDisabled?: boolean;
+  onSetQuantity?: (id: string, qty: number) => void;
 }
 
 export const GroceryItemCard: React.FC<GroceryItemCardProps> = ({
@@ -25,10 +26,38 @@ export const GroceryItemCard: React.FC<GroceryItemCardProps> = ({
   onDelete,
   onToggleStatus,
   isIncreaseDisabled = false,
+  onSetQuantity,
 }) => {
   const { language } = useStore();
   const calc = calculateItemSubtotals(item.quantity, item.unitPrice, item.discounts);
   const isCompleted = item.status === 'completed';
+
+  const [isEditingQty, setIsEditingQty] = useState(false);
+  const [qtyInput, setQtyInput] = useState(item.quantity.toString());
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setQtyInput(item.quantity.toString());
+  }, [item.quantity]);
+
+  useEffect(() => {
+    if (isEditingQty && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditingQty]);
+
+  const handleCommitQty = () => {
+    setIsEditingQty(false);
+    const parsed = parseInt(qtyInput.replace(/\D/g, ''), 10);
+    if (!isNaN(parsed) && parsed > 0 && parsed !== item.quantity) {
+      if (onSetQuantity) {
+        onSetQuantity(item.id, parsed);
+      }
+    } else {
+      setQtyInput(item.quantity.toString());
+    }
+  };
 
   return (
     <div
@@ -103,6 +132,7 @@ export const GroceryItemCard: React.FC<GroceryItemCardProps> = ({
               currentPrice={item.unitPrice}
               previousPrice={item.previousUnitPrice}
               unit={item.unit}
+              name={item.nameSnapshot}
             />
           </div>
         </div>
@@ -144,9 +174,43 @@ export const GroceryItemCard: React.FC<GroceryItemCardProps> = ({
             <Minus className="w-4 h-4" />
           </button>
 
-          <span className="w-12 text-center font-bold text-sm text-text-main dark:text-slate-100">
-            {item.quantity} <span className="text-[10px] font-normal text-text-secondary dark:text-slate-400">{item.unit}</span>
-          </span>
+          {isEditingQty ? (
+            <input
+              ref={inputRef}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={qtyInput}
+              onChange={(e) => setQtyInput(e.target.value.replace(/\D/g, ''))}
+              onBlur={handleCommitQty}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleCommitQty();
+                } else if (e.key === 'Escape') {
+                  setIsEditingQty(false);
+                  setQtyInput(item.quantity.toString());
+                }
+              }}
+              className="w-12 h-8 text-center font-bold text-sm bg-white dark:bg-slate-800 text-primary dark:text-blue-400 border border-blue-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner px-0.5"
+              autoFocus
+            />
+          ) : (
+            <button
+              type="button"
+              onDoubleClick={() => setIsEditingQty(true)}
+              onClick={() => setIsEditingQty(true)}
+              className="w-12 text-center font-bold text-sm text-text-main dark:text-slate-100 hover:bg-white/80 dark:hover:bg-slate-800/80 rounded-md px-1 py-1 cursor-text transition-all select-none hover:shadow-xs active:scale-95"
+              title={
+                language === 'zh'
+                  ? '双击或点击直接使用键盘修改数量'
+                  : language === 'en'
+                  ? 'Double-click or click to edit quantity with keyboard'
+                  : 'Klik 2x untuk ganti kuantitas dengan keyboard'
+              }
+            >
+              {item.quantity} <span className="text-[10px] font-normal text-text-secondary dark:text-slate-400">{item.unit}</span>
+            </button>
+          )}
 
           <button
             type="button"

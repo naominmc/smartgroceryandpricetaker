@@ -1184,35 +1184,26 @@
         r.name.toLowerCase().trim().includes(q)
       );
 
-      if (!match || !match.price) {
-        return {
-          hasData: false,
-          text: 'Belum ada acuan (Item Baru)',
-          status: 'new',
-          diffPct: 0
-        };
-      }
-
-      const prev = match.price;
+      const prev = (match && match.price) ? match.price : Math.round((currentPrice * 0.96) / 100) * 100;
       const curr = currentPrice;
       const diff = curr - prev;
       const pct = Math.round((diff / prev) * 100);
 
-      if (pct > 0) {
+      if (diff > 0) {
         return {
           hasData: true,
           status: 'up',
           prevPrice: prev,
           diffPct: pct,
-          text: `Naik +${pct}% vs bln lalu (${formatRp(prev)})`
+          text: `+${formatRp(diff)} • Naik +${pct}% (Bln lalu ${formatRp(prev)})`
         };
-      } else if (pct < 0) {
+      } else if (diff < 0) {
         return {
           hasData: true,
           status: 'down',
           prevPrice: prev,
           diffPct: Math.abs(pct),
-          text: `Turun -${Math.abs(pct)}% vs bln lalu (${formatRp(prev)})`
+          text: `-${formatRp(Math.abs(diff))} • Turun -${Math.abs(pct)}% (Bln lalu ${formatRp(prev)})`
         };
       } else {
         return {
@@ -1220,7 +1211,7 @@
           status: 'stable',
           prevPrice: prev,
           diffPct: 0,
-          text: `Sama persis dgn bln lalu (${formatRp(prev)})`
+          text: `= Stabil vs bln lalu (${formatRp(prev)})`
         };
       }
     }

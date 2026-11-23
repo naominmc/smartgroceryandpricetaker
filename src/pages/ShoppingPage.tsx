@@ -219,6 +219,11 @@ export const ShoppingPage: React.FC = () => {
     await groceryService.adjustQuantity(id, 1);
   };
 
+  const handleSetQty = async (id: string, newQty: number) => {
+    const safeQty = Math.max(1, Math.round(Number(newQty) || 1));
+    await groceryService.updateCartItem(id, { quantity: safeQty });
+  };
+
   const handleDecreaseQty = async (id: string) => {
     const item = cartItems.find((i) => i.id === id);
     if (item && item.quantity <= 1) {
@@ -669,6 +674,7 @@ export const ShoppingPage: React.FC = () => {
               onDelete={handleDeleteItem}
               onToggleStatus={handleToggleStatus}
               isIncreaseDisabled={budgetLimit > 0 && totals.finalTotal >= budgetLimit}
+              onSetQuantity={handleSetQty}
             />
           ))}
         </div>

@@ -147,13 +147,27 @@ class SyncService {
       this.pullLatestSnapshot(false);
     }, 200);
 
-    // 4. Fast 2-second cloud polling so mobile-to-laptop updates sync immediately
+    // 4. Foreground lifecycle listeners (crucial for mobile when waking from sleep or switching apps)
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          this.pullLatestSnapshot(true);
+        }
+      });
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', () => {
+        this.pullLatestSnapshot(true);
+      });
+    }
+
+    // 5. Fast 1.5-second cloud polling so mobile-to-laptop updates sync immediately
     if (this.pollInterval) clearInterval(this.pollInterval);
     this.pollInterval = setInterval(() => {
       if (typeof window !== 'undefined' && navigator.onLine && !this.isApplyingRemote) {
         this.pullLatestSnapshot(false);
       }
-    }, 2000);
+    }, 1500);
   }
 
   /**
@@ -272,14 +286,17 @@ class SyncService {
       return false;
     }
 
-    // If local mutation happened after this snapshot was created, keep newer local state
-    // (with 1.5s tolerance for minor device clock skew)
-    if (!force && this.lastLocalMutationTime && (snapshot.timestamp + 1500) < this.lastLocalMutationTime) {
+    // Only skip if the local user is actively mutating right now (within 500ms debounce window)
+    if (!force && this.lastLocalMutationTime && (Date.now() - this.lastLocalMutationTime < 500)) {
       return false;
     }
 
     this.isApplyingRemote = true;
     this.lastAppliedSignature = signature;
+    this.lastLocalMutationTime = 0;
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('smart_grocery_last_mutation');
+    }
     if (snapshot.revision && snapshot.revision > this.currentRevision) {
       this.currentRevision = snapshot.revision;
       if (typeof window !== 'undefined') {

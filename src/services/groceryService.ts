@@ -1,5 +1,6 @@
 import { syncService } from './syncService';
 import { db } from '../db/database';
+import { SUPERMARKET_CATALOG } from '../data/supermarketCatalog';
 import type {
   Product,
   CartItem,
@@ -185,6 +186,26 @@ export const groceryService = {
           if ((matchesProduct || matchesKeyword) && Number(item.unitPrice) > 0) {
             return item.unitPrice;
           }
+        }
+      }
+
+      // Fallback: lookup in Supermarket Catalog
+      if (norm.length > 0) {
+        const catMatch = SUPERMARKET_CATALOG.find((c) => {
+          const cName = c.name.toLowerCase();
+          return (
+            cName === norm ||
+            cName.includes(norm) ||
+            norm.includes(cName) ||
+            (norm.includes('beras') && cName.includes('beras')) ||
+            (norm.includes('telur') && cName.includes('telur')) ||
+            (norm.includes('minyak') && cName.includes('minyak')) ||
+            (norm.includes('susu') && cName.includes('susu')) ||
+            (norm.includes('indomie') && cName.includes('indomie'))
+          );
+        });
+        if (catMatch && catMatch.unitPrice > 0) {
+          return catMatch.unitPrice;
         }
       }
 
