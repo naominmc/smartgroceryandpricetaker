@@ -81,33 +81,33 @@ export const PWAInstallBanner: React.FC = () => {
   return (
     <>
       {isOpen && (
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-3 rounded-2xl shadow-float mb-3 flex items-center justify-between gap-2.5 animate-slide-up">
-          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-            <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
-              <Smartphone className="w-5 h-5 text-white" />
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-2.5 sm:p-3 rounded-2xl shadow-float mb-3 flex items-center justify-between gap-2 sm:gap-2.5 animate-slide-up">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+              <Smartphone className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
             <div className="min-w-0 flex-1">
-              <h4 className="font-bold text-xs leading-tight">
+              <h4 className="font-bold text-xs leading-tight whitespace-nowrap">
                 {bannerTitle}
               </h4>
-              <p className="text-[10px] text-blue-100 leading-snug mt-0.5 line-clamp-2 break-words">
+              <p className="text-[8.5px] sm:text-[9.5px] text-blue-100 leading-tight mt-0.5 whitespace-nowrap tracking-tight">
                 {bannerDesc}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 flex-shrink-0">
+          <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
             <button
               type="button"
               onClick={handleInstallClick}
-              className="bg-white text-primary hover:bg-blue-50 active:scale-95 font-bold text-xs px-3 py-1.5 rounded-lg shadow-sm transition-all min-h-[36px] cursor-pointer"
+              className="bg-white text-primary hover:bg-blue-50 active:scale-95 font-bold text-xs px-2.5 sm:px-3 py-1.5 rounded-lg shadow-sm transition-all min-h-[34px] cursor-pointer"
             >
               {bannerBtn}
             </button>
             <button
               type="button"
               onClick={() => setShowDismissConfirm(true)}
-              className="p-1.5 text-white/80 hover:text-white rounded-lg min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer transition-colors"
+              className="p-1 text-white/80 hover:text-white rounded-lg min-h-[34px] min-w-[34px] flex items-center justify-center cursor-pointer transition-colors"
               aria-label={language === 'zh' ? '关闭横幅' : language === 'en' ? 'Close Banner' : 'Tutup Banner'}
               title={language === 'zh' ? '关闭通知' : language === 'en' ? 'Close Notification' : 'Tutup Notifikasi'}
             >
