@@ -169,14 +169,6 @@ export const BudgetPage: React.FC = () => {
                 className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 font-bold text-base outline-none focus:ring-2 focus:ring-primary min-h-[44px]"
               />
             </div>
-            {budgetLimitInput && (
-              <p className="text-[11px] text-text-secondary dark:text-slate-400 font-semibold px-0.5">
-                {language === 'zh' ? '当前金额: ' : language === 'en' ? 'Value: ' : 'Nilai: '}
-                <strong className="text-primary dark:text-blue-400">
-                  {formatRupiah(parseInt(budgetLimitInput || '0', 10))}
-                </strong>
-              </p>
-            )}
             {errorMessage && (
               <p className="text-xs text-danger font-semibold px-0.5 animate-fade-in">
                 {errorMessage}

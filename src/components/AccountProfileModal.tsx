@@ -554,11 +554,6 @@ export const AccountProfileModal: React.FC<AccountProfileModalProps> = ({
                 <HardDrive className="w-3.5 h-3.5 text-primary dark:text-blue-400" />
                 <span>Penyimpanan &amp; Cache Aplikasi</span>
               </span>
-
-              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200/60 dark:border-emerald-800/60 px-2 py-0.5 rounded-full flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>Optimal</span>
-              </span>
             </div>
 
             {/* Storage Meter Display */}
