@@ -284,54 +284,6 @@ export const BudgetPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Category Breakdown Card */}
-      <div className="bg-card dark:bg-slate-800/90 rounded-card p-4 border border-border dark:border-slate-700 shadow-soft space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 font-bold text-xs text-text-main dark:text-slate-100">
-            <PieChart className="w-4 h-4 text-primary dark:text-blue-400" />
-            <span>{t('spendingByCategory', language)}</span>
-          </div>
-          <span className="text-[11px] text-text-secondary dark:text-slate-400">
-            {t('activeCategoriesCount', language, { count: activeCategoriesWithSpending.length })}
-          </span>
-        </div>
-
-        {activeCategoriesWithSpending.length === 0 ? (
-          <p className="text-xs text-text-secondary dark:text-slate-400 italic text-center py-2">
-            {t('noItemsCategory', language)}
-          </p>
-        ) : (
-          <div className="space-y-2.5">
-            {activeCategoriesWithSpending.map(([category, amount]) => {
-              const categoryPercent =
-                activeTotals.grossTotal > 0
-                  ? Math.round((amount / activeTotals.grossTotal) * 100)
-                  : 0;
-
-              return (
-                <div key={category} className="space-y-1">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="font-medium text-text-main dark:text-slate-200 truncate pr-2">
-                      {translateCategory(category, language)}
-                    </span>
-                    <span className="font-bold text-text-main dark:text-slate-100">
-                      {formatRupiah(amount)}{' '}
-                      <span className="text-text-secondary dark:text-slate-400 font-normal">({categoryPercent}%)</span>
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-100 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
-                    <div
-                      className="bg-primary dark:bg-blue-500 h-full rounded-full transition-all duration-300"
-                      style={{ width: `${Math.min(100, categoryPercent)}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
       {/* Historical Monthly Spending Comparison */}
       <div className="bg-card dark:bg-slate-800/90 rounded-card p-4 border border-border dark:border-slate-700 shadow-soft space-y-3">
         <div className="flex items-center justify-between">
