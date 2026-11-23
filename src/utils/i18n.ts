@@ -163,7 +163,7 @@ export const translations = {
     deletePermanentBody: 'Apakah Anda yakin ingin menghapus struk belanja dari {location} senilai {amount}?',
     deletePermanentWarning: 'Data struk ini akan dihapus selamanya dari memori lokal dan tidak bisa dikembalikan lagi jika tidak sengaja kepencet!',
     daysRemaining: 'Sisa {days} hari',
-    noTrashItems: 'Tidak ada struk di tempat sampah 🍃',
+    noTrashItems: 'Tidak ada struk di tempat sampah',
     atTime: 'pukul',
 
     // Extra Shopping, Payment, & Card strings
@@ -547,7 +547,7 @@ export const translations = {
     deletePermanentBody: 'Are you sure you want to permanently delete receipt from {location} worth {amount}?',
     deletePermanentWarning: 'This receipt data will be deleted forever from local memory and cannot be recovered if accidentally clicked!',
     daysRemaining: '{days} days remaining',
-    noTrashItems: 'No receipts in trash 🍃',
+    noTrashItems: 'No receipts in trash',
     atTime: 'at',
 
     // Extra Shopping, Payment, & Card strings
@@ -931,7 +931,7 @@ export const translations = {
     deletePermanentBody: '您确定要永久删除来自 {location} 价值 {amount} 的小票吗？',
     deletePermanentWarning: '此小票数据将从本地存储中永久删除，如果误点将无法恢复！',
     daysRemaining: '剩余 {days} 天',
-    noTrashItems: '回收站中没有小票 🍃',
+    noTrashItems: '回收站中没有小票',
     atTime: '时间',
 
     // Extra Shopping, Payment, & Card strings
