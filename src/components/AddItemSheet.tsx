@@ -32,10 +32,13 @@ const DEFAULT_SEARCH_HISTORY = [
 
 const itemSchema = z.object({
   name: z.string().trim().min(1, 'Nama produk wajib diisi'),
-  category: z.string().default('Beras dan bahan pokok'),
+  category: z.preprocess(
+    (v) => (!v || String(v).trim() === '' ? 'Beras dan bahan pokok' : String(v).trim()),
+    z.string()
+  ),
   unit: z.string().default('pcs'),
   quantity: z.preprocess(
-    (v) => (v === '' || v === null || isNaN(Number(v)) ? 1 : Number(v)),
+    (v) => (v === '' || v === null || v === undefined || isNaN(Number(v)) ? 1 : Number(v)),
     z.number().min(0.01, 'Kuantitas harus lebih dari 0')
   ),
   unitPrice: z.preprocess(
@@ -109,16 +112,17 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
     resolver: zodResolver(itemSchema) as any,
     defaultValues: {
       name: '',
-      category: 'Beras dan bahan pokok',
+      category: '',
       unit: 'pcs',
-      quantity: 1,
+      quantity: '' as unknown as number,
       unitPrice: '' as unknown as number,
       discounts: [],
     },
   });
 
   const watchedName = watch('name') || '';
-  const watchedQty = watch('quantity') || 0;
+  const watchedCategory = watch('category') || '';
+  const watchedQty = Number(watch('quantity')) > 0 ? Number(watch('quantity')) : 1;
   const watchedPrice = Number(watch('unitPrice')) || 0;
   const watchedDiscounts = watch('discounts') || [];
 
@@ -226,9 +230,9 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
       setCustomUnit(false);
       reset({
         name: '',
-        category: 'Beras dan bahan pokok',
+        category: '',
         unit: 'pcs',
-        quantity: 1,
+        quantity: '' as unknown as number,
         unitPrice: '' as unknown as number,
         discounts: [],
       });
@@ -569,10 +573,15 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
             <label className="block text-xs font-bold text-text-main dark:text-slate-200 mb-1">{t('categoryLabel', language)}</label>
             <select
               {...register('category')}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm min-h-[44px] bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 cursor-pointer"
+              className={`w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm min-h-[44px] bg-white dark:bg-slate-800 cursor-pointer ${
+                !watchedCategory ? 'text-gray-400 dark:text-slate-500' : 'text-text-main dark:text-slate-100'
+              }`}
             >
+              <option value="" disabled hidden className="text-gray-400 dark:text-slate-500">
+                {language === 'zh' ? '选择分类...' : language === 'en' ? 'Select category...' : 'Pilih Kategori...'}
+              </option>
               {PRODUCT_CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
+                <option key={cat} value={cat} className="text-text-main dark:text-slate-100 bg-white dark:bg-slate-800">
                   {translateCategory(cat, language)}
                 </option>
               ))}
@@ -590,14 +599,16 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
                 min="0.01"
                 step="any"
                 inputMode="decimal"
-                placeholder="1"
+                placeholder={language === 'zh' ? '例如: 1' : language === 'en' ? 'e.g. 1' : 'Contoh: 1'}
                 onKeyDown={(e) => {
                   if (e.key === '-' || e.key === 'Subtract') {
                     e.preventDefault();
                   }
                 }}
-                {...register('quantity', { valueAsNumber: true })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm font-semibold min-h-[44px]"
+                {...register('quantity', {
+                  setValueAs: (v) => (v === '' || v === null || v === undefined ? '' : Number(v)),
+                })}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm font-semibold min-h-[44px]"
               />
               {errors.quantity && (
                 <p className="text-xs text-danger mt-1">{errors.quantity.message}</p>
