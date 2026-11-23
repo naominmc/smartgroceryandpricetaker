@@ -187,14 +187,32 @@ export const groceryService = {
       data.unit
     );
 
+    const safeUnitPrice = Math.max(0, Math.round(Number(data.unitPrice) || 0));
+    const safeQty = Math.max(1, Number(data.quantity) || 1);
+
+    // If active item already exists with exact same name and price, increment quantity
+    const allActive = await db.cartItems.toArray();
+    const existing = allActive.find(
+      (c) => c.nameSnapshot.toLowerCase() === data.name.trim().toLowerCase() && c.status === 'active'
+    );
+    if (existing && existing.unitPrice === safeUnitPrice) {
+      const updatedQty = existing.quantity + safeQty;
+      await db.cartItems.update(existing.id, {
+        quantity: updatedQty,
+        updatedAt: new Date().toISOString(),
+      });
+      syncService.notifyChange();
+      return { ...existing, quantity: updatedQty };
+    }
+
     const newItem: CartItem = {
       id: `cart-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
       productId: product.id,
       nameSnapshot: data.name.trim(),
       categorySnapshot: data.category,
       unit: data.unit,
-      quantity: Math.max(1, Number(data.quantity) || 1),
-      unitPrice: Math.max(0, Math.round(Number(data.unitPrice) || 0)),
+      quantity: safeQty,
+      unitPrice: safeUnitPrice,
       discounts: data.discounts || [],
       previousUnitPrice: previousPrice,
       status: 'active',

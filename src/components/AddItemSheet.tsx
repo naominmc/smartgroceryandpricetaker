@@ -10,19 +10,23 @@ import type { ProductCategory, CartItem } from '../types';
 import { PRODUCT_CATEGORIES, STANDARD_UNITS } from '../types';
 import { DiscountEditor } from './DiscountEditor';
 import { calculateItemSubtotals } from '../utils/calculations';
-import { formatRupiah, getActiveCurrency } from '../utils/currency';
+import { formatRupiah, getActiveCurrency, formatNumberWithDots } from '../utils/currency';
 import { useStore } from '../store/useStore';
 import { t, translateCategory } from '../utils/i18n';
 
 const SEARCH_HISTORY_KEY = 'smart_grocery_product_search_history';
 
 const DEFAULT_SEARCH_HISTORY = [
+  'Beras Rojolele',
+  'Beras 5kg',
   'Beras Pandan Wangi 5kg',
   'Minyak Goreng 2L',
-  'Beras Rojalele',
+  'Telur 1kg',
   'Telur Ayam Negeri 1kg',
+  'Garam 500g',
   'Susu UHT Full Cream 1L',
   'Mie Instan Kuah Soto (5 bungkus)',
+  'Sabun Mandi',
   'Sabun Mandi Cair 450ml',
 ];
 
@@ -223,20 +227,54 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
   if (!isOpen) return null;
 
   const onSubmit = async (data: ItemFormData) => {
-    if (data.unitPrice < 0) {
+    let finalUnitPrice = Math.round(Number(data.unitPrice) || 0);
+
+    // If unit price was left blank, check recommendations by product name / keyword
+    if (finalUnitPrice <= 0) {
+      const typed = (data.name || '').trim().toLowerCase();
+      const match = recommendations.find((r) => {
+        const rName = r.name.toLowerCase();
+        return (
+          rName === typed ||
+          (typed.includes('beras') && rName.includes('beras')) ||
+          (typed.includes('telur') && rName.includes('telur')) ||
+          (typed.includes('minyak') && rName.includes('minyak')) ||
+          (typed.includes('garam') && rName.includes('garam')) ||
+          (typed.includes('susu') && rName.includes('susu')) ||
+          (typed.includes('sabun') && rName.includes('sabun'))
+        );
+      });
+      if (match && match.lastUnitPrice > 0) {
+        finalUnitPrice = match.lastUnitPrice;
+      }
+    }
+
+    if (finalUnitPrice <= 0) {
       setError('unitPrice', {
         type: 'manual',
-        message: 'Harga satuan barang tidak boleh bernilai negatif!',
+        message:
+          language === 'zh'
+            ? '单价必须大于0！'
+            : language === 'en'
+            ? 'Unit price must be greater than 0!'
+            : 'Harga satuan barang harus lebih dari 0!',
       });
       return;
     }
+
     if (data.quantity <= 0) {
       setError('quantity', {
         type: 'manual',
-        message: 'Kuantitas barang harus lebih dari 0!',
+        message:
+          language === 'zh'
+            ? '商品数量必须大于0！'
+            : language === 'en'
+            ? 'Quantity must be greater than 0!'
+            : 'Kuantitas barang harus lebih dari 0!',
       });
       return;
     }
+
     try {
       setIsSubmitting(true);
 
@@ -254,12 +292,12 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
       }
 
       await onSave({
-        name: data.name,
+        name: data.name.trim(),
         category: data.category as ProductCategory,
         unit: data.unit,
-        quantity: Number(data.quantity),
-        unitPrice: Math.round(Number(data.unitPrice)),
-        discounts: data.discounts,
+        quantity: Number(data.quantity) || 1,
+        unitPrice: finalUnitPrice,
+        discounts: data.discounts || [],
       });
       onClose();
     } catch (err) {
@@ -410,6 +448,31 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
                 onFocus={() => setIsHistoryOpen(true)}
                 onBlur={() => {
                   setTimeout(() => setIsHistoryOpen(false), 250);
+                  const currentPrice = watch('unitPrice');
+                  if (!currentPrice || Number(currentPrice) === 0) {
+                    const typed = (watch('name') || '').trim().toLowerCase();
+                    if (typed) {
+                      const match = recommendations.find((r) => {
+                        const rName = r.name.toLowerCase();
+                        return (
+                          rName === typed ||
+                          (typed.includes('beras') && rName.includes('beras')) ||
+                          (typed.includes('telur') && rName.includes('telur')) ||
+                          (typed.includes('minyak') && rName.includes('minyak')) ||
+                          (typed.includes('garam') && rName.includes('garam')) ||
+                          (typed.includes('susu') && rName.includes('susu')) ||
+                          (typed.includes('sabun') && rName.includes('sabun'))
+                        );
+                      });
+                      if (match && match.lastUnitPrice > 0) {
+                        setValue('unitPrice', match.lastUnitPrice, { shouldValidate: true, shouldDirty: true });
+                        setValue('category', match.category, { shouldValidate: true, shouldDirty: true });
+                        const isStd = STANDARD_UNITS.includes(match.unit);
+                        setCustomUnit(!isStd);
+                        setValue('unit', match.unit || 'pcs', { shouldValidate: true, shouldDirty: true });
+                      }
+                    }
+                  }
                 }}
                 className="w-full pl-3.5 pr-8 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm min-h-[44px]"
               />
@@ -450,9 +513,19 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
                       onMouseDown={() => {
                         setValue('name', item, { shouldValidate: true, shouldDirty: true });
                         setIsHistoryOpen(false);
-                        const rec = recommendations.find(
-                          (r) => r.name.toLowerCase() === item.toLowerCase()
-                        );
+                        const trimmed = item.trim().toLowerCase();
+                        const rec = recommendations.find((r) => {
+                          const rName = r.name.toLowerCase();
+                          return (
+                            rName === trimmed ||
+                            (trimmed.includes('beras') && rName.includes('beras')) ||
+                            (trimmed.includes('telur') && rName.includes('telur')) ||
+                            (trimmed.includes('minyak') && rName.includes('minyak')) ||
+                            (trimmed.includes('garam') && rName.includes('garam')) ||
+                            (trimmed.includes('susu') && rName.includes('susu')) ||
+                            (trimmed.includes('sabun') && rName.includes('sabun'))
+                          );
+                        });
                         if (rec) {
                           setValue('category', rec.category, { shouldValidate: true, shouldDirty: true });
                           const isStd = STANDARD_UNITS.includes(rec.unit);
@@ -590,25 +663,21 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
                 control={control}
                 render={({ field }) => (
                   <input
-                    type="number"
-                    min="0"
-                    step="any"
+                    type="text"
                     inputMode="numeric"
-                    placeholder="Contoh: 15000"
+                    placeholder="Contoh: 15.000"
                     value={
                       field.value === 0 || field.value === '0' || field.value === '' || field.value === null || field.value === undefined
                         ? ''
-                        : field.value
+                        : formatNumberWithDots(field.value)
                     }
                     onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === '') {
+                      const digits = e.target.value.replace(/\D/g, '');
+                      if (digits === '') {
                         field.onChange('');
                       } else {
-                        const num = parseFloat(val);
-                        if (!isNaN(num)) {
-                          field.onChange(Math.max(0, num));
-                        }
+                        const num = parseInt(digits, 10);
+                        field.onChange(isNaN(num) ? '' : num);
                       }
                     }}
                     onKeyDown={(e) => {

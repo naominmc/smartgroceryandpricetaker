@@ -566,15 +566,23 @@ export const ShoppingPage: React.FC = () => {
                 <button
                   key={rec.name}
                   type="button"
-                  onClick={() => {
-                    handleSaveItem({
-                      name: rec.name,
-                      category: rec.category,
-                      unit: rec.unit,
-                      quantity: 1,
-                      unitPrice: rec.lastUnitPrice,
-                      discounts: rec.discounts || [],
-                    });
+                  onClick={async () => {
+                    const existingItem = cartItems.find(
+                      (ci) => ci.nameSnapshot.toLowerCase() === rec.name.toLowerCase()
+                    );
+                    if (existingItem) {
+                      await groceryService.adjustQuantity(existingItem.id, 1);
+                      playBeep(1400, 0.04);
+                    } else {
+                      await handleSaveItem({
+                        name: rec.name,
+                        category: rec.category,
+                        unit: rec.unit,
+                        quantity: 1,
+                        unitPrice: rec.lastUnitPrice,
+                        discounts: rec.discounts || [],
+                      });
+                    }
                   }}
                   className={`flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-2xl border text-left transition-all active:scale-95 shadow-2xs min-h-[44px] ${
                     inCart
