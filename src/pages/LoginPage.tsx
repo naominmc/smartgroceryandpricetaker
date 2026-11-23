@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Lock,
   Mail,
@@ -49,27 +49,119 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
 
-  // Google Modal State (Untuk Password & Username wajib)
-  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
-  const [googleUser, setGoogleUser] = useState<{
-    email: string;
-    fullName: string;
-    photoURL: string;
-    existing: boolean;
-  } | null>(null);
-  const [googleFullNameInput, setGoogleFullNameInput] = useState('');
-  const [googleUsernameInput, setGoogleUsernameInput] = useState('');
-  const [googlePasswordInput, setGooglePasswordInput] = useState('');
-  const [showGooglePassword, setShowGooglePassword] = useState(false);
-
   const isDark = themeMode === 'dark';
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => {
       setToastMessage(null);
-    }, 3200);
+    }, 3500);
   };
+
+  // Helper untuk memproses hasil sukses Google OAuth (Sign In & Sign Up Otomatis)
+  const handleGoogleSuccess = async (user: any) => {
+    if (!user || !user.email) return;
+    const email = user.email.toLowerCase().trim();
+    const fullName = user.displayName || email.split('@')[0] || 'Pengguna Google';
+    const photoURL = user.photoURL || '';
+
+    setIsLoading(true);
+    try {
+      let account = await authService.findAccount(email);
+      if (!account) {
+        // Sign Up otomatis akun baru dari Google jika belum terdaftar
+        const baseUsername = (email.split('@')[0] || 'user').replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
+        let username = baseUsername;
+        let counter = 1;
+        while (await authService.findAccount(username)) {
+          username = `${baseUsername}${counter++}`;
+        }
+
+        account = await authService.autoRegisterGoogleAccount({
+          fullName,
+          username,
+          email,
+          avatarUrl: photoURL,
+          isGoogleLinked: true,
+        });
+      } else {
+        // Akun sudah ada -> pastikan tanda Google linked tersimpan
+        if (!account.isGoogleLinked) {
+          account.isGoogleLinked = true;
+          await authService.saveAccountToFirestore(account);
+        }
+      }
+
+      // Simpan sesi user dan langsung arahkan ke halaman utama / dashboard
+      updateUserProfile({
+        fullName: account.fullName,
+        username: account.username,
+        email: account.email,
+        avatarUrl: account.avatarUrl || photoURL,
+        isGoogleLinked: true,
+        passwordMasked: account.password || '••••••••',
+        loginTime:
+          new Date().toLocaleDateString(language === 'zh' ? 'zh-CN' : language === 'en' ? 'en-US' : 'id-ID', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+          }) +
+          ', ' +
+          new Date().toLocaleTimeString(language === 'zh' ? 'zh-CN' : language === 'en' ? 'en-US' : 'id-ID', {
+            hour: '2-digit',
+            minute: '2-digit',
+          }) +
+          ' WIB',
+      });
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('sg_password', account.password || '');
+        localStorage.setItem('sg_fullName', account.fullName);
+        localStorage.setItem('sg_username', account.username);
+        localStorage.setItem('sg_email', account.email);
+        localStorage.setItem('smart_grocery_authenticated', 'true');
+      }
+
+      showToast(t('signInSuccess', language, { name: account.fullName }));
+
+      setTimeout(() => {
+        setActiveTab('shopping');
+        setIsLoading(false);
+        onLogin();
+      }, 350);
+    } catch (err: any) {
+      setIsLoading(false);
+      console.error('handleGoogleSuccess error:', err);
+      showToast('Gagal memproses akun Google: ' + (err.message || 'Error'));
+    }
+  };
+
+  // Tangani hasil Redirect OAuth Google saat halaman dimuat (untuk Safari iOS & Mobile)
+  useEffect(() => {
+    let isMounted = true;
+    const checkRedirect = async () => {
+      try {
+        const redirectUser = await authService.checkRedirectResult();
+        if (redirectUser && isMounted) {
+          await handleGoogleSuccess(redirectUser);
+        }
+      } catch (err: any) {
+        console.warn('OAuth redirect check error:', err);
+        if (isMounted && err?.code && err.code !== 'auth/null-user') {
+          if (err?.code === 'auth/unauthorized-domain') {
+            showToast('Domain belum diizinkan di Firebase Console. Harap tambahkan domain ini ke Authorized Domains.');
+          } else {
+            showToast('Gagal memproses login Google: ' + (err.message || err.code));
+          }
+        }
+      }
+    };
+
+    checkRedirect();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Realtime check for local duplicates in signup mode
   const cleanUsername = usernameInput.trim().replace(/^@/, '').toLowerCase();
@@ -85,137 +177,26 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     cleanEmail.length > 3 &&
     registeredAccounts.some((acc) => acc.email.toLowerCase() === cleanEmail);
 
-  // Alur Google Asli: signInWithPopup(auth, googleProvider)
+  // Alur Google Asli: signInWithRedirect untuk Mobile Safari iOS, signInWithPopup dengan fallback untuk Desktop
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     showToast(t('googleConnecting', language));
     try {
-      const res = await authService.signInWithGoogle();
-      setIsLoading(false);
-      if (res.existingAccount) {
-        // Akun Google sudah terdaftar -> tetap wajib isi kata sandi (password)
-        setGoogleUser({
-          email: res.email,
-          fullName: res.existingAccount.fullName || res.fullName,
-          photoURL: res.photoURL,
-          existing: true,
-        });
-        setGooglePasswordInput('');
-        setIsGoogleModalOpen(true);
-      } else {
-        // Akun Google baru -> wajib isi username dan password
-        setGoogleUser({
-          email: res.email,
-          fullName: res.fullName,
-          photoURL: res.photoURL,
-          existing: false,
-        });
-        const autoUsername = (res.email.split('@')[0] || 'user').replace(/[^a-zA-Z0-9_]/g, '');
-        setGoogleUsernameInput(autoUsername);
-        setGoogleFullNameInput(res.fullName);
-        setGooglePasswordInput('');
-        setIsGoogleModalOpen(true);
+      const authResult = await authService.initiateGoogleAuth();
+      if (authResult.mode === 'popup' && authResult.user) {
+        await handleGoogleSuccess(authResult.user);
       }
+      // Jika mode === 'redirect', browser Safari/Mobile otomatis dialihkan ke halaman Google
     } catch (err: any) {
       setIsLoading(false);
       console.warn('Google sign-in exception:', err);
-      if (err?.code !== 'auth/popup-closed-by-user') {
-        showToast('Koneksi Google batal atau ditutup. Silakan coba lagi.');
-      }
-    }
-  };
-
-  // Submit Modal Google (Verifikasi Password atau Buat Akun Google)
-  const handleGoogleModalSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!googleUser) return;
-
-    if (googleUser.existing) {
-      // Verifikasi kata sandi akun Google yang sudah ada
-      if (!googlePasswordInput.trim()) {
-        showToast(t('fillPassword', language));
-        return;
-      }
-      setIsLoading(true);
-      try {
-        const account = await authService.loginWithCredentials(googleUser.email, googlePasswordInput);
-        updateUserProfile({
-          fullName: account.fullName,
-          username: account.username,
-          email: account.email,
-          avatarUrl: account.avatarUrl || googleUser.photoURL,
-          isGoogleLinked: true,
-          passwordMasked: account.password,
-          loginTime:
-            new Date().toLocaleDateString(language === 'zh' ? 'zh-CN' : language === 'en' ? 'en-US' : 'id-ID', {
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric',
-            }) +
-            ', ' +
-            new Date().toLocaleTimeString(language === 'zh' ? 'zh-CN' : language === 'en' ? 'en-US' : 'id-ID', {
-              hour: '2-digit',
-              minute: '2-digit',
-            }) +
-            ' WIB',
-        });
-        setIsGoogleModalOpen(false);
-        setIsLoading(false);
-        showToast(t('signInSuccess', language, { name: account.fullName }));
-        setTimeout(() => {
-          setActiveTab('shopping');
-          onLogin();
-        }, 350);
-      } catch (err) {
-        setIsLoading(false);
-        showToast(t('wrongPassword', language));
-      }
-    } else {
-      // Pendaftaran akun baru menggunakan Google: wajib username & password
-      const cleanUser = googleUsernameInput.trim().replace(/^@/, '');
-      const cleanPass = googlePasswordInput.trim();
-      const cleanName = googleFullNameInput.trim() || googleUser.fullName;
-
-      if (!cleanName || cleanName.length < 3) {
-        showToast(t('minFullName', language));
-        return;
-      }
-      if (!cleanUser || cleanUser.length < 3) {
-        showToast(t('minUsername', language));
-        return;
-      }
-      if (!cleanPass || cleanPass.length < 6) {
-        showToast(t('minPassword', language));
-        return;
-      }
-
-      setIsLoading(true);
-      try {
-        await authService.registerAccount({
-          fullName: cleanName,
-          username: cleanUser,
-          email: googleUser.email,
-          password: cleanPass,
-          isGoogleLinked: true,
-          avatarUrl: googleUser.photoURL,
-        });
-
-        setIsLoading(false);
-        setIsGoogleModalOpen(false);
-        // Setelah membuat akun, wajib sign in / login ulang terlebih dahulu
-        setActiveAuthTab('signin');
-        setEmailInput(googleUser.email);
-        setPasswordInput('');
-        showToast(t('googleAccCreated', language));
-      } catch (err: any) {
-        setIsLoading(false);
-        if (err?.message === 'USERNAME_EXISTS') {
-          showToast(t('usernameTaken', language));
-        } else if (err?.message === 'EMAIL_EXISTS') {
-          showToast(t('emailTaken', language));
-        } else {
-          showToast('Gagal membuat akun. Silakan coba lagi.');
-        }
+      if (err?.code === 'auth/unauthorized-domain') {
+        showToast('Domain Vercel belum diizinkan di Firebase Console. Tambahkan domain ini ke Authorized Domains.');
+      } else if (
+        err?.code !== 'auth/popup-closed-by-user' &&
+        err?.code !== 'auth/cancelled-popup-request'
+      ) {
+        showToast('Koneksi Google gagal. Silakan coba lagi.');
       }
     }
   };
@@ -347,15 +328,22 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
   return (
     <div
-      className={`min-h-[100dvh] h-[100dvh] w-full overflow-y-auto relative flex justify-center items-center p-3 sm:p-6 bg-cover bg-center bg-no-repeat transition-colors duration-300 ${
-        isDark ? 'bg-slate-950 text-slate-100' : 'bg-gray-100 text-gray-900'
+      className={`min-h-dvh w-full overflow-y-auto relative flex justify-center items-center p-3 sm:p-6 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] pt-[calc(1.25rem+env(safe-area-inset-top,0px))] transition-colors duration-300 ${
+        isDark ? 'text-slate-100' : 'text-gray-900'
       }`}
-      style={{
-        backgroundImage: isDark
-          ? `linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 0.94) 100%), url('/supermarket_bg.jpg')`
-          : `linear-gradient(135deg, rgba(238, 242, 255, 0.92) 0%, rgba(240, 253, 250, 0.88) 100%), url('/supermarket_bg.jpg')`,
-      }}
     >
+      {/* Fixed Fullscreen Background Layer to prevent any white gap on mobile Safari address bar */}
+      <div
+        className={`fixed inset-0 w-full h-full -z-10 bg-cover bg-center bg-no-repeat transition-colors duration-300 pointer-events-none ${
+          isDark ? 'bg-slate-950' : 'bg-gray-100'
+        }`}
+        style={{
+          backgroundImage: isDark
+            ? `linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 0.94) 100%), url('/supermarket_bg.jpg')`
+            : `linear-gradient(135deg, rgba(238, 242, 255, 0.92) 0%, rgba(240, 253, 250, 0.88) 100%), url('/supermarket_bg.jpg')`,
+        }}
+      />
+
       {/* Toast Alert */}
       {toastMessage && (
         <div className="fixed top-5 z-50 bg-gray-900/95 dark:bg-slate-800/95 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg border border-white/20 animate-fade-in flex items-center gap-2 max-w-[90%] text-center">
@@ -365,7 +353,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       )}
 
       {/* Main Viewport Card - Vertically Centered on Mobile & Laptop like ICT Codehub */}
-      <main className="w-full max-w-[420px] max-h-[94dvh] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl text-text-main dark:text-dark-text flex flex-col relative shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] dark:shadow-dark-float rounded-3xl sm:rounded-[36px] overflow-hidden border border-white/60 dark:border-slate-800 transition-colors duration-200 my-auto">
+      <main className="w-full max-w-[420px] max-h-[92dvh] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl text-text-main dark:text-dark-text flex flex-col relative shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] dark:shadow-dark-float rounded-3xl sm:rounded-[36px] overflow-hidden border border-white/60 dark:border-slate-800 transition-colors duration-200 my-auto">
         
         {/* Top Header Bar dengan Suara, Tema, Logo Center, dan Bahasa di Kanan */}
         <header className="px-4 sm:px-5 pt-3.5 pb-3 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 dark:from-slate-900 dark:via-blue-950 dark:to-indigo-950 text-white shadow-md relative overflow-hidden flex items-center justify-between border-b dark:border-slate-800 flex-shrink-0">
@@ -612,7 +600,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300"
                       >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                       </button>
                     </div>
                   </div>
@@ -691,12 +679,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700" />
             </div>
 
-            {/* Real Google Login Button */}
+            {/* Real Google Login Button (Kompatibel Mobile Safari iOS & Desktop) */}
             <button
               type="button"
               onClick={handleGoogleLogin}
               disabled={isLoading}
-              className="w-full py-2 px-3 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-750 text-gray-800 dark:text-slate-100 font-bold text-xs shadow-2xs transition-all flex items-center justify-center gap-2.5 cursor-pointer min-h-[40px]"
+              className="w-full py-2.5 px-3 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-750 text-gray-800 dark:text-slate-100 font-bold text-xs shadow-2xs transition-all flex items-center justify-center gap-2.5 cursor-pointer min-h-[42px] active:scale-98"
             >
               <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
                 <path
@@ -728,143 +716,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           </footer>
         </div>
       </main>
-
-      {/* Modal Autentikasi Google: Wajib Kata Sandi & Username */}
-      {isGoogleModalOpen && googleUser && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="w-full max-w-sm bg-white dark:bg-slate-900 rounded-3xl p-5 shadow-2xl border border-gray-200 dark:border-slate-800 space-y-3.5 animate-slide-up">
-            <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-slate-800">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-950 flex items-center justify-center">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24">
-                    <path
-                      fill="#4285F4"
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                    />
-                    <path
-                      fill="#34A853"
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    />
-                    <path
-                      fill="#FBBC05"
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                    />
-                    <path
-                      fill="#EA4335"
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-gray-900 dark:text-slate-100">
-                    {googleUser.existing ? t('googleVerifyPassword', language) : t('googleSignUpTitle', language)}
-                  </h3>
-                  <p className="text-[11px] text-gray-500 dark:text-slate-400">
-                    {googleUser.email}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsGoogleModalOpen(false)}
-                className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <p className="text-xs text-gray-600 dark:text-slate-300">
-              {googleUser.existing
-                ? t('googleVerifyPasswordDesc', language)
-                : t('googleSignUpDesc', language)}
-            </p>
-
-            <form onSubmit={handleGoogleModalSubmit} className="space-y-3">
-              {!googleUser.existing && (
-                <>
-                  <div>
-                    <label className="block text-[11px] font-bold text-gray-700 dark:text-slate-300 mb-1">
-                      {t('fullName', language)}
-                    </label>
-                    <input
-                      type="text"
-                      value={googleFullNameInput}
-                      onChange={(e) => setGoogleFullNameInput(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-gray-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-gray-700 dark:text-slate-300 mb-1">
-                      {t('username', language)}
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">@</span>
-                      <input
-                        type="text"
-                        value={googleUsernameInput}
-                        onChange={(e) => setGoogleUsernameInput(e.target.value)}
-                        className="w-full pl-7 pr-3 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-gray-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary"
-                        required
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
-
-              <div>
-                <label className="block text-[11px] font-bold text-gray-700 dark:text-slate-300 mb-1">
-                  {t('password', language)} <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type={showGooglePassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    value={googlePasswordInput}
-                    onChange={(e) => setGooglePasswordInput(e.target.value)}
-                    className="w-full pl-8 pr-8 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-gray-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary"
-                    required
-                  />
-                  <Lock className="w-3.5 h-3.5 text-gray-400 dark:text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                  <button
-                    type="button"
-                    onClick={() => setShowGooglePassword(!showGooglePassword)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300"
-                  >
-                    {showGooglePassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setIsGoogleModalOpen(false)}
-                  className="flex-1 py-2 px-3 rounded-xl border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-300 font-bold text-xs hover:bg-gray-100 dark:hover:bg-slate-800"
-                >
-                  {t('cancelBtn', language)}
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="flex-1 py-2 px-3 rounded-xl bg-primary text-white font-bold text-xs hover:bg-blue-600 shadow-sm"
-                >
-                  {isLoading
-                    ? t('processing', language)
-                    : googleUser.existing
-                    ? t('signInBtn', language)
-                    : t('registerBtn', language)}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

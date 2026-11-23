@@ -9,6 +9,8 @@ import {
   query,
   where,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
@@ -218,7 +220,116 @@ class AuthService {
   }
 
   /**
-   * Alur Autentikasi Google Asli menggunakan signInWithPopup(auth, googleProvider)
+   * Deteksi apakah sedang berjalan di perangkat mobile / Safari iOS
+   */
+  public isMobileDevice(): boolean {
+    if (typeof window === 'undefined') return false;
+    return (
+      /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+      (navigator.maxTouchPoints > 1 && /Macintosh/i.test(navigator.userAgent))
+    );
+  }
+
+  /**
+   * Simpan atau perbarui akun pengguna di Firestore dan local cache
+   */
+  public async saveAccountToFirestore(account: RegisteredAccount): Promise<void> {
+    const cleanEmail = account.email.trim().toLowerCase();
+    try {
+      await setDoc(doc(firestore, 'users', cleanEmail), account);
+    } catch (e) {
+      console.warn('saveAccountToFirestore error:', e);
+    }
+    const local = getLocalAccounts();
+    const updated = [
+      ...local.filter((a) => a.email.toLowerCase() !== cleanEmail),
+      account,
+    ];
+    saveLocalAccounts(updated);
+  }
+
+  /**
+   * Pendaftaran otomatis untuk akun Google baru (Sign Up otomatis)
+   */
+  public async autoRegisterGoogleAccount(data: {
+    fullName: string;
+    username: string;
+    email: string;
+    avatarUrl?: string;
+    isGoogleLinked?: boolean;
+  }): Promise<RegisteredAccount> {
+    const cleanEmail = data.email.trim().toLowerCase();
+    const cleanUsername = data.username.trim().toLowerCase().replace(/^@/, '');
+    const cleanFullName = data.fullName.trim() || 'Pengguna Google';
+
+    const newAcc: RegisteredAccount = {
+      fullName: cleanFullName,
+      username: cleanUsername,
+      email: cleanEmail,
+      password: '', // Akun berbasis Google OAuth tidak memerlukan sandi manual
+      isGoogleLinked: true,
+      avatarUrl: data.avatarUrl || '',
+      createdAt: Date.now(),
+    };
+
+    await this.saveAccountToFirestore(newAcc);
+    return newAcc;
+  }
+
+  /**
+   * Menjalankan proses login Google:
+   * Menggunakan signInWithRedirect untuk mobile / Safari iOS,
+   * atau signInWithPopup untuk desktop dengan fallback otomatis ke redirect jika popup terblokir.
+   */
+  public async initiateGoogleAuth(): Promise<
+    | {
+        mode: 'redirect';
+      }
+    | {
+        mode: 'popup';
+        user: any;
+      }
+  > {
+    const isMobile = this.isMobileDevice();
+
+    if (isMobile) {
+      // Mobile Safari / Chrome: langsung gunakan redirect agar tidak terblokir popup blocker
+      await signInWithRedirect(auth, googleProvider);
+      return { mode: 'redirect' };
+    }
+
+    try {
+      const res = await signInWithPopup(auth, googleProvider);
+      return { mode: 'popup', user: res.user };
+    } catch (err: any) {
+      // Fallback ke redirect jika popup diblokir browser desktop
+      if (
+        err?.code === 'auth/popup-blocked' ||
+        err?.code === 'auth/popup-closed-by-user' ||
+        err?.code === 'auth/cancelled-popup-request'
+      ) {
+        await signInWithRedirect(auth, googleProvider);
+        return { mode: 'redirect' };
+      }
+      throw err;
+    }
+  }
+
+  /**
+   * Memeriksa hasil redirect login Google saat halaman dimuat ulang
+   */
+  public async checkRedirectResult(): Promise<any | null> {
+    try {
+      const result = await getRedirectResult(auth);
+      return result ? result.user : null;
+    } catch (err: any) {
+      console.warn('checkRedirectResult error:', err);
+      throw err;
+    }
+  }
+
+  /**
+   * Alur Autentikasi Google Asli menggunakan signInWithPopup (kompatibilitas mundur)
    */
   public async signInWithGoogle(): Promise<{
     email: string;
@@ -232,7 +343,6 @@ class AuthService {
     const fullName = user.displayName || 'Google User';
     const photoURL = user.photoURL || '';
 
-    // Cek apakah akun Google ini sudah ada di database kami
     const existing = await this.findAccount(email);
 
     return {
@@ -245,3 +355,4 @@ class AuthService {
 }
 
 export const authService = new AuthService();
+
