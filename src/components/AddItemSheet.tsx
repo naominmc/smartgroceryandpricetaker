@@ -27,15 +27,18 @@ const DEFAULT_SEARCH_HISTORY = [
 ];
 
 const itemSchema = z.object({
-  name: z.string().min(1, 'Nama produk wajib diisi'),
-  category: z.string().min(1, 'Pilih kategori produk'),
-  unit: z.string().min(1, 'Pilih satuan produk'),
-  quantity: z.number().min(0.01, 'Kuantitas harus lebih dari 0'),
+  name: z.string().trim().min(1, 'Nama produk wajib diisi'),
+  category: z.string().default('Beras dan bahan pokok'),
+  unit: z.string().default('pcs'),
+  quantity: z.preprocess(
+    (v) => (v === '' || v === null || isNaN(Number(v)) ? 1 : Number(v)),
+    z.number().min(0.01, 'Kuantitas harus lebih dari 0')
+  ),
   unitPrice: z.preprocess(
     (v) => (v === '' || v === null || isNaN(Number(v)) ? 0 : Number(v)),
     z.number().min(0, 'Harga satuan tidak boleh negatif')
   ),
-  discounts: z.array(z.number()),
+  discounts: z.array(z.number()).default([]),
 });
 
 type ItemFormData = {
@@ -302,7 +305,16 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
         </div>
 
         {/* Sheet Form Scrollable Area */}
-        <form onSubmit={handleSubmit(onSubmit)} className="overflow-y-auto px-5 py-4 space-y-4 flex-1">
+        <form
+          onSubmit={handleSubmit(onSubmit, (invalidErrors) => {
+            console.warn('Form validation failed:', invalidErrors);
+            if (invalidErrors.name) {
+              const nameInput = document.querySelector('input[name="name"]') as HTMLInputElement | null;
+              nameInput?.focus();
+            }
+          })}
+          className="overflow-y-auto px-5 py-4 space-y-4 flex-1"
+        >
           {/* Quick Scanner Shortcut (Single line text, compact and space-efficient) */}
           {!editingItem && (
             <div className="bg-gradient-to-r from-blue-50 to-amber-50 dark:from-slate-800 dark:to-slate-800/80 px-3 py-2 rounded-2xl border border-blue-200/70 dark:border-slate-700 flex items-center justify-between gap-2 shadow-2xs">
@@ -346,11 +358,13 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
                     key={rec.name}
                     type="button"
                     onClick={() => {
-                      setValue('name', rec.name);
-                      setValue('category', rec.category);
-                      setValue('unit', rec.unit);
-                      setValue('unitPrice', rec.lastUnitPrice);
-                      setValue('discounts', rec.discounts || []);
+                      setValue('name', rec.name, { shouldValidate: true, shouldDirty: true });
+                      setValue('category', rec.category, { shouldValidate: true, shouldDirty: true });
+                      const isStd = STANDARD_UNITS.includes(rec.unit);
+                      setCustomUnit(!isStd);
+                      setValue('unit', rec.unit || 'pcs', { shouldValidate: true, shouldDirty: true });
+                      setValue('unitPrice', rec.lastUnitPrice || 0, { shouldValidate: true, shouldDirty: true });
+                      setValue('discounts', rec.discounts || [], { shouldValidate: true, shouldDirty: true });
                     }}
                     className="w-full text-left text-[11px] font-semibold bg-white dark:bg-slate-800 hover:bg-amber-100/80 dark:hover:bg-amber-900/60 text-slate-800 dark:text-slate-100 p-2 rounded-xl border border-amber-200/80 dark:border-slate-700 shadow-2xs transition-all active:scale-95 flex flex-col justify-between min-h-[44px] cursor-pointer"
                   >
@@ -434,16 +448,18 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
                     <div
                       key={item}
                       onMouseDown={() => {
-                        setValue('name', item);
+                        setValue('name', item, { shouldValidate: true, shouldDirty: true });
                         setIsHistoryOpen(false);
                         const rec = recommendations.find(
                           (r) => r.name.toLowerCase() === item.toLowerCase()
                         );
                         if (rec) {
-                          setValue('category', rec.category);
-                          setValue('unit', rec.unit);
-                          setValue('unitPrice', rec.lastUnitPrice);
-                          if (rec.discounts) setValue('discounts', rec.discounts);
+                          setValue('category', rec.category, { shouldValidate: true, shouldDirty: true });
+                          const isStd = STANDARD_UNITS.includes(rec.unit);
+                          setCustomUnit(!isStd);
+                          setValue('unit', rec.unit || 'pcs', { shouldValidate: true, shouldDirty: true });
+                          setValue('unitPrice', rec.lastUnitPrice || 0, { shouldValidate: true, shouldDirty: true });
+                          setValue('discounts', rec.discounts || [], { shouldValidate: true, shouldDirty: true });
                         }
                       }}
                       className="flex items-center justify-between px-3 py-2 hover:bg-blue-50/60 dark:hover:bg-slate-700/70 transition-colors cursor-pointer group"
@@ -537,13 +553,14 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
                 </div>
               ) : (
                 <select
-                  value={watch('unit')}
+                  {...register('unit')}
+                  value={watch('unit') || 'pcs'}
                   onChange={(e) => {
                     if (e.target.value === 'custom') {
                       setCustomUnit(true);
-                      setValue('unit', '');
+                      setValue('unit', '', { shouldValidate: true });
                     } else {
-                      setValue('unit', e.target.value);
+                      setValue('unit', e.target.value, { shouldValidate: true });
                     }
                   }}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm min-h-[44px] bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 cursor-pointer"
@@ -650,6 +667,15 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
 
           {/* Submit Button */}
           <div className="pt-2">
+            {Object.keys(errors).length > 0 && (
+              <div className="bg-red-50 dark:bg-rose-950/80 border border-red-200 dark:border-rose-900 text-danger dark:text-rose-300 text-xs font-bold p-2.5 rounded-xl mb-2 text-center animate-fade-in">
+                {errors.name?.message ||
+                  errors.quantity?.message ||
+                  errors.unitPrice?.message ||
+                  errors.unit?.message ||
+                  (language === 'zh' ? '请填写商品信息' : language === 'en' ? 'Please complete product details' : 'Mohon lengkapi data barang.')}
+              </div>
+            )}
             <button
               type="submit"
               disabled={isSubmitting}

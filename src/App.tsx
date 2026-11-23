@@ -162,6 +162,8 @@ export const App: React.FC = () => {
     discounts: number[];
   }) => {
     await groceryService.addItemToCart(item);
+    setActiveTab('shopping');
+    soundService.playSuccess();
   };
 
   const handleLogout = () => {

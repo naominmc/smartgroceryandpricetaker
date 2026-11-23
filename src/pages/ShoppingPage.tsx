@@ -259,17 +259,22 @@ export const ShoppingPage: React.FC = () => {
     unitPrice: number;
     discounts: number[];
   }) => {
-    if (editingItem) {
-      await groceryService.updateCartItem(editingItem.id, {
-        nameSnapshot: data.name,
-        categorySnapshot: data.category,
-        unit: data.unit,
-        quantity: data.quantity,
-        unitPrice: data.unitPrice,
-        discounts: data.discounts,
-      });
-    } else {
-      await groceryService.addItemToCart(data);
+    try {
+      if (editingItem) {
+        await groceryService.updateCartItem(editingItem.id, {
+          nameSnapshot: data.name,
+          categorySnapshot: data.category,
+          unit: data.unit,
+          quantity: data.quantity,
+          unitPrice: data.unitPrice,
+          discounts: data.discounts,
+        });
+      } else {
+        await groceryService.addItemToCart(data);
+      }
+      soundService.playSuccess();
+    } catch (err) {
+      console.error('Gagal menyimpan barang ke troli:', err);
     }
   };
 
