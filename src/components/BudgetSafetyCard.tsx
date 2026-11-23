@@ -78,7 +78,10 @@ export const BudgetSafetyCard: React.FC<BudgetSafetyCardProps> = ({
         {onEditBudget && (
           <button
             type="button"
-            onClick={onEditBudget}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEditBudget();
+            }}
             className="flex items-center gap-1 text-[11px] font-medium text-text-secondary dark:text-slate-400 hover:text-primary dark:hover:text-blue-400 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors min-h-[36px] flex-shrink-0"
             title={t('setLimit', language)}
           >

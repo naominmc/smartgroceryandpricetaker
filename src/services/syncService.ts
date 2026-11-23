@@ -378,9 +378,7 @@ class SyncService {
       if (userProfile && JSON.stringify(userProfile) !== JSON.stringify(store.userProfile)) {
         store.updateUserProfile(userProfile);
       }
-      if (themeMode && themeMode !== store.themeMode) {
-        store.setThemeMode(themeMode);
-      }
+      // Note: themeMode is kept strictly manual per device screen preference and not auto-switched by remote sync
       if (language && language !== store.language) {
         store.setLanguage(language);
       }

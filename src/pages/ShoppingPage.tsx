@@ -360,7 +360,7 @@ export const ShoppingPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 pt-3 pb-3 w-full max-w-full min-w-0 overflow-x-hidden box-border">
+    <div className="space-y-4 pt-3 pb-3 w-full max-w-full min-w-0 box-border">
       {/* PWA Installation Prompt if applicable */}
       <PWAInstallBanner />
 
@@ -519,23 +519,12 @@ export const ShoppingPage: React.FC = () => {
             </div>
           </div>
         ) : (
-          /* Full View (Tampilan Lengkap) dengan tombol Perkecil */
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between px-1">
-              <span className="text-[10px] font-bold text-text-secondary dark:text-slate-400 uppercase tracking-wider">
-                {t('summaryCheckout', language)}
-              </span>
-              <button
-                type="button"
-                onClick={() => setIsManualExpanded(false)}
-                className="flex items-center gap-1 text-[11px] font-bold text-primary dark:text-blue-400 hover:underline cursor-pointer bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-lg border border-blue-100 dark:border-blue-900"
-                title={t('minimize', language)}
-              >
-                <span>{t('minimize', language)}</span>
-                <ChevronUp className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
+          /* Full View (Tampilan Lengkap) - ketuk area kartu untuk memperkecil kembali tanpa tombol/simbol perkecil */
+          <div
+            onClick={() => setIsManualExpanded(false)}
+            className="space-y-2.5 cursor-pointer animate-fade-in"
+            title="Ketuk area ini untuk memperkecil tampilan rincian anggaran"
+          >
             {/* F-05 Budget Safety Card */}
             <BudgetSafetyCard
               budgetStatus={budgetStatus}
@@ -549,7 +538,10 @@ export const ShoppingPage: React.FC = () => {
 
             {/* Top Checkout Action Bar - Cepat checkout tanpa perlu scroll */}
             {cartItems.length > 0 && (
-              <div className="bg-card dark:bg-slate-800 rounded-card p-3.5 border border-border dark:border-slate-700 shadow-soft space-y-2.5 animate-fade-in">
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="bg-card dark:bg-slate-800 rounded-card p-3.5 border border-border dark:border-slate-700 shadow-soft space-y-2.5 animate-fade-in cursor-default"
+              >
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-[10px] text-text-secondary dark:text-slate-400 block font-medium">
@@ -563,8 +555,11 @@ export const ShoppingPage: React.FC = () => {
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
-                      onClick={() => setIsClearCartConfirmOpen(true)}
-                      className="inline-flex items-center gap-1 text-[11px] font-bold text-danger dark:text-rose-400 hover:bg-red-50 dark:hover:bg-rose-950/70 px-2.5 py-2 rounded-xl transition-all min-h-[44px]"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsClearCartConfirmOpen(true);
+                      }}
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-danger dark:text-rose-400 hover:bg-red-50 dark:hover:bg-rose-950/70 px-2.5 py-2 rounded-xl transition-all min-h-[44px] cursor-pointer"
                       title={t('clearCartBtn', language)}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -573,8 +568,11 @@ export const ShoppingPage: React.FC = () => {
 
                     <button
                       type="button"
-                      onClick={() => setIsCheckoutDialogOpen(true)}
-                      className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-soft transition-all min-h-[44px] flex items-center gap-1.5"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsCheckoutDialogOpen(true);
+                      }}
+                      className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-soft transition-all min-h-[44px] flex items-center gap-1.5 cursor-pointer"
                     >
                       <Check className="w-4 h-4 stroke-[2.5]" />
                       <span>{t('checkoutBtn', language)}</span>

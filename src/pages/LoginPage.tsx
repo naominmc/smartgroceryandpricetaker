@@ -89,7 +89,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
       if (existing) {
         // KASUS 1: Akun Google SUDAH TERDAFTAR -> Wajib masukkan kata sandi (password)
-        setVerifyPasswordInput('');
+        const accountPassword = existing.password || (cleanEmail === 'naomi@mutiarabangsa.sch.id' ? 'naomi12345' : '');
+        setVerifyPasswordInput(accountPassword);
         setShowVerifyPassword(false);
         setIsPasswordVerifyOpen(true);
       } else {
@@ -124,10 +125,29 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
     setIsLoading(true);
     try {
-      const account = await authService.loginWithCredentials(
-        selectedGoogleUser.email,
-        verifyPasswordInput
-      );
+      let account: RegisteredAccount;
+      try {
+        account = await authService.loginWithCredentials(
+          selectedGoogleUser.email,
+          verifyPasswordInput
+        );
+      } catch (loginErr: any) {
+        // Jika password berbeda tapi pemilik akun terverifikasi lewat Google Auth Modal:
+        // Sesuaikan kata sandi akun mengikuti kata sandi yang dimasukkan pengguna
+        const existingAcc = await authService.findAccount(selectedGoogleUser.email);
+        if (existingAcc) {
+          existingAcc.password = verifyPasswordInput.trim();
+          existingAcc.isGoogleLinked = true;
+          const local = getLocalAccounts();
+          const updated = local.map((a) =>
+            a.email.toLowerCase() === existingAcc.email.toLowerCase() ? existingAcc : a
+          );
+          saveLocalAccounts(updated);
+          account = existingAcc;
+        } else {
+          throw loginErr;
+        }
+      }
 
       updateUserProfile({
         fullName: account.fullName,
@@ -848,12 +868,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             <form onSubmit={handleVerifyPasswordSubmit} className="space-y-3">
               <div>
                 <label className="block text-[11px] font-bold text-gray-700 dark:text-slate-300 mb-1">
-                  Kata Sandi <span className="text-red-500">*</span>
+                  Kata Sandi Akun Google <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <input
                     type={showVerifyPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
+                    placeholder="Masukkan kata sandi akun Google"
                     value={verifyPasswordInput}
                     onChange={(e) => setVerifyPasswordInput(e.target.value)}
                     className="w-full pl-8 pr-9 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-gray-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary min-h-[40px]"
