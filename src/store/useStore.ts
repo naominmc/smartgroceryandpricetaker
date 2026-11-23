@@ -153,6 +153,9 @@ export const useStore = create<AppState>((set, get) => {
         }
       }
       set({ themeMode: nextMode });
+      if (typeof window !== 'undefined' && (window as any).__smart_grocery_notify_sync) {
+        (window as any).__smart_grocery_notify_sync();
+      }
     },
     setThemeMode: (mode) => {
       if (typeof window !== 'undefined') {
@@ -164,6 +167,9 @@ export const useStore = create<AppState>((set, get) => {
         }
       }
       set({ themeMode: mode });
+      if (typeof window !== 'undefined' && (window as any).__smart_grocery_notify_sync) {
+        (window as any).__smart_grocery_notify_sync();
+      }
     },
 
     // Language
@@ -173,6 +179,9 @@ export const useStore = create<AppState>((set, get) => {
         localStorage.setItem('smart_grocery_lang', lang);
       }
       set({ language: lang });
+      if (typeof window !== 'undefined' && (window as any).__smart_grocery_notify_sync) {
+        (window as any).__smart_grocery_notify_sync();
+      }
     },
 
     // Sound effects toggle
@@ -214,6 +223,9 @@ export const useStore = create<AppState>((set, get) => {
           username: nextProfile.username,
         };
       });
+      if (typeof window !== 'undefined' && (window as any).__smart_grocery_notify_sync) {
+        (window as any).__smart_grocery_notify_sync();
+      }
     },
 
     // Default payment storage / bank: Bank BCA requested by user (persisted in localStorage)
@@ -225,6 +237,9 @@ export const useStore = create<AppState>((set, get) => {
         localStorage.setItem('smart_grocery_payment_method', method);
       }
       set({ selectedPaymentMethod: method });
+      if (typeof window !== 'undefined' && (window as any).__smart_grocery_notify_sync) {
+        (window as any).__smart_grocery_notify_sync();
+      }
     },
 
     sessionLocation: typeof window !== 'undefined' ? (localStorage.getItem('smart_grocery_location') || 'LOTTE MART GROCERY - PURI INDAH').toUpperCase() : 'LOTTE MART GROCERY - PURI INDAH',

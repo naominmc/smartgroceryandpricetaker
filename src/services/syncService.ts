@@ -1,14 +1,19 @@
-import { firestore, doc, setDoc, onSnapshot, getDoc } from './firebase';
+import { firestore, doc, setDoc, onSnapshot, getDoc, getDocFromServer } from './firebase';
 import { db } from '../db/database';
 import { useStore } from '../store/useStore';
-import type { CartItem, Budget, PurchaseTransaction } from '../types';
+import type { CartItem, Budget, PurchaseTransaction, Product } from '../types';
 
 export interface GrocerySnapshotData {
   cartItems: CartItem[];
   budgets: Budget[];
   transactions: PurchaseTransaction[];
+  products?: Product[];
   sessionLocation: string;
   sessionDate: string;
+  selectedPaymentMethod?: string;
+  userProfile?: any;
+  themeMode?: 'light' | 'dark';
+  language?: 'id' | 'en' | 'zh';
 }
 
 export interface GrocerySnapshot {
@@ -125,13 +130,12 @@ class SyncService {
       }
       this.unsubscribeSnapshot = onSnapshot(
         syncDocRef,
+        { includeMetadataChanges: true },
         (docSnap) => {
           if (docSnap.exists()) {
             const remoteData = docSnap.data();
             if (remoteData && remoteData.snapshot && remoteData.snapshot.user === SINGLE_USER) {
-              if (remoteData.snapshot.deviceId !== this.deviceId) {
-                this.applySnapshot(remoteData.snapshot, 'remote');
-              }
+              this.applySnapshot(remoteData.snapshot, 'remote');
             }
           }
         },
@@ -204,14 +208,17 @@ class SyncService {
     if (typeof window === 'undefined' || !navigator.onLine) return false;
     try {
       const syncDocRef = doc(firestore, 'sync', SINGLE_USER);
-      const docSnap = await getDoc(syncDocRef);
+      let docSnap;
+      try {
+        docSnap = await getDocFromServer(syncDocRef);
+      } catch (e) {
+        docSnap = await getDoc(syncDocRef);
+      }
       if (docSnap.exists()) {
         const remoteData = docSnap.data();
         if (remoteData && remoteData.snapshot && remoteData.snapshot.user === SINGLE_USER) {
-          if (force || remoteData.snapshot.deviceId !== this.deviceId) {
-            const applied = await this.applySnapshot(remoteData.snapshot, 'remote', force);
-            return applied;
-          }
+          const applied = await this.applySnapshot(remoteData.snapshot, 'remote', force);
+          return applied;
         }
       }
 
@@ -225,19 +232,21 @@ class SyncService {
    * Generates a full snapshot of the single-user application state
    */
   public async takeSnapshot(): Promise<GrocerySnapshot> {
-    const [cartItems, budgets, transactions] = await Promise.all([
+    const [cartItems, budgets, transactions, products] = await Promise.all([
       db.cartItems.toArray(),
       db.budgets.toArray(),
       db.transactions.toArray(),
+      db.products.toArray(),
     ]);
 
-    const { sessionLocation, sessionDate } = useStore.getState();
-
-    // Compact transactions to latest 5 for ultra-fast sync
-    const sortedTx = [...transactions].sort(
-      (a, b) => new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime()
-    );
-    const compactTransactions = sortedTx.slice(0, 5);
+    const {
+      sessionLocation,
+      sessionDate,
+      selectedPaymentMethod,
+      userProfile,
+      themeMode,
+      language,
+    } = useStore.getState();
 
     this.currentRevision += 1;
     if (typeof window !== 'undefined') {
@@ -253,9 +262,14 @@ class SyncService {
       data: {
         cartItems,
         budgets,
-        transactions: compactTransactions,
-        sessionLocation: sessionLocation || 'Lotte Mart Grocery - Puri Indah',
+        transactions,
+        products: products.slice(0, 50),
+        sessionLocation: sessionLocation || 'LOTTE MART GROCERY - PURI INDAH',
         sessionDate: sessionDate || new Date().toISOString().split('T')[0],
+        selectedPaymentMethod: selectedPaymentMethod || 'Bank BCA',
+        userProfile: userProfile || undefined,
+        themeMode: themeMode || 'light',
+        language: language || 'id',
       },
     };
   }
@@ -269,9 +283,6 @@ class SyncService {
     force: boolean = false
   ): Promise<boolean> {
     if (!snapshot || snapshot.user !== SINGLE_USER || !snapshot.data) return false;
-
-    // Ignore echoes from self unless forced
-    if (!force && snapshot.deviceId === this.deviceId) return false;
 
     // Fast check: compare full data JSON to avoid redundant identical DB writes
     const incomingDataSignature = JSON.stringify(snapshot.data);
@@ -296,30 +307,63 @@ class SyncService {
     this.updateState({ isSyncing: true });
 
     try {
-      const { cartItems, budgets, transactions, sessionLocation, sessionDate } = snapshot.data;
+      const {
+        cartItems,
+        budgets,
+        transactions,
+        products,
+        sessionLocation,
+        sessionDate,
+        selectedPaymentMethod,
+        userProfile,
+        themeMode,
+        language,
+      } = snapshot.data;
 
       // 1. Atomically sync all tables in a single Dexie transaction
-      await db.transaction('rw', [db.cartItems, db.budgets, db.transactions], async () => {
+      await db.transaction('rw', [db.cartItems, db.budgets, db.transactions, db.products], async () => {
         if (Array.isArray(cartItems)) {
           await db.cartItems.clear();
           if (cartItems.length > 0) {
             await db.cartItems.bulkPut(cartItems);
           }
         }
-        if (Array.isArray(budgets) && budgets.length > 0) {
-          await db.budgets.bulkPut(budgets);
+        if (Array.isArray(budgets)) {
+          await db.budgets.clear();
+          if (budgets.length > 0) {
+            await db.budgets.bulkPut(budgets);
+          }
         }
-        if (Array.isArray(transactions) && transactions.length > 0) {
-          await db.transactions.bulkPut(transactions);
+        if (Array.isArray(transactions)) {
+          await db.transactions.clear();
+          if (transactions.length > 0) {
+            await db.transactions.bulkPut(transactions);
+          }
+        }
+        if (Array.isArray(products) && products.length > 0) {
+          await db.products.bulkPut(products);
         }
       });
 
-      // 2. Sync Location & Date in Zustand Store
-      if (sessionLocation) {
-        useStore.getState().setSessionLocation(sessionLocation);
+      // 2. Sync Location, Date, Bank, Profile, Theme, and Language in Zustand Store
+      const store = useStore.getState();
+      if (sessionLocation && sessionLocation !== store.sessionLocation) {
+        store.setSessionLocation(sessionLocation);
       }
-      if (sessionDate) {
-        useStore.getState().setSessionDate(sessionDate);
+      if (sessionDate && sessionDate !== store.sessionDate) {
+        store.setSessionDate(sessionDate);
+      }
+      if (selectedPaymentMethod && selectedPaymentMethod !== store.selectedPaymentMethod) {
+        store.setSelectedPaymentMethod(selectedPaymentMethod);
+      }
+      if (userProfile && JSON.stringify(userProfile) !== JSON.stringify(store.userProfile)) {
+        store.updateUserProfile(userProfile);
+      }
+      if (themeMode && themeMode !== store.themeMode) {
+        store.setThemeMode(themeMode);
+      }
+      if (language && language !== store.language) {
+        store.setLanguage(language);
       }
 
       const timeStr = new Date().toLocaleTimeString('id-ID', {
