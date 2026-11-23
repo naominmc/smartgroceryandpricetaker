@@ -1,4 +1,4 @@
-import { firestore, doc, setDoc, onSnapshot } from './firebase';
+import { firestore, doc, setDoc, onSnapshot, getDoc } from './firebase';
 import { db } from '../db/database';
 import { useStore } from '../store/useStore';
 import type { CartItem, Budget, PurchaseTransaction } from '../types';
@@ -180,27 +180,20 @@ class SyncService {
   }
 
   /**
-   * Pulls latest snapshot from Vercel /api/snapshot or fallback cloud store
+   * Pulls latest snapshot from Firestore cloud store
    */
   public async pullLatestSnapshot(force: boolean = false): Promise<boolean> {
     if (typeof window === 'undefined' || !navigator.onLine) return false;
     try {
-      let snapshot: GrocerySnapshot | null = null;
-
-      const res = await fetch(CLOUD_DIRECT_URL, {
-        cache: 'no-store',
-      });
-      if (res.ok) {
-        const json = await res.json();
-        if (json && json.data) {
-          snapshot = json.data;
-        }
-      }
-
-      if (snapshot && snapshot.user === SINGLE_USER) {
-        if (force || snapshot.deviceId !== this.deviceId) {
-          const applied = await this.applySnapshot(snapshot, 'remote', force);
-          return applied;
+      const syncDocRef = doc(firestore, 'sync', SINGLE_USER);
+      const docSnap = await getDoc(syncDocRef);
+      if (docSnap.exists()) {
+        const remoteData = docSnap.data();
+        if (remoteData && remoteData.snapshot && remoteData.snapshot.user === SINGLE_USER) {
+          if (force || remoteData.snapshot.deviceId !== this.deviceId) {
+            const applied = await this.applySnapshot(remoteData.snapshot, 'remote', force);
+            return applied;
+          }
         }
       }
 
@@ -273,24 +266,15 @@ class SyncService {
     // Ignore echoes from self unless forced
     if (!force && snapshot.deviceId === this.deviceId) return false;
 
-    // Do not overwrite if local state was modified within the last 30 seconds
-    if (!force && this.lastLocalMutationTime && Date.now() - this.lastLocalMutationTime < 30000) {
-      return false;
-    }
-
-    // Check revision: NEVER overwrite newer local state with an older remote snapshot!
-    if (!force && snapshot.revision && this.currentRevision && snapshot.revision < this.currentRevision) {
-      return false;
-    }
-
-    // Never overwrite newer local state with an older remote timestamp
-    if (!force && snapshot.timestamp && this.lastLocalMutationTime && snapshot.timestamp < this.lastLocalMutationTime) {
-      return false;
-    }
-
     // Check signature to avoid redundant re-renders
     const signature = this.generateSignature(snapshot);
     if (!force && signature === this.lastAppliedSignature) {
+      return false;
+    }
+
+    // If local mutation happened after this snapshot was created, keep newer local state
+    // (with 1.5s tolerance for minor device clock skew)
+    if (!force && this.lastLocalMutationTime && (snapshot.timestamp + 1500) < this.lastLocalMutationTime) {
       return false;
     }
 
@@ -308,19 +292,14 @@ class SyncService {
     try {
       const { cartItems, budgets, transactions, sessionLocation, sessionDate } = snapshot.data;
 
-      // 1. Sync Cart Items (Never wipe local items with empty remote cart unless forced)
+      // 1. Sync Cart Items (Additions, quantity updates, removals, and clearing)
       if (Array.isArray(cartItems)) {
-        const localItems = await db.cartItems.toArray();
-        if (cartItems.length === 0 && localItems.length > 0 && !force) {
-          // Keep existing local cart items safely
-        } else {
-          await db.transaction('rw', db.cartItems, async () => {
-            await db.cartItems.clear();
-            if (cartItems.length > 0) {
-              await db.cartItems.bulkPut(cartItems);
-            }
-          });
-        }
+        await db.transaction('rw', db.cartItems, async () => {
+          await db.cartItems.clear();
+          if (cartItems.length > 0) {
+            await db.cartItems.bulkPut(cartItems);
+          }
+        });
       }
 
       // 2. Sync Budgets
@@ -361,7 +340,7 @@ class SyncService {
     } finally {
       setTimeout(() => {
         this.isApplyingRemote = false;
-      }, 100);
+      }, 50);
     }
   }
 
@@ -407,29 +386,15 @@ class SyncService {
         }
       }
 
-            // 1b. Post to Firebase Cloud Firestore for instant millisecond push
+      // 1b. Post to Firebase Cloud Firestore for instant millisecond push
       try {
         const syncDocRef = doc(firestore, 'sync', SINGLE_USER);
-        setDoc(syncDocRef, {
+        await setDoc(syncDocRef, {
           snapshot,
           updatedAt: Date.now(),
-        }).catch((err) => {
-          console.warn('Firestore setDoc note:', err);
         });
       } catch (e) {
         console.warn('Firestore setDoc error:', e);
-      }
-
-      // 2. Post to central cloud store
-      if (typeof window !== 'undefined' && navigator.onLine) {
-        fetch(CLOUD_DIRECT_URL, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: 'smartgrocery_singleuser_naomiiracle',
-            data: snapshot,
-          }),
-        }).catch(() => {});
       }
 
       const timeStr = new Date().toLocaleTimeString('id-ID', {

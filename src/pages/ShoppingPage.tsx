@@ -840,24 +840,6 @@ export const ShoppingPage: React.FC = () => {
         onConfirm={handleConfirmCheckout}
         onCancel={() => setIsCheckoutDialogOpen(false)}
       />
-
-      {/* Floating Action Button: + Tambah Barang Simpel (Tetap Floating di atas Bottom Nav) */}
-      <div
-        className="fixed left-0 right-0 z-30 flex justify-center pointer-events-none px-4"
-        style={{ bottom: 'calc(env(safe-area-inset-bottom, 12px) + 72px)' }}
-      >
-        <div className="w-full max-w-[430px] flex justify-end pointer-events-auto pr-1">
-          <button
-            type="button"
-            onClick={() => openAddItemSheet(null)}
-            className="w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 active:scale-90 text-white shadow-xl shadow-blue-600/35 border-2 border-white/90 dark:border-slate-800 flex items-center justify-center transition-all cursor-pointer group"
-            title={t('addItemSimple', language)}
-            aria-label={t('addItemSimple', language)}
-          >
-            <Plus className="w-7 h-7 stroke-[3] text-white transition-transform group-hover:rotate-90 group-hover:scale-110 duration-200" />
-          </button>
-        </div>
-      </div>
     </div>
   );
 };

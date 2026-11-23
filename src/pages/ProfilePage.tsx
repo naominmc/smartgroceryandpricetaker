@@ -683,15 +683,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
             </div>
           </div>
 
-          {/* Login Time & Google Linked Status */}
-          <div className="flex items-center justify-between text-[10px] text-text-secondary dark:text-slate-400 pt-0.5">
-            <span className="flex items-center gap-1">
-              <Clock className="w-3 h-3 text-gray-400 dark:text-slate-500" />
-              {t('loginTimeLabel', language)}: <strong className="font-semibold text-text-main dark:text-slate-300">{userProfile.loginTime}</strong>
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+          {/* Google Linked Status */}
+          <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 pt-0.5">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
             <span>{t('googleOAuthVerified', language)}</span>
           </div>
@@ -1144,8 +1137,14 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
 
       {/* Warning Modal: Konfirmasi Pulihkan Struk Belanja */}
       {txToRestore && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-[340px] bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-modal animate-scale-up border dark:border-slate-800 space-y-3.5">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+          onClick={() => setTxToRestore(null)}
+        >
+          <div
+            className="w-full max-w-[340px] bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-modal animate-scale-up border dark:border-slate-800 space-y-3.5"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center gap-2.5 text-blue-600 dark:text-blue-400">
               <div className="w-9 h-9 rounded-full bg-blue-50 dark:bg-blue-950/80 flex items-center justify-center flex-shrink-0">
                 <RotateCcw className="w-5 h-5" />
@@ -1183,13 +1182,16 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
               <button
                 type="button"
                 onClick={async () => {
-                  await db.transactions.update(txToRestore.id, {
-                    isDeleted: false,
-                    deletedAt: undefined,
-                  });
-                  syncService.notifyChange();
-                  showToast(language === 'zh' ? '收据已成功恢复至历史记录！🎉' : language === 'en' ? 'Receipt successfully restored to History! 🎉' : 'Struk berhasil dipulihkan ke Riwayat! 🎉');
+                  const target = txToRestore;
                   setTxToRestore(null);
+                  if (target) {
+                    await db.transactions.update(target.id, {
+                      isDeleted: false,
+                      deletedAt: undefined,
+                    });
+                    syncService.notifyChange();
+                    showToast(language === 'zh' ? '收据已成功恢复至历史记录！🎉' : language === 'en' ? 'Receipt successfully restored to History! 🎉' : 'Struk berhasil dipulihkan ke Riwayat! 🎉');
+                  }
                 }}
                 className="flex-1 py-2.5 px-3 rounded-xl bg-primary hover:bg-primary-hover active:scale-95 text-white font-bold text-xs shadow-soft min-h-[42px] cursor-pointer"
               >
@@ -1202,8 +1204,14 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
 
       {/* Warning Modal: Konfirmasi Hapus Struk Permanen */}
       {txToDeletePermanent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-[340px] bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-modal animate-scale-up border border-rose-200 dark:border-rose-950 space-y-3.5">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+          onClick={() => setTxToDeletePermanent(null)}
+        >
+          <div
+            className="w-full max-w-[340px] bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-modal animate-scale-up border border-rose-200 dark:border-rose-950 space-y-3.5"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center gap-2.5 text-danger dark:text-rose-400">
               <div className="w-9 h-9 rounded-full bg-red-50 dark:bg-rose-950/80 flex items-center justify-center flex-shrink-0">
                 <Trash2 className="w-5 h-5 text-rose-600 dark:text-rose-400" />
@@ -1241,10 +1249,13 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
               <button
                 type="button"
                 onClick={async () => {
-                  await db.transactions.delete(txToDeletePermanent.id);
-                  syncService.notifyChange();
-                  showToast(language === 'zh' ? '收据已永久删除。' : language === 'en' ? 'Receipt has been permanently deleted.' : 'Struk telah dihapus permanen.');
+                  const target = txToDeletePermanent;
                   setTxToDeletePermanent(null);
+                  if (target) {
+                    await db.transactions.delete(target.id);
+                    syncService.notifyChange();
+                    showToast(language === 'zh' ? '收据已永久删除。' : language === 'en' ? 'Receipt has been permanently deleted.' : 'Struk telah dihapus permanen.');
+                  }
                 }}
                 className="flex-1 py-2.5 px-3 rounded-xl bg-danger hover:bg-red-700 active:scale-95 text-white font-bold text-xs shadow-soft min-h-[42px] cursor-pointer"
               >
