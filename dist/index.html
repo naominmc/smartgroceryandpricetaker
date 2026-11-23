@@ -242,7 +242,7 @@
         <div id="cartActionBar" class="pt-1 flex flex-col gap-1.5">
           <button id="btnCheckout" class="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-sm shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 transition active:scale-98">
             <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-            <span>Selesaikan Belanja (Checkout Struk BCA)</span>
+            <span>Checkout (Struk BCA)</span>
           </button>
           <div class="flex items-center justify-end px-1">
             <button id="btnClearCart" class="py-1 px-2.5 text-[11px] font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950 rounded-lg transition flex items-center gap-1">
@@ -1655,7 +1655,7 @@
       document.getElementById('statsTotalSaved').textContent = formatRp(totalSaved);
 
       if (AppState.history.length === 0) {
-        container.innerHTML = `<div class="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-dashed border-slate-200 dark:border-slate-700 text-center text-xs text-slate-400">Belum ada riwayat transaksi belanja. Selesaikan belanja di troli untuk menyimpan struk.</div>`;
+        container.innerHTML = `<div class="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-dashed border-slate-200 dark:border-slate-700 text-center text-xs text-slate-400">Belum ada riwayat transaksi belanja. Checkout di troli untuk menyimpan struk.</div>`;
         return;
       }
 

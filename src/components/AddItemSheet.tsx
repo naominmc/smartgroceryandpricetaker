@@ -380,20 +380,19 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
             </div>
           )}
 
-          {/* Rekomendasi dari Riwayat Pembelian (2 Kolom Kebawah) */}
+          {/* Rekomendasi dari Riwayat Pembelian (Horizontal Scroll Max 6 Item) */}
           {recommendations.length > 0 && (
             <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-slate-800 p-2.5 rounded-2xl border border-amber-200/80 dark:border-amber-900/50 space-y-1.5">
               <div className="flex items-center justify-between text-xs font-bold text-amber-900 dark:text-amber-200">
-                <span className="flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
+                <span>
                   {t('recommendationsHistory', language)}
                 </span>
                 <span className="text-[10px] text-amber-700 dark:text-amber-400 font-normal">
                   {t('clickToAutofill', language)}
                 </span>
               </div>
-              <div className="grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pr-0.5 no-scrollbar">
-                {recommendations.slice(0, 12).map((rec) => (
+              <div className="flex gap-2 overflow-x-auto no-scrollbar scroll-smooth pb-0.5">
+                {recommendations.slice(0, 6).map((rec) => (
                   <button
                     key={rec.name}
                     type="button"
@@ -406,7 +405,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
                       setValue('unitPrice', rec.lastUnitPrice || 0, { shouldValidate: true, shouldDirty: true });
                       setValue('discounts', rec.discounts || [], { shouldValidate: true, shouldDirty: true });
                     }}
-                    className="w-full text-left text-[11px] font-semibold bg-white dark:bg-slate-800 hover:bg-amber-100/80 dark:hover:bg-amber-900/60 text-slate-800 dark:text-slate-100 p-2 rounded-xl border border-amber-200/80 dark:border-slate-700 shadow-2xs transition-all active:scale-95 flex flex-col justify-between min-h-[44px] cursor-pointer"
+                    className="flex-shrink-0 min-w-[130px] max-w-[155px] text-left text-[11px] font-semibold bg-white dark:bg-slate-800 hover:bg-amber-100/80 dark:hover:bg-amber-900/60 text-slate-800 dark:text-slate-100 p-2 rounded-xl border border-amber-200/80 dark:border-slate-700 shadow-2xs transition-all active:scale-95 flex flex-col justify-between min-h-[44px] cursor-pointer"
                   >
                     <span className="truncate w-full font-bold text-slate-800 dark:text-slate-100 leading-tight">
                       {rec.name}

@@ -106,57 +106,65 @@ export const HistoryTransactionCard: React.FC<HistoryTransactionCardProps> = ({ 
         {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
       </button>
 
-      {/* Expanded Items Breakdown */}
+      {/* Expanded Items Breakdown: Gabungan Rincian Menyerupai Struk (Single Card Ringkas) */}
       {isExpanded && (
-        <div className="mt-2.5 space-y-2 pt-2 border-t border-dashed border-gray-200 dark:border-slate-700 animate-fade-in">
-          {transaction.items.map((item, idx) => (
-            <div
-              key={item.id || idx}
-              className="bg-gray-50/70 dark:bg-slate-700/60 p-2.5 rounded-xl border border-gray-200/80 dark:border-slate-650 flex items-center justify-between text-xs"
-            >
-              <div className="flex-1 min-w-0 pr-2">
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <span className="text-[9px] font-semibold text-gray-500 dark:text-slate-300 bg-gray-200/60 dark:bg-slate-600 px-1.5 py-0.2 rounded">
-                    {translateCategory(item.categorySnapshot, language)}
+        <div className="mt-3 bg-gray-50/90 dark:bg-slate-750/90 rounded-2xl p-3 sm:p-3.5 border border-gray-200/90 dark:border-slate-700 font-sans text-xs shadow-xs space-y-2.5 animate-fade-in">
+          {/* Header Struk Mini */}
+          <div className="text-[10px] font-bold text-text-secondary dark:text-slate-400 uppercase tracking-wider pb-1.5 border-b border-dashed border-gray-300 dark:border-slate-650 flex justify-between items-center">
+            <span>{language === 'zh' ? '商品明细' : language === 'en' ? 'Item Details' : 'Rincian Belanja'}</span>
+            <span>{language === 'zh' ? '小计' : language === 'en' ? 'Subtotal' : 'Subtotal'}</span>
+          </div>
+
+          {/* Daftar Produk dalam Satu Kotak Ringkas */}
+          <div className="space-y-2 divide-y divide-gray-200/60 dark:divide-slate-700/60">
+            {transaction.items.map((item, idx) => (
+              <div key={item.id || idx} className="pt-2 first:pt-0 flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-bold text-text-main dark:text-slate-100 text-xs truncate leading-tight">
+                      {item.nameSnapshot}
+                    </span>
+                    <span className="text-[9px] font-medium text-gray-500 dark:text-slate-400 bg-gray-200/70 dark:bg-slate-700 px-1.5 py-0.2 rounded">
+                      {translateCategory(item.categorySnapshot, language)}
+                    </span>
+                    {item.discounts && item.discounts.length > 0 && (
+                      <span className="text-[9px] font-bold text-danger dark:text-rose-300 bg-red-50 dark:bg-rose-950/70 px-1 rounded">
+                        {language === 'zh' ? '折扣' : language === 'en' ? 'Disc' : 'Diskon'} -{item.discounts.join('% -')}%
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[10.5px] text-text-secondary dark:text-slate-400 mt-0.5">
+                    {item.quantity} {item.unit} × {formatRupiah(item.unitPrice)}
+                  </div>
+                </div>
+
+                <div className="text-right flex-shrink-0">
+                  <span className="font-extrabold text-text-main dark:text-slate-100 text-xs block">
+                    {formatRupiah(item.finalSubtotal)}
                   </span>
-                  {item.discounts.length > 0 && (
-                    <span className="text-[9px] font-bold text-danger dark:text-rose-300 bg-red-50 dark:bg-rose-950/70 px-1 rounded">
-                      {language === 'zh' ? '折扣' : language === 'en' ? 'Discount' : 'Diskon'} -{item.discounts.join('% -')}%
+                  {item.discountAmount > 0 && (
+                    <span className="text-[10px] font-semibold text-success dark:text-emerald-400 block">
+                      -{formatRupiah(item.discountAmount)}
                     </span>
                   )}
                 </div>
-                <h4 className="font-semibold text-text-main dark:text-slate-100 truncate text-xs">
-                  {item.nameSnapshot}
-                </h4>
-                <div className="text-[11px] text-text-secondary dark:text-slate-400">
-                  {item.quantity} {item.unit} × {formatRupiah(item.unitPrice)}
-                </div>
               </div>
+            ))}
+          </div>
 
-              <div className="text-right flex-shrink-0">
-                <span className="font-bold text-text-main dark:text-slate-100 block">
-                  {formatRupiah(item.finalSubtotal)}
-                </span>
-                {item.discountAmount > 0 && (
-                  <span className="text-[10px] text-success dark:text-emerald-400 block">
-                    {t('savedAmount', language, { amount: formatRupiah(item.discountAmount) })}
-                  </span>
-                )}
-              </div>
-            </div>
-          ))}
-
-          {/* Totals Summary */}
-          <div className="bg-blue-50/50 dark:bg-blue-950/40 p-2.5 rounded-xl border border-blue-100 dark:border-blue-900/60 text-xs space-y-1">
-            <div className="flex justify-between text-gray-600 dark:text-slate-400">
+          {/* Rincian Total Struk (Menyatu dalam Satu Kotak) */}
+          <div className="pt-2.5 border-t border-dashed border-gray-300 dark:border-slate-600 space-y-1 text-xs">
+            <div className="flex justify-between text-text-secondary dark:text-slate-400 text-[11px]">
               <span>{t('grossSubtotalLabel', language)}</span>
-              <span className="text-gray-900 dark:text-slate-200">{formatRupiah(transaction.grossTotal)}</span>
+              <span className="text-text-main dark:text-slate-200 font-semibold">{formatRupiah(transaction.grossTotal)}</span>
             </div>
-            <div className="flex justify-between text-success dark:text-emerald-400 font-medium">
-              <span>{t('discountSavingsLabel', language)}</span>
-              <span>-{formatRupiah(transaction.discountTotal)}</span>
-            </div>
-            <div className="flex justify-between text-primary dark:text-blue-400 font-bold text-sm pt-1 border-t border-blue-200/50 dark:border-blue-800/40">
+            {transaction.discountTotal > 0 && (
+              <div className="flex justify-between text-success dark:text-emerald-400 font-medium text-[11px]">
+                <span>{t('discountSavingsLabel', language)}</span>
+                <span>-{formatRupiah(transaction.discountTotal)}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-primary dark:text-blue-400 font-black text-sm pt-1.5 border-t border-gray-200 dark:border-slate-700">
               <span>{t('finalPaidLabel', language)}</span>
               <span>{formatRupiah(transaction.finalTotal)}</span>
             </div>

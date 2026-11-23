@@ -4,7 +4,6 @@ import confetti from 'canvas-confetti';
 import {
   Plus,
   Trash2,
-  Sparkles,
   History,
   MapPin,
   Calendar,
@@ -365,14 +364,55 @@ export const ShoppingPage: React.FC = () => {
       {/* PWA Installation Prompt if applicable */}
       <PWAInstallBanner />
 
-      {/* Top Header */}
-      <div className="pt-1">
-        <div className="flex items-center gap-1.5 text-xs text-text-secondary dark:text-slate-400 font-medium">
-          <span>{formatPeriodLabel(currentPeriod, language)}</span>
+      {/* Top Header: Belanja Bulanan di atas, Periode di bawah, sejajar dengan Lokasi & Kalender di sisi kanan */}
+      <div className="pt-1 flex items-center justify-between gap-2.5">
+        {/* Kiri: Judul Belanja Bulanan di atas, Periode di bawah */}
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl font-extrabold text-text-main dark:text-slate-100 tracking-tight leading-tight">
+            {language === 'zh' ? '月度购物清单' : language === 'en' ? 'Monthly Shopping' : 'Belanja Bulanan'}
+          </h1>
+          <div className="text-xs text-text-secondary dark:text-slate-400 font-medium mt-0.5">
+            {formatPeriodLabel(currentPeriod, language)}
+          </div>
         </div>
-        <h1 className="text-xl font-extrabold text-text-main dark:text-slate-100 tracking-tight">
-          {language === 'zh' ? '月度购物清单' : language === 'en' ? 'Monthly Shopping' : 'Belanja Bulanan'}
-        </h1>
+
+        {/* Kanan: Lokasi Supermarket & Ikon Kalender */}
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <button
+            type="button"
+            onClick={() => setIsLocationModalOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-teal-50 dark:bg-teal-950/80 border border-teal-200/80 dark:border-teal-800/80 text-[#0f766e] dark:text-teal-400 hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-colors shadow-2xs cursor-pointer max-w-[140px] sm:max-w-[180px] min-h-[36px]"
+            title="Klik untuk memilih supermarket (Jabodetabek)"
+          >
+            <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-[#0f766e] dark:text-teal-400" />
+            <span className="text-[11px] font-extrabold uppercase truncate leading-tight">
+              {sessionLocation || t('selectSupermarket', language)}
+            </span>
+            <ChevronRight className="w-3 h-3 flex-shrink-0 text-teal-600 dark:text-teal-400" />
+          </button>
+
+          {/* Ikon Kalender Saja (Buka picker saat ditekan, tanpa teks angka tanggal terbuka) */}
+          <div
+            onClick={(e) => {
+              const input = e.currentTarget.querySelector('input') as HTMLInputElement | null;
+              if (input && typeof input.showPicker === 'function') {
+                try {
+                  input.showPicker();
+                } catch {}
+              }
+            }}
+            className="w-9 h-9 flex items-center justify-center bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-xl border border-gray-200 dark:border-slate-700 cursor-pointer shadow-xs relative transition-colors"
+            title="Pilih tanggal belanja"
+          >
+            <Calendar className="w-4 h-4 text-primary dark:text-blue-400 pointer-events-none flex-shrink-0" />
+            <input
+              type="date"
+              value={sessionDate}
+              onChange={(e) => setSessionDate(e.target.value)}
+              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Success / Error Alerts */}
@@ -390,68 +430,15 @@ export const ShoppingPage: React.FC = () => {
         </div>
       )}
 
-      {/* Sesi Belanja: Lokasi & Tanggal Supermarket (Model Bioskop JABODETABEK) */}
-      <div className="bg-card dark:bg-slate-800 rounded-2xl p-2.5 border border-border dark:border-slate-700 shadow-soft flex items-center justify-between gap-2">
-        <button
-          type="button"
-          onClick={() => setIsLocationModalOpen(true)}
-          className="flex items-center gap-2.5 flex-1 min-w-0 text-left hover:opacity-90 active:scale-[0.99] transition-all cursor-pointer group"
-          title="Klik untuk memilih supermarket (Jabodetabek)"
-        >
-          <div className="p-2 rounded-xl bg-teal-50 dark:bg-teal-950/80 text-[#0f766e] dark:text-teal-400 flex-shrink-0 group-hover:bg-teal-100 dark:group-hover:bg-teal-900/50 transition-colors shadow-2xs">
-            <MapPin className="w-4 h-4" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <span className="text-[10px] font-extrabold text-[#0f766e] dark:text-teal-400 tracking-wider bg-teal-50 dark:bg-teal-950/80 border border-teal-200/60 dark:border-teal-800/60 px-1.5 py-0.2 rounded-md uppercase">
-                {selectedCity.toUpperCase()}
-              </span>
-            </div>
-            <div className="flex items-center gap-1 uppercase min-w-0">
-              <span className="text-xs font-extrabold text-text-main dark:text-slate-100 leading-tight">
-                {(sessionLocation || t('selectSupermarket', language)).toUpperCase()}
-              </span>
-              <ChevronRight className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 flex-shrink-0" />
-            </div>
-          </div>
-        </button>
-
-        <div
-          onClick={(e) => {
-            const input = e.currentTarget.querySelector('input') as HTMLInputElement | null;
-            if (input && typeof input.showPicker === 'function') {
-              try {
-                input.showPicker();
-              } catch {}
-            }
-          }}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-100 dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 flex-shrink-0 cursor-pointer shadow-xs relative"
-        >
-          <Calendar className="w-3.5 h-3.5 text-primary dark:text-blue-400 pointer-events-none flex-shrink-0" />
-          <span className="text-xs font-bold text-gray-900 dark:text-slate-100 pointer-events-none whitespace-nowrap">
-            {(() => {
-              if (!sessionDate) return '';
-              const parts = sessionDate.split('-');
-              if (parts.length === 3) {
-                return `${parts[2]}/${parts[1]}/${parts[0]}`;
-              }
-              return sessionDate;
-            })()}
-          </span>
-          <input
-            type="date"
-            value={sessionDate}
-            onChange={(e) => setSessionDate(e.target.value)}
-            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-          />
-        </div>
-      </div>
-
       {/* Sticky Floating Container: Budget Safety Card & Quick Checkout Bar */}
       <div className="sticky top-0 z-20 space-y-2 pt-2.5 pb-2 bg-white/98 dark:bg-slate-900/98 backdrop-blur-md -mx-4 px-4 shadow-sm border-b border-gray-100 dark:border-slate-800 transition-all duration-200">
         {isMinimized ? (
-          /* Minimized Compact Floating Bar (~48px tinggi, tidak menutupi layar, info tetap jelas) */
-          <div className="bg-card dark:bg-slate-800 rounded-2xl p-2.5 border border-border dark:border-slate-700 shadow-soft flex items-center justify-between gap-2 animate-fade-in">
+          /* Minimized Compact Floating Bar (~48px tinggi, seluruh kotak bisa diklik untuk buka detail) */
+          <div
+            onClick={() => setIsManualExpanded(true)}
+            className="bg-card dark:bg-slate-800 rounded-2xl p-2.5 border border-border dark:border-slate-700 shadow-soft flex items-center justify-between gap-2 animate-fade-in cursor-pointer hover:border-gray-300 dark:hover:border-slate-600 transition-colors"
+            title="Klik untuk melihat rincian anggaran"
+          >
             {/* Info Sisa Anggaran & Total Belanja */}
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 flex-wrap">
@@ -493,41 +480,37 @@ export const ShoppingPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Aksi Cepat: Kosongkan, Checkout, dan Toggle Detail */}
-            <div className="flex items-center gap-1.5 flex-shrink-0">
+            {/* Aksi Cepat: Kosongkan dan Checkout */}
+            <div className="flex items-center gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
               {cartItems.length > 0 && (
                 <>
                   <button
                     type="button"
-                    onClick={() => setIsClearCartConfirmOpen(true)}
-                    className="p-1.5 text-danger dark:text-rose-400 hover:bg-red-50 dark:hover:bg-rose-950/70 rounded-xl transition-all cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsClearCartConfirmOpen(true);
+                    }}
+                    className="w-9 h-9 bg-gray-100/90 dark:bg-slate-700/80 hover:bg-red-50 dark:hover:bg-rose-950/70 border border-gray-200 dark:border-slate-600 text-danger dark:text-rose-400 rounded-xl transition-all cursor-pointer flex items-center justify-center shadow-xs active:scale-95"
                     title={t('clearCartBtn', language)}
+                    aria-label={t('clearCartBtn', language)}
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-4 h-4" />
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => setIsCheckoutDialogOpen(true)}
-                    className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs px-2.5 py-1.5 rounded-xl shadow-soft transition-all flex items-center gap-1 cursor-pointer min-h-[36px]"
-                    title={t('checkoutBtn', language)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsCheckoutDialogOpen(true);
+                    }}
+                    className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs px-3 py-2 rounded-xl shadow-soft transition-all flex items-center gap-1 cursor-pointer min-h-[36px]"
+                    title={t('finishShoppingNow', language)}
                   >
                     <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                    <span>{t('checkoutBtn', language)}</span>
+                    <span>{t('finishShoppingNow', language)}</span>
                   </button>
                 </>
               )}
-
-              {/* Tombol Expand / Buka Detail Lengkap */}
-              <button
-                type="button"
-                onClick={() => setIsManualExpanded(true)}
-                className="px-2 py-1.5 text-text-secondary dark:text-slate-400 hover:text-text-main dark:hover:text-slate-100 bg-gray-100/80 dark:bg-slate-700/80 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl transition-all flex items-center gap-0.5 text-[10px] font-bold cursor-pointer min-h-[36px]"
-                title={t('detail', language)}
-              >
-                <span>{t('detail', language)}</span>
-                <ChevronDown className="w-3.5 h-3.5" />
-              </button>
             </div>
           </div>
         ) : (
@@ -599,12 +582,11 @@ export const ShoppingPage: React.FC = () => {
         )}
       </div>
 
-      {/* Rekomendasi Barang dari Riwayat Pembelian (Beli Lagi 1-Klik) */}
+      {/* Rekomendasi Barang dari Riwayat Pembelian (Beli Lagi 1-Klik - Maks 6 Item) */}
       {recommendations.length > 0 && (
         <div className="bg-gradient-to-r from-amber-50/70 via-orange-50/40 to-blue-50/50 dark:from-slate-800 dark:to-slate-850 p-3.5 rounded-card border border-amber-200/70 dark:border-slate-700 shadow-soft space-y-2.5 animate-fade-in">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-text-main dark:text-slate-100">
-              <Sparkles className="w-4 h-4 text-amber-500 fill-amber-400" />
+            <div className="flex items-center text-xs font-bold text-text-main dark:text-slate-100">
               <span>{t('recommendationsTitle', language)}</span>
             </div>
             <span className="text-[10px] text-text-secondary dark:text-slate-400 font-medium">
@@ -613,7 +595,7 @@ export const ShoppingPage: React.FC = () => {
           </div>
 
           <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar scroll-smooth">
-            {recommendations.slice(0, 10).map((rec) => {
+            {recommendations.slice(0, 6).map((rec) => {
               const inCart = cartItems.some(
                 (ci) => (ci.nameSnapshot || (ci as any).name || '').toLowerCase() === rec.name.toLowerCase()
               );
