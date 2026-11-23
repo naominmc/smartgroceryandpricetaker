@@ -56,11 +56,13 @@ export const ShoppingPage: React.FC = () => {
     language,
   } = useStore();
 
-  const [currentPeriod] = useState(getCurrentMonthPeriod());
+  const currentPeriod = useMemo(() => {
+    return sessionDate ? sessionDate.substring(0, 7) : getCurrentMonthPeriod();
+  }, [sessionDate]);
   const [budgetLimit, setBudgetLimit] = useState(1200000);
   const [isEditingBudget, setIsEditingBudget] = useState(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
-  const [newBudgetInput, setNewBudgetInput] = useState('');
+  const [newBudgetInput, setNewBudgetInput] = useState('1200000');
   const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
   const [checkoutSuccessMessage, setCheckoutSuccessMessage] = useState<string | null>(null);
   const [checkoutErrorMessage, setCheckoutErrorMessage] = useState<string | null>(null);
@@ -179,10 +181,13 @@ export const ShoppingPage: React.FC = () => {
     return Array.from(itemMap.values());
   }, [allTransactions]);
 
-  const budgetRecord = useLiveQuery(() => db.budgets.where('period').equals(currentPeriod).first());
+  const budgetRecord = useLiveQuery(
+    () => db.budgets.where('period').equals(currentPeriod).first(),
+    [currentPeriod]
+  );
 
   useEffect(() => {
-    if (budgetRecord) {
+    if (budgetRecord && budgetRecord.limit > 0) {
       setBudgetLimit(budgetRecord.limit);
       setNewBudgetInput(budgetRecord.limit.toString());
     }
@@ -283,9 +288,11 @@ export const ShoppingPage: React.FC = () => {
   };
 
   const handleSaveBudgetLimit = async () => {
-    const parsed = parseInt(newBudgetInput.replace(/\D/g, ''), 10) || 0;
-    await groceryService.setBudget(currentPeriod, parsed);
-    setBudgetLimit(parsed);
+    const rawDigits = (newBudgetInput || budgetLimit.toString()).replace(/\D/g, '');
+    const parsed = parseInt(rawDigits, 10);
+    const finalVal = isNaN(parsed) || parsed <= 0 ? 1200000 : parsed;
+    await groceryService.setBudget(currentPeriod, finalVal);
+    setBudgetLimit(finalVal);
     setIsEditingBudget(false);
   };
 
@@ -505,7 +512,10 @@ export const ShoppingPage: React.FC = () => {
               budgetStatus={budgetStatus}
               itemCount={cartItems.length}
               totalSavings={totals.discountTotal}
-              onEditBudget={() => setIsEditingBudget(true)}
+              onEditBudget={() => {
+                setNewBudgetInput(budgetLimit.toString());
+                setIsEditingBudget(true);
+              }}
             />
 
             {/* Top Checkout Action Bar - Cepat checkout tanpa perlu scroll */}
@@ -717,7 +727,7 @@ export const ShoppingPage: React.FC = () => {
               {t('setMonthlyBudgetDesc', language, { period: formatPeriodLabel(currentPeriod, language) })}
             </p>
 
-            <div className="space-y-1.5 mb-4">
+            <div className="space-y-2 mb-4">
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-sm text-gray-400 dark:text-slate-500">
                   Rp
@@ -725,11 +735,25 @@ export const ShoppingPage: React.FC = () => {
                 <input
                   type="text"
                   inputMode="numeric"
-                  value={formatNumberWithDots(newBudgetInput)}
+                  value={formatNumberWithDots(newBudgetInput || budgetLimit.toString())}
                   onChange={(e) => setNewBudgetInput(e.target.value.replace(/\D/g, ''))}
                   placeholder="1.200.000"
                   className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 font-bold text-base outline-none focus:ring-2 focus:ring-primary min-h-[44px]"
                 />
+              </div>
+
+              {/* Preset Chips */}
+              <div className="flex gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
+                {[500000, 1000000, 1200000, 1500000, 2000000].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setNewBudgetInput(preset.toString())}
+                    className="text-[11px] font-bold px-2.5 py-1 rounded-lg border border-gray-200 dark:border-slate-700 hover:border-primary hover:text-primary dark:hover:text-blue-400 bg-gray-50 dark:bg-slate-800 text-gray-700 dark:text-slate-300 transition-all whitespace-nowrap cursor-pointer"
+                  >
+                    {formatRupiah(preset)}
+                  </button>
+                ))}
               </div>
             </div>
 

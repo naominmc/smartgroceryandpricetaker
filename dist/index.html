@@ -1040,6 +1040,7 @@
     };
 
     function saveState() {
+      AppState.lastLocalMutation = Date.now();
       Storage.set('theme', AppState.theme);
       Storage.set('budgetCap', AppState.budgetCap);
       Storage.set('sessionLocation', AppState.sessionLocation);
@@ -2014,27 +2015,18 @@
       document.getElementById('itemForm').addEventListener('submit', (e) => {
         e.preventDefault();
         const rawPrice = priceInput.value.trim();
-        const unitPrice = parseFloat(rawPrice);
-        const err = document.getElementById('errorItemPrice');
+        let unitPrice = parseFloat(rawPrice);
+        const name = document.getElementById('inputItemName').value.trim() || 'Barang Belanja';
 
-        // Validasi ketat: Tolak harga bernilai negatif atau tidak valid
-        if (rawPrice === '' || isNaN(unitPrice) || unitPrice < 0 || rawPrice.includes('-')) {
-          err.classList.remove('hidden');
-          priceInput.classList.add('border-rose-500', 'ring-2', 'ring-rose-500');
-          priceInput.focus();
-          showToast('Ditolak! Harga barang tidak boleh bernilai negatif.', 'alert-triangle', 'danger');
-          playBeep(450, 0.2);
-          return;
+        // Auto-match price from reference if blank or 0
+        if (rawPrice === '' || isNaN(unitPrice) || unitPrice <= 0) {
+          const match = AppState.referencePrices.find(r => r.name.toLowerCase().includes(name.toLowerCase()));
+          unitPrice = match ? match.price : 10000;
         }
 
-        const qty = parseInt(document.getElementById('inputItemQty').value) || 1;
-        if (qty <= 0) {
-          showToast('Ditolak! Jumlah (Qty) barang minimal 1.', 'alert-triangle', 'danger');
-          return;
-        }
+        const qty = Math.max(1, parseInt(document.getElementById('inputItemQty').value) || 1);
 
         const editId = document.getElementById('editItemId').value;
-        const name = document.getElementById('inputItemName').value.trim();
         const cat = document.getElementById('inputItemCategory').value;
         const unit = document.getElementById('inputItemUnit').value;
         const discRaw = document.getElementById('inputItemDiscount').value.trim();
@@ -2042,11 +2034,7 @@
         const note = document.getElementById('inputItemNote').value.trim();
 
         const discCalc = calculateDiscount(unitPrice, discRaw, discType);
-        if (discCalc.finalUnitPrice < 0) {
-          showToast('Ditolak! Diskon melebihi harga satuan barang.', 'alert-triangle', 'danger');
-          return;
-        }
-        const subtotal = discCalc.finalUnitPrice * qty;
+        const subtotal = Math.max(0, discCalc.finalUnitPrice * qty);
 
         if (editId) {
           const it = AppState.cart.find(i => i.id === editId);
@@ -2434,6 +2422,8 @@
         apply(snap, origin, force = false) {
           if (!snap || snap.user !== 'naomiiracle') return;
           if (!force && snap.deviceId === this.deviceId) return;
+          if (!force && snap.timestamp && AppState.lastLocalMutation && snap.timestamp < AppState.lastLocalMutation) return;
+          if (!force && AppState.lastLocalMutation && (Date.now() - AppState.lastLocalMutation < 15000)) return;
           const sig = this.signature(snap.data);
           if (!force && sig === this.lastSignature) return;
 
