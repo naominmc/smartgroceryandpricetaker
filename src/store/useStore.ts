@@ -18,6 +18,7 @@ export interface UserProfile {
   loginTime: string;
   isGoogleLinked: boolean;
   passwordMasked: string;
+  isPwaDismissed?: boolean;
 }
 
 interface AppState {
@@ -87,6 +88,11 @@ interface AppState {
   // Online / Offline state
   isOnline: boolean;
   setIsOnline: (online: boolean) => void;
+
+  // Refresh & Reload Indicator
+  isRefreshing: boolean;
+  triggerRefresh: () => void;
+  setIsRefreshing: (refreshing: boolean) => void;
 }
 
 const getInitialTheme = (): ThemeMode => {
@@ -122,6 +128,7 @@ const getInitialProfile = (): UserProfile => {
       loginTime: localStorage.getItem('sg_loginTime') || '22 Nov 2026, 11.12 WIB',
       isGoogleLinked: true,
       passwordMasked: validPw,
+      isPwaDismissed: localStorage.getItem('smart_grocery_pwa_dismissed') === 'true',
     };
   }
   return {
@@ -246,6 +253,13 @@ export const useStore = create<AppState>((set, get) => {
           if (data.avatarUrl !== undefined) localStorage.setItem('sg_avatarUrl', data.avatarUrl);
           if (data.currency !== undefined) localStorage.setItem('sg_currency', data.currency);
           if (data.passwordMasked !== undefined) localStorage.setItem('sg_password', data.passwordMasked);
+          if (data.isPwaDismissed !== undefined) {
+            if (data.isPwaDismissed) {
+              localStorage.setItem('smart_grocery_pwa_dismissed', 'true');
+            } else {
+              localStorage.removeItem('smart_grocery_pwa_dismissed');
+            }
+          }
         }
         return {
           userProfile: nextProfile,
@@ -315,5 +329,22 @@ export const useStore = create<AppState>((set, get) => {
 
     isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
     setIsOnline: (online) => set({ isOnline: online }),
+
+    // Refresh & Reload Indicator
+    isRefreshing: false,
+    triggerRefresh: () => {
+      if (get().isRefreshing) return;
+      set({ isRefreshing: true });
+      soundService.pop();
+      if (typeof window !== 'undefined' && (window as any).syncService) {
+        try {
+          (window as any).syncService.pullLatestSnapshot(true);
+        } catch {}
+      }
+      setTimeout(() => {
+        set({ isRefreshing: false });
+      }, 1200);
+    },
+    setIsRefreshing: (refreshing) => set({ isRefreshing: refreshing }),
   };
 });

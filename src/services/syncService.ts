@@ -17,12 +17,13 @@ export interface GrocerySnapshotData {
   currency?: string;
   cacheResetAt?: number;
   isSoundEnabled?: boolean;
+  isPwaDismissed?: boolean;
 }
 
 export interface GrocerySnapshot {
   version: number;
   revision: number;
-  user: 'naomiiracle';
+  user: string;
   deviceId: string;
   timestamp: number;
   data: GrocerySnapshotData;
@@ -61,6 +62,29 @@ class SyncService {
     lastOrigin: null,
     pendingCount: 0,
   };
+
+  public getSyncUserKey(): string {
+    if (typeof window !== 'undefined') {
+      const email = localStorage.getItem('sg_email');
+      if (email && email.includes('@')) {
+        return email.trim().toLowerCase().replace(/[^a-zA-Z0-9_]/g, '_');
+      }
+      const user = localStorage.getItem('sg_username');
+      if (user) {
+        return user.trim().toLowerCase().replace(/[^a-zA-Z0-9_]/g, '_');
+      }
+    }
+    const store = useStore.getState();
+    const email = store.userProfile?.email?.trim().toLowerCase();
+    if (email && email.includes('@')) {
+      return email.replace(/[^a-zA-Z0-9_]/g, '_');
+    }
+    const user = store.userProfile?.username?.trim().toLowerCase();
+    if (user) {
+      return user.replace(/[^a-zA-Z0-9_]/g, '_');
+    }
+    return 'naomiiracle';
+  }
 
   constructor() {
     this.deviceId = this.getOrCreateDeviceId();
@@ -117,11 +141,12 @@ class SyncService {
     }
 
     // 1. Initialize Local BroadcastChannel for instant multi-tab sync
+    const userKey = this.getSyncUserKey();
     if ('BroadcastChannel' in window) {
       try {
         this.broadcastChannel = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
         this.broadcastChannel.onmessage = (event) => {
-          if (event.data && event.data.user === SINGLE_USER) {
+          if (event.data && (event.data.user === userKey || event.data.user === SINGLE_USER)) {
             this.applySnapshot(event.data, 'local');
           }
         };
@@ -130,31 +155,8 @@ class SyncService {
       }
     }
 
-        // 1b. Firebase Firestore Realtime WebSocket Listener (instant sync)
-    try {
-      const syncDocRef = doc(firestore, 'sync', SINGLE_USER);
-      if (this.unsubscribeSnapshot) {
-        this.unsubscribeSnapshot();
-        this.unsubscribeSnapshot = null;
-      }
-      this.unsubscribeSnapshot = onSnapshot(
-        syncDocRef,
-        { includeMetadataChanges: true },
-        (docSnap) => {
-          if (docSnap.exists()) {
-            const remoteData = docSnap.data();
-            if (remoteData && remoteData.snapshot && remoteData.snapshot.user === SINGLE_USER) {
-              this.applySnapshot(remoteData.snapshot, 'remote');
-            }
-          }
-        },
-        (err) => {
-          console.warn('Firestore snapshot listener note:', err);
-        }
-      );
-    } catch (e) {
-      console.warn('Could not initialize Firestore listener:', e);
-    }
+    // 1b. Firebase Firestore Realtime WebSocket Listener (instant sync)
+    this.reconnect();
 
     // 2. Check for snapshot in URL query string (for 1-tap QR scan or link pairing)
     this.checkUrlSnapshot();
@@ -211,12 +213,44 @@ class SyncService {
   }
 
   /**
+    * Reconnects Firestore real-time listener to current user account sync room
+    */
+  public reconnect(): void {
+    if (this.unsubscribeSnapshot) {
+      this.unsubscribeSnapshot();
+      this.unsubscribeSnapshot = null;
+    }
+    const userKey = this.getSyncUserKey();
+    try {
+      const syncDocRef = doc(firestore, 'sync', userKey);
+      this.unsubscribeSnapshot = onSnapshot(
+        syncDocRef,
+        { includeMetadataChanges: true },
+        (docSnap) => {
+          if (docSnap.exists()) {
+            const remoteData = docSnap.data();
+            if (remoteData && remoteData.snapshot) {
+              this.applySnapshot(remoteData.snapshot, 'remote');
+            }
+          }
+        },
+        (err) => {
+          console.warn('Firestore snapshot listener note:', err);
+        }
+      );
+    } catch (e) {
+      console.warn('Could not initialize Firestore listener:', e);
+    }
+  }
+
+  /**
    * Pulls latest snapshot from Firestore cloud store
    */
   public async pullLatestSnapshot(force: boolean = false): Promise<boolean> {
     if (typeof window === 'undefined' || !navigator.onLine) return false;
     try {
-      const syncDocRef = doc(firestore, 'sync', SINGLE_USER);
+      const userKey = this.getSyncUserKey();
+      const syncDocRef = doc(firestore, 'sync', userKey);
       let docSnap;
       try {
         docSnap = await getDocFromServer(syncDocRef);
@@ -225,7 +259,7 @@ class SyncService {
       }
       if (docSnap.exists()) {
         const remoteData = docSnap.data();
-        if (remoteData && remoteData.snapshot && remoteData.snapshot.user === SINGLE_USER) {
+        if (remoteData && remoteData.snapshot) {
           const applied = await this.applySnapshot(remoteData.snapshot, 'remote', force);
           return applied;
         }
@@ -264,10 +298,11 @@ class SyncService {
       localStorage.setItem('smart_grocery_revision', this.currentRevision.toString());
     }
 
+    const userKey = this.getSyncUserKey();
     return {
       version: 1,
       revision: this.currentRevision,
-      user: SINGLE_USER,
+      user: userKey,
       deviceId: this.deviceId,
       timestamp: Date.now(),
       data: {
@@ -287,6 +322,10 @@ class SyncService {
             ? parseInt(localStorage.getItem('smart_grocery_cache_reset_at') || '0', 10) || undefined
             : undefined,
         isSoundEnabled: typeof isSoundEnabled === 'boolean' ? isSoundEnabled : true,
+        isPwaDismissed:
+          typeof window !== 'undefined'
+            ? localStorage.getItem('smart_grocery_pwa_dismissed') === 'true' || Boolean(userProfile?.isPwaDismissed)
+            : false,
       },
     };
   }
@@ -299,7 +338,8 @@ class SyncService {
     origin: 'local' | 'remote' | 'url' | 'initial',
     force: boolean = false
   ): Promise<boolean> {
-    if (!snapshot || snapshot.user !== SINGLE_USER || !snapshot.data) return false;
+    const userKey = this.getSyncUserKey();
+    if (!snapshot || (snapshot.user !== userKey && snapshot.user !== SINGLE_USER) || !snapshot.data) return false;
 
     // Fast check: compare full data JSON to avoid redundant identical DB writes
     const incomingDataSignature = JSON.stringify(snapshot.data);
@@ -387,6 +427,14 @@ class SyncService {
       }
       if (typeof isSoundEnabled === 'boolean' && isSoundEnabled !== store.isSoundEnabled) {
         store.setSoundEnabled(isSoundEnabled);
+      }
+
+      // Check and apply remote PWA banner dismissal across devices
+      if (typeof snapshot.data.isPwaDismissed === 'boolean') {
+        pwaService.setDismissed(snapshot.data.isPwaDismissed);
+        if (snapshot.data.isPwaDismissed) {
+          store.updateUserProfile({ isPwaDismissed: true });
+        }
       }
 
       // Check and apply remote cache clear across devices
@@ -484,8 +532,9 @@ class SyncService {
       }
 
       // 1b. Post to Firebase Cloud Firestore for instant millisecond push
+      const userKey = this.getSyncUserKey();
       try {
-        const syncDocRef = doc(firestore, 'sync', SINGLE_USER);
+        const syncDocRef = doc(firestore, 'sync', userKey);
         await setDoc(syncDocRef, {
           snapshot: cleanSnapshot,
           updatedAt: Date.now(),

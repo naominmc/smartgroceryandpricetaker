@@ -21,6 +21,8 @@ import { soundService } from '../utils/sound';
 import { LanguageSelectorModal } from '../components/LanguageSelectorModal';
 import { authService, getLocalAccounts } from '../services/authService';
 import { GoogleAuthModal, type GoogleAccount } from '../components/GoogleAuthModal';
+import { pwaService } from '../utils/pwa';
+import { syncService } from '../services/syncService';
 
 interface LoginPageProps {
   onLogin: () => void;
@@ -177,6 +179,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         localStorage.setItem('sg_email', account.email);
         localStorage.setItem('smart_grocery_authenticated', 'true');
       }
+
+      if (account.isPwaDismissed) {
+        pwaService.setDismissed(true);
+        updateUserProfile({ isPwaDismissed: true });
+      }
+      syncService.reconnect();
 
       setIsPasswordVerifyOpen(false);
       setIsLoading(false);
@@ -386,6 +394,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           localStorage.setItem('sg_username', account.username);
           localStorage.setItem('sg_email', account.email);
         }
+
+        if (account.isPwaDismissed) {
+          pwaService.setDismissed(true);
+          updateUserProfile({ isPwaDismissed: true });
+        }
+        syncService.reconnect();
 
         showToast(t('signInSuccess', language, { name: account.fullName }));
 

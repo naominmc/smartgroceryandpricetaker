@@ -26,6 +26,7 @@ export interface RegisteredAccount {
   isGoogleLinked?: boolean;
   avatarUrl?: string;
   createdAt?: number;
+  isPwaDismissed?: boolean;
 }
 
 const LOCAL_ACCOUNTS_KEY = 'sg_registered_users';

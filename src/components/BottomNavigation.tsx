@@ -11,7 +11,7 @@ interface BottomNavigationProps {
 export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   cartItemCount = 0,
 }) => {
-  const { activeTab, setActiveTab, userProfile, isEditingProfile, language, openAddItemSheet } = useStore();
+  const { activeTab, setActiveTab, userProfile, isEditingProfile, language, openAddItemSheet, triggerRefresh } = useStore();
   const [blockedToast, setBlockedToast] = useState(false);
 
   const leftNavItems: { id: NavigationTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
@@ -30,7 +30,32 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
       setTimeout(() => setBlockedToast(false), 2500);
       return;
     }
-    setActiveTab(tabId);
+
+    const container = document.getElementById('app-scroll-container');
+    const currentScroll = container
+      ? container.scrollTop
+      : (window.scrollY || document.documentElement.scrollTop || 0);
+
+    if (activeTab !== tabId) {
+      // 1. Reset scroll saat berpindah section: selalu mulai dari posisi paling atas
+      setActiveTab(tabId);
+      if (container) {
+        container.scrollTop = 0;
+      }
+      window.scrollTo(0, 0);
+    } else {
+      // 2. Tap ikon navigasi saat sudah berada di section aktif
+      if (currentScroll > 15) {
+        // Jika sedang di posisi scroll ke bawah -> smooth scroll to top
+        if (container) {
+          container.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        // Jika sudah di paling atas -> reload/refresh data dan putar logo capybara
+        triggerRefresh();
+      }
+    }
   };
 
   const handleCenterPlusClick = () => {

@@ -33,6 +33,8 @@ export const App: React.FC = () => {
     toggleSound,
     isEditingProfile,
     language,
+    isRefreshing,
+    triggerRefresh,
   } = useStore();
   const [isInitialized, setIsInitialized] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -43,7 +45,6 @@ export const App: React.FC = () => {
   });
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const getShortPaymentName = (method: string): string => {
     if (!method) return 'BCA';
@@ -60,14 +61,14 @@ export const App: React.FC = () => {
     return method.replace('Bank ', '').split(' ')[0] || 'Bank';
   };
 
-  const handleTriggerRefresh = () => {
-    if (isRefreshing) return;
-    setIsRefreshing(true);
-    soundService.pop();
-    setTimeout(() => {
-      setIsRefreshing(false);
-    }, 1200);
-  };
+  // Reset posisi scroll ke paling atas setiap kali berpindah section (berlaku untuk semua section)
+  useEffect(() => {
+    const container = document.getElementById('app-scroll-container');
+    if (container) {
+      container.scrollTop = 0;
+    }
+    window.scrollTo(0, 0);
+  }, [activeTab]);
 
   // Pull-to-refresh on mobile scroll container
   useEffect(() => {
@@ -89,7 +90,7 @@ export const App: React.FC = () => {
       const currentY = e.touches[0].clientY;
       if (currentY - startY > 65) {
         isTracking = false;
-        handleTriggerRefresh();
+        triggerRefresh();
       }
     };
 
@@ -234,7 +235,7 @@ export const App: React.FC = () => {
             {/* App Logo Maskot Capybara (Kotak outline muter saat refresh / load) & App Name */}
             <div className="flex items-center gap-2.5 min-w-0">
               <div
-                onClick={handleTriggerRefresh}
+                onClick={triggerRefresh}
                 className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl p-0.5 shadow-md flex-shrink-0 relative group cursor-pointer overflow-hidden transition-all duration-300 ${
                   isRefreshing
                     ? 'bg-gradient-to-tr from-amber-400 via-rose-500 via-indigo-500 to-emerald-400 animate-spin-outline'
@@ -246,7 +247,7 @@ export const App: React.FC = () => {
                   <img
                     src="/capybara_logo.png"
                     alt="Capybara Smart Grocery"
-                    className="w-full h-full object-cover"
+                    className={`w-full h-full object-cover transition-transform duration-700 ${isRefreshing ? 'animate-spin' : ''}`}
                     onError={(e) => {
                       (e.currentTarget as HTMLImageElement).src = '/capybara_mascot.svg';
                     }}

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { X, Smartphone, AlertCircle, EyeOff, Clock } from 'lucide-react';
 import { pwaService } from '../utils/pwa';
 import { useStore } from '../store/useStore';
+import { syncService } from '../services/syncService';
+import { firestore, doc, setDoc } from '../services/firebase';
 
 export const PWAInstallBanner: React.FC = () => {
   const { language } = useStore();
@@ -44,15 +46,33 @@ export const PWAInstallBanner: React.FC = () => {
     }
   };
 
-  const handleDismissForever = () => {
+  const handleCloseBanner = async () => {
     pwaService.setDismissed(true);
     setShowDismissConfirm(false);
     setIsOpen(false);
+    const store = useStore.getState();
+    store.updateUserProfile({ isPwaDismissed: true });
+    syncService.notifyChange();
+
+    // Simpan status tertutup ke penyimpanan akun / backend Firestore agar tidak muncul di perangkat lain
+    try {
+      const email = store.userProfile?.email || (typeof window !== 'undefined' ? localStorage.getItem('sg_email') : '');
+      if (email) {
+        const cleanEmail = email.trim().toLowerCase();
+        const userDocRef = doc(firestore, 'users', cleanEmail);
+        await setDoc(userDocRef, { isPwaDismissed: true }, { merge: true });
+      }
+    } catch (e) {
+      console.warn('Failed to save PWA dismissed status to backend:', e);
+    }
+  };
+
+  const handleDismissForever = () => {
+    handleCloseBanner();
   };
 
   const handleDismissTemporary = () => {
-    setShowDismissConfirm(false);
-    setIsOpen(false);
+    handleCloseBanner();
   };
 
   if (isStandalone || pwaService.isDismissed()) return null;
@@ -96,7 +116,7 @@ export const PWAInstallBanner: React.FC = () => {
             </button>
             <button
               type="button"
-              onClick={() => setShowDismissConfirm(true)}
+              onClick={handleCloseBanner}
               className="p-1 text-white/80 hover:text-white rounded-lg min-h-[34px] min-w-[34px] flex items-center justify-center cursor-pointer transition-colors"
               aria-label={language === 'zh' ? '关闭横幅' : language === 'en' ? 'Close Banner' : 'Tutup Banner'}
               title={language === 'zh' ? '关闭通知' : language === 'en' ? 'Close Notification' : 'Tutup Notifikasi'}
