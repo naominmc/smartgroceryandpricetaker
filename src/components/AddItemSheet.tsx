@@ -137,7 +137,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
     setSearchHistory([]);
     try {
       localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify([]));
-    } catch {}
+    } catch { }
     setIsHistoryOpen(false);
   };
 
@@ -149,7 +149,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
     setSearchHistory(updated);
     try {
       localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updated));
-    } catch {}
+    } catch { }
   };
 
   // Realtime calculation preview
@@ -246,8 +246,8 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
           language === 'zh'
             ? '商品名称为必填项！'
             : language === 'en'
-            ? 'Product name is required!'
-            : 'Nama produk wajib diisi!',
+              ? 'Product name is required!'
+              : 'Nama produk wajib diisi!',
       });
       return;
     }
@@ -290,7 +290,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
         setSearchHistory(updated);
         try {
           localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updated));
-        } catch {}
+        } catch { }
       }
 
       await onSave({
@@ -745,8 +745,8 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
                   {language === 'zh'
                     ? `商品金额 (${formatRupiah(liveCalc.finalSubtotal)}) 超出剩余预算 (${formatRupiah(remainingBudget || 0)})`
                     : language === 'en'
-                    ? `Item total (${formatRupiah(liveCalc.finalSubtotal)}) exceeds remaining budget (${formatRupiah(remainingBudget || 0)})`
-                    : `Harga barang (${formatRupiah(liveCalc.finalSubtotal)}) melebihi sisa anggaran (${formatRupiah(remainingBudget || 0)})`}
+                      ? `Item total (${formatRupiah(liveCalc.finalSubtotal)}) exceeds remaining budget (${formatRupiah(remainingBudget || 0)})`
+                      : `Harga barang (${formatRupiah(liveCalc.finalSubtotal)}) melebihi sisa anggaran (${formatRupiah(remainingBudget || 0)})`}
                 </span>
               </div>
             )}
@@ -767,8 +767,8 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
               {isSubmitting
                 ? t('savingSubtotal', language)
                 : editingItem
-                ? t('saveChangesBtn', language)
-                : t('addToCartBtn', language)}
+                  ? t('saveChangesBtn', language)
+                  : t('addToCartBtn', language)}
             </button>
           </div>
         </form>

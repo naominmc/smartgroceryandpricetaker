@@ -33,7 +33,7 @@ import { EmptyState } from '../components/EmptyState';
 import { PWAInstallBanner } from '../components/PWAInstallBanner';
 import { LocationPickerModal, SUPERMARKET_PRESETS } from '../components/LocationPickerModal';
 import { syncService } from '../services/syncService';
-import { calculateCartTotals, evaluateBudgetSafety } from '../utils/calculations';
+import { calculateCartTotals, evaluateBudgetSafety, calculateItemSubtotals } from '../utils/calculations';
 import { formatRupiah, formatNumberWithDots } from '../utils/currency';
 import { formatPeriodLabel, getCurrentMonthPeriod } from '../utils/priceComparison';
 import { t } from '../utils/i18n';

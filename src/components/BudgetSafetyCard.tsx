@@ -25,10 +25,10 @@ export const BudgetSafetyCard: React.FC<BudgetSafetyCardProps> = ({
     level === 'safe'
       ? t('statusSafeMsg', language)
       : level === 'warning'
-      ? t('statusWarningMsg', language)
-      : level === 'danger'
-      ? t('statusDangerMsg', language)
-      : t('statusExceededMsg', language, { amount: formatRupiah(excessAmount) });
+        ? t('statusWarningMsg', language)
+        : level === 'danger'
+          ? t('statusDangerMsg', language)
+          : t('statusExceededMsg', language, { amount: formatRupiah(excessAmount) });
 
   // Determine color scheme based on level
   let theme = {
@@ -113,11 +113,10 @@ export const BudgetSafetyCard: React.FC<BudgetSafetyCardProps> = ({
             {level === 'exceeded' ? t('overBudgetCap', language) : t('safeBalance', language)}
           </span>
           <span
-            className={`text-xl font-extrabold tracking-tight ${
-              level === 'exceeded'
+            className={`text-xl font-extrabold tracking-tight ${level === 'exceeded'
                 ? 'text-danger dark:text-rose-400'
                 : 'text-success dark:text-emerald-400'
-            }`}
+              }`}
           >
             {level === 'exceeded' ? `+${formatRupiah(excessAmount)}` : formatRupiah(remaining)}
           </span>
