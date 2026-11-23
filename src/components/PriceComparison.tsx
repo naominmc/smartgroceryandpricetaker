@@ -56,9 +56,9 @@ export const PriceComparison: React.FC<PriceComparisonProps> = ({
 
   if (result.status === 'up') {
     return (
-      <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-danger dark:text-rose-300 bg-red-50 dark:bg-rose-950/60 px-2 py-0.5 rounded-full border border-red-100 dark:border-rose-900">
-        <ArrowUpRight className="w-3.5 h-3.5 text-danger dark:text-rose-400 stroke-[2.5]" />
-        <span>
+      <div className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold text-danger dark:text-rose-300 bg-red-50 dark:bg-rose-950/60 px-2 py-0.5 rounded-full border border-red-100 dark:border-rose-900 whitespace-nowrap flex-nowrap shrink-0">
+        <ArrowUpRight className="w-3 h-3 text-danger dark:text-rose-400 stroke-[2.5] shrink-0" />
+        <span className="whitespace-nowrap">
           {t('prevMonthUp', language, {
             diff: formatRupiah(result.difference),
             pct: result.percentageChange,
@@ -71,9 +71,9 @@ export const PriceComparison: React.FC<PriceComparisonProps> = ({
 
   if (result.status === 'down') {
     return (
-      <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-success dark:text-emerald-300 bg-green-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-green-100 dark:border-emerald-900">
-        <ArrowDownRight className="w-3.5 h-3.5 text-success dark:text-emerald-400 stroke-[2.5]" />
-        <span>
+      <div className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold text-success dark:text-emerald-300 bg-green-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-green-100 dark:border-emerald-900 whitespace-nowrap flex-nowrap shrink-0">
+        <ArrowDownRight className="w-3 h-3 text-success dark:text-emerald-400 stroke-[2.5] shrink-0" />
+        <span className="whitespace-nowrap">
           {t('prevMonthDown', language, {
             diff: formatRupiah(Math.abs(result.difference)),
             pct: result.percentageChange,
@@ -85,9 +85,9 @@ export const PriceComparison: React.FC<PriceComparisonProps> = ({
   }
 
   return (
-    <div className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-600 dark:text-slate-300 bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded-full">
-      <Minus className="w-3.5 h-3.5 text-gray-400 dark:text-slate-400 stroke-[2.5]" />
-      <span>{t('prevMonthStable', language, { amount: formatRupiah(result.previousPrice || 0) })}</span>
+    <div className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-medium text-gray-600 dark:text-slate-300 bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded-full whitespace-nowrap flex-nowrap shrink-0">
+      <Minus className="w-3 h-3 text-gray-400 dark:text-slate-400 stroke-[2.5] shrink-0" />
+      <span className="whitespace-nowrap">{t('prevMonthStable', language, { amount: formatRupiah(result.previousPrice || 0) })}</span>
     </div>
   );
 };

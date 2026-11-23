@@ -66,6 +66,8 @@ interface AddItemSheetProps {
     discounts: number[];
   }) => Promise<void>;
   editingItem?: CartItem | null;
+  remainingBudget?: number;
+  budgetLimit?: number;
 }
 
 export const AddItemSheet: React.FC<AddItemSheetProps> = ({
@@ -73,6 +75,8 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
   onClose,
   onSave,
   editingItem,
+  remainingBudget,
+  budgetLimit = 0,
 }) => {
   const { language } = useStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -150,6 +154,13 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
 
   // Realtime calculation preview
   const liveCalc = calculateItemSubtotals(watchedQty, watchedPrice, watchedDiscounts);
+
+  // Check if item exceeds remaining budget (Proactive prevent)
+  const isBudgetRestricted =
+    budgetLimit > 0 &&
+    remainingBudget !== undefined &&
+    !editingItem &&
+    liveCalc.finalSubtotal > remainingBudget;
 
   // Recommendations from purchase history
   const allTransactions = useLiveQuery(() => db.transactions.toArray()) || [];
@@ -727,6 +738,18 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
 
           {/* Submit Button */}
           <div className="pt-2">
+            {isBudgetRestricted && (
+              <div className="bg-red-50 dark:bg-rose-950/80 border border-red-200 dark:border-rose-900 text-danger dark:text-rose-300 text-xs font-bold p-2.5 rounded-xl mb-2 text-center animate-fade-in flex items-center justify-center gap-1.5">
+                <span>
+                  ⚠️{' '}
+                  {language === 'zh'
+                    ? `商品金额 (${formatRupiah(liveCalc.finalSubtotal)}) 超出剩余预算 (${formatRupiah(remainingBudget || 0)})`
+                    : language === 'en'
+                    ? `Item total (${formatRupiah(liveCalc.finalSubtotal)}) exceeds remaining budget (${formatRupiah(remainingBudget || 0)})`
+                    : `Harga barang (${formatRupiah(liveCalc.finalSubtotal)}) melebihi sisa anggaran (${formatRupiah(remainingBudget || 0)})`}
+                </span>
+              </div>
+            )}
             {Object.keys(errors).length > 0 && (
               <div className="bg-red-50 dark:bg-rose-950/80 border border-red-200 dark:border-rose-900 text-danger dark:text-rose-300 text-xs font-bold p-2.5 rounded-xl mb-2 text-center animate-fade-in">
                 {errors.name?.message ||
@@ -738,7 +761,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
             )}
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isBudgetRestricted}
               className="w-full bg-primary hover:bg-primary-hover active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl shadow-float transition-all disabled:opacity-50 min-h-[48px] flex items-center justify-center text-sm cursor-pointer"
             >
               {isSubmitting

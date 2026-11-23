@@ -102,7 +102,7 @@ export const BudgetPage: React.FC = () => {
   const historicalPeriods = Object.entries(historyByPeriod).sort().reverse();
 
   return (
-    <div className="space-y-4 pb-3">
+    <div className="space-y-4 pt-3 pb-3">
       {/* Header */}
       <div className="pt-1">
         <span className="text-xs text-text-secondary dark:text-slate-400 font-medium block">

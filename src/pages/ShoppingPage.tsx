@@ -214,14 +214,35 @@ export const ShoppingPage: React.FC = () => {
 
   // Handlers for cart items
   const handleIncreaseQty = async (id: string) => {
-    if (budgetLimit > 0 && totals.finalTotal >= budgetLimit) {
-      return;
+    const item = cartItems.find((i) => i.id === id);
+    if (!item) return;
+
+    if (budgetLimit > 0) {
+      const unitAddCalc = calculateItemSubtotals(1, item.unitPrice, item.discounts);
+      if (totals.finalTotal >= budgetLimit || unitAddCalc.finalSubtotal > budgetStatus.remaining) {
+        try {
+          soundService.error();
+        } catch {}
+        return;
+      }
     }
+
     await groceryService.adjustQuantity(id, 1);
   };
 
   const handleSetQty = async (id: string, newQty: number) => {
     const safeQty = Math.max(1, Math.round(Number(newQty) || 1));
+    const item = cartItems.find((i) => i.id === id);
+    if (item && budgetLimit > 0 && safeQty > item.quantity) {
+      const addedUnits = safeQty - item.quantity;
+      const additionalCalc = calculateItemSubtotals(addedUnits, item.unitPrice, item.discounts);
+      if (additionalCalc.finalSubtotal > budgetStatus.remaining) {
+        try {
+          soundService.error();
+        } catch {}
+        return;
+      }
+    }
     await groceryService.updateCartItem(id, { quantity: safeQty });
   };
 
@@ -339,7 +360,7 @@ export const ShoppingPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 pb-3">
+    <div className="space-y-4 pt-3 pb-3">
       {/* PWA Installation Prompt if applicable */}
       <PWAInstallBanner />
 
@@ -426,7 +447,7 @@ export const ShoppingPage: React.FC = () => {
       </div>
 
       {/* Sticky Floating Container: Budget Safety Card & Quick Checkout Bar */}
-      <div className="sticky top-0 z-20 space-y-2 pt-1 pb-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md -mx-4 px-4 shadow-xs border-b border-gray-100/80 dark:border-slate-800/80 transition-all duration-200">
+      <div className="sticky top-0 z-20 space-y-2 pt-2.5 pb-2 bg-white/98 dark:bg-slate-900/98 backdrop-blur-md -mx-4 px-4 shadow-sm border-b border-gray-100 dark:border-slate-800 transition-all duration-200">
         {isMinimized ? (
           /* Minimized Compact Floating Bar (~48px tinggi, tidak menutupi layar, info tetap jelas) */
           <div className="bg-card dark:bg-slate-800 rounded-2xl p-2.5 border border-border dark:border-slate-700 shadow-soft flex items-center justify-between gap-2 animate-fade-in">
@@ -665,19 +686,25 @@ export const ShoppingPage: React.FC = () => {
         />
       ) : (
         <div className="space-y-2.5">
-          {cartItems.map((item) => (
-            <GroceryItemCard
-              key={item.id}
-              item={item}
-              onIncrease={handleIncreaseQty}
-              onDecrease={handleDecreaseQty}
-              onEdit={handleEditItem}
-              onDelete={handleDeleteItem}
-              onToggleStatus={handleToggleStatus}
-              isIncreaseDisabled={budgetLimit > 0 && totals.finalTotal >= budgetLimit}
-              onSetQuantity={handleSetQty}
-            />
-          ))}
+          {cartItems.map((item) => {
+            const itemUnitCost = calculateItemSubtotals(1, item.unitPrice, item.discounts).finalSubtotal;
+            const isItemIncreaseDisabled =
+              budgetLimit > 0 && (totals.finalTotal >= budgetLimit || itemUnitCost > budgetStatus.remaining);
+
+            return (
+              <GroceryItemCard
+                key={item.id}
+                item={item}
+                onIncrease={handleIncreaseQty}
+                onDecrease={handleDecreaseQty}
+                onEdit={handleEditItem}
+                onDelete={handleDeleteItem}
+                onToggleStatus={handleToggleStatus}
+                isIncreaseDisabled={isItemIncreaseDisabled}
+                onSetQuantity={handleSetQty}
+              />
+            );
+          })}
         </div>
       )}
 
@@ -807,6 +834,8 @@ export const ShoppingPage: React.FC = () => {
         onClose={closeAddItemSheet}
         onSave={handleSaveItem}
         editingItem={editingItem}
+        remainingBudget={budgetStatus.remaining}
+        budgetLimit={budgetLimit}
       />
 
       {/* Delete Single Item Confirmation Dialog */}

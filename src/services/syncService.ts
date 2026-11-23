@@ -15,6 +15,7 @@ export interface GrocerySnapshotData {
   themeMode?: 'light' | 'dark';
   language?: 'id' | 'en' | 'zh';
   currency?: string;
+  cacheResetAt?: number;
 }
 
 export interface GrocerySnapshot {
@@ -273,6 +274,10 @@ class SyncService {
         themeMode: themeMode || 'light',
         language: language || 'id',
         currency: currency || userProfile?.currency || 'ID Rupiah Indonesia (Rp - IDR)',
+        cacheResetAt:
+          typeof window !== 'undefined'
+            ? parseInt(localStorage.getItem('smart_grocery_cache_reset_at') || '0', 10) || undefined
+            : undefined,
       },
     };
   }
@@ -371,6 +376,21 @@ class SyncService {
       }
       if (currency && currency !== store.currency) {
         store.setCurrency(currency);
+      }
+
+      // Check and apply remote cache clear across devices
+      if (snapshot.data.cacheResetAt && typeof window !== 'undefined') {
+        const localResetAt = parseInt(localStorage.getItem('smart_grocery_cache_reset_at') || '0', 10);
+        if (snapshot.data.cacheResetAt > localResetAt) {
+          localStorage.setItem('smart_grocery_cache_reset_at', snapshot.data.cacheResetAt.toString());
+          if ('caches' in window) {
+            window.caches.keys().then((keys) => Promise.all(keys.map((k) => window.caches.delete(k)))).catch(() => {});
+          }
+          try {
+            sessionStorage.clear();
+          } catch {}
+          window.dispatchEvent(new CustomEvent('smart_grocery_cache_cleared'));
+        }
       }
 
       const timeStr = new Date().toLocaleTimeString('id-ID', {

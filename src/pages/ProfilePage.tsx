@@ -136,6 +136,18 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
     setUsername(userProfile.username);
     setBio(userProfile.bio);
     setCurrency(storeCurrency || userProfile.currency || 'ID Rupiah Indonesia (Rp - IDR)');
+
+    const handleSyncStorage = () => {
+      calculateStorage();
+    };
+
+    window.addEventListener('smart_grocery_remote_sync', handleSyncStorage);
+    window.addEventListener('smart_grocery_cache_cleared', handleSyncStorage);
+
+    return () => {
+      window.removeEventListener('smart_grocery_remote_sync', handleSyncStorage);
+      window.removeEventListener('smart_grocery_cache_cleared', handleSyncStorage);
+    };
   }, [userProfile, storeCurrency]);
 
   useEffect(() => {
@@ -155,6 +167,11 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
       try {
         sessionStorage.clear();
       } catch {}
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('smart_grocery_cache_reset_at', Date.now().toString());
+        syncService.notifyChange();
+      }
 
       await calculateStorage();
       showToast(t('cacheClearedToast', language));
@@ -391,7 +408,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
   };
 
   return (
-    <div className="space-y-4 pb-3">
+    <div className="space-y-4 pt-3 pb-3">
       {/* Top Header */}
       <div className="flex items-center justify-between pt-1">
         <div>
@@ -951,6 +968,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
                   if (window.confirm(language === 'zh' ? '确定要永久清空废纸篓中的所有收据吗？' : language === 'en' ? 'Permanently delete all receipts in the recycle bin?' : 'Hapus seluruh struk di tempat sampah secara permanen?')) {
                     const ids = deletedTransactions.map((t) => t.id);
                     await Promise.all(ids.map((id) => db.transactions.delete(id)));
+                    syncService.notifyChange();
                     showToast(language === 'zh' ? '废纸篓已全部清空。' : language === 'en' ? 'All receipts in the trash have been cleared.' : 'Semua struk di tempat sampah telah dikosongkan.');
                   }
                 }}

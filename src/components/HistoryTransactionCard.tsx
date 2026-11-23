@@ -86,17 +86,11 @@ export const HistoryTransactionCard: React.FC<HistoryTransactionCardProps> = ({ 
         </div>
       </div>
 
-      {/* Snapshot budget usage & Payment Method indicator */}
-      <div className="mt-2.5 text-[11px] text-gray-700 dark:text-slate-200 bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 px-2.5 py-1.5 rounded-lg flex flex-wrap items-center justify-between gap-1">
-        {transaction.budgetLimitSnapshot > 0 && (
-          <div>
-            <span>{language === 'zh' ? '预算上限快照: ' : language === 'en' ? 'Limit Snapshot: ' : 'Snapshot Batas: '}</span>
-            <span className="font-extrabold text-gray-900 dark:text-slate-100">
-              {formatRupiah(transaction.budgetLimitSnapshot)} (
-              {((transaction.finalTotal / transaction.budgetLimitSnapshot) * 100).toFixed(1)}%)
-            </span>
-          </div>
-        )}
+      {/* Payment Method indicator */}
+      <div className="mt-2.5 text-[11px] text-gray-700 dark:text-slate-200 bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 px-2.5 py-1.5 rounded-lg flex items-center justify-between gap-1">
+        <span className="text-xs font-semibold text-text-secondary dark:text-slate-400">
+          {t('paymentSource', language)}:
+        </span>
         <div className="flex items-center gap-1 font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 px-2 py-0.5 rounded border border-blue-100 dark:border-blue-900">
           <span>💳 {transaction.paymentMethod || 'Bank BCA'}</span>
         </div>

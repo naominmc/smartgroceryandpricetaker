@@ -90,9 +90,6 @@ export const PWAInstallBanner: React.FC = () => {
               <h4 className="font-bold text-xs leading-tight whitespace-nowrap">
                 {bannerTitle}
               </h4>
-              <p className="text-[8.5px] sm:text-[9.5px] text-blue-100 leading-tight mt-0.5 whitespace-nowrap tracking-tight">
-                {bannerDesc}
-              </p>
             </div>
           </div>
 

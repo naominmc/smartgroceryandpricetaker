@@ -126,8 +126,8 @@ export const GroceryItemCard: React.FC<GroceryItemCardProps> = ({
             )}
           </div>
 
-          {/* Last month price comparator */}
-          <div className="mt-1.5">
+          {/* Last month price comparator (strict 1 baris) */}
+          <div className="mt-1.5 flex items-center overflow-x-auto no-scrollbar">
             <PriceComparison
               currentPrice={item.unitPrice}
               previousPrice={item.previousUnitPrice}
@@ -221,10 +221,10 @@ export const GroceryItemCard: React.FC<GroceryItemCardProps> = ({
             title={
               isIncreaseDisabled
                 ? language === 'zh'
-                  ? '已达到预算上限，无法增加数量'
+                  ? '已超出剩余预算，无法再增加'
                   : language === 'en'
-                  ? 'Budget limit reached, cannot increase quantity'
-                  : 'Batas anggaran telah tercapai, tidak dapat menambah kuantitas'
+                  ? 'Exceeds remaining budget, cannot add more'
+                  : 'Melebihi sisa anggaran, tidak dapat menambah'
                 : undefined
             }
           >

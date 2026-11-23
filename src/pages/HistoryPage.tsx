@@ -284,7 +284,7 @@ export const HistoryPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 pb-3">
+    <div className="space-y-4 pt-3 pb-3">
       {/* Header */}
       <div className="flex items-center justify-between pt-1">
         <div>
