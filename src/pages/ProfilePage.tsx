@@ -758,8 +758,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
 
           {/* Card 2: MATA UANG BELANJA */}
           <div className="bg-card dark:bg-slate-800/90 rounded-2xl p-3.5 border border-border dark:border-slate-700 shadow-soft space-y-1.5">
-        <label className="text-[10px] font-black tracking-wider text-text-secondary dark:text-slate-400 uppercase flex items-center gap-1">
-          <Globe className="w-3 h-3" />
+        <label className="text-[10px] font-black tracking-wider text-text-secondary dark:text-slate-400 uppercase flex items-center gap-1.5">
+          <Globe className="w-3.5 h-3.5 text-primary dark:text-blue-400" />
           <span>{t('currencySection', language)}</span>
         </label>
 

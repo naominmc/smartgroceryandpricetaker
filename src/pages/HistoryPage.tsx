@@ -163,13 +163,14 @@ export const HistoryPage: React.FC = () => {
 
       const query = searchQuery.toLowerCase().trim();
       return (
+        tx.id.toLowerCase().includes(query) ||
+        (tx.location && tx.location.toLowerCase().includes(query)) ||
+        (tx.paymentMethod && tx.paymentMethod.toLowerCase().includes(query)) ||
         tx.items.some(
           (item) =>
             item.nameSnapshot.toLowerCase().includes(query) ||
             item.categorySnapshot.toLowerCase().includes(query)
-        ) ||
-        (tx.location && tx.location.toLowerCase().includes(query)) ||
-        (tx.paymentMethod && tx.paymentMethod.toLowerCase().includes(query))
+        )
       );
     });
   }, [sortedTransactions, selectedYear, selectedMonth, selectedDay, searchQuery, isThisWeekFilter, startOfWeek, endOfWeek]);
