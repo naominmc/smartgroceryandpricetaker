@@ -431,17 +431,17 @@ export const ShoppingPage: React.FC = () => {
       )}
 
       {/* Sticky Floating Container: Budget Safety Card & Quick Checkout Bar */}
-      <div className="sticky top-0 z-20 space-y-2 pt-2.5 pb-2 bg-white/98 dark:bg-slate-900/98 backdrop-blur-md -mx-4 px-4 shadow-sm border-b border-gray-100 dark:border-slate-800 transition-all duration-200 w-auto max-w-full box-border">
+      <div className="sticky top-0 z-20 space-y-2 pt-2.5 pb-2 bg-white/98 dark:bg-slate-900/98 backdrop-blur-md -mx-4 px-4 shadow-sm border-b border-gray-100 dark:border-slate-800 transition-all duration-200 w-[calc(100%+2rem)] box-border">
         {isMinimized ? (
           /* Minimized Compact Floating Bar (~48px tinggi, seluruh kotak bisa diklik untuk buka detail) */
           <div
             onClick={() => setIsManualExpanded(true)}
-            className="bg-card dark:bg-slate-800 rounded-2xl p-2.5 border border-border dark:border-slate-700 shadow-soft flex items-center justify-between gap-1.5 sm:gap-2 animate-fade-in cursor-pointer hover:border-gray-300 dark:hover:border-slate-600 transition-colors w-full min-w-0 max-w-full box-border"
+            className="bg-card dark:bg-slate-800 rounded-2xl p-2.5 sm:p-3 border border-border dark:border-slate-700 shadow-soft flex items-center justify-between gap-2 animate-fade-in cursor-pointer hover:border-gray-300 dark:hover:border-slate-600 transition-colors w-full min-w-0 box-border"
             title="Klik untuk melihat rincian anggaran"
           >
             {/* Info Sisa Anggaran & Total Belanja */}
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap min-w-0">
+              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 min-w-0">
                 {(() => {
                   const isRedStatus = budgetStatus.remaining <= 10000 || budgetStatus.level === 'exceeded' || budgetStatus.level === 'danger';
                   const isWarningStatus = !isRedStatus && budgetStatus.level === 'warning';
@@ -473,15 +473,20 @@ export const ShoppingPage: React.FC = () => {
                   );
                 })()}
 
-                <span className="text-[11px] text-text-secondary dark:text-slate-400 font-semibold truncate max-w-full">
-                  | {t('totalSpent', language)}: <strong className="text-text-main dark:text-slate-100 font-black">{formatRupiah(totals.finalTotal)}</strong>
-                  <span className="text-[10px] ml-0.5 opacity-80 whitespace-nowrap">({t('unitsCount', language, { qty: totals.totalQuantity })})</span>
-                </span>
+                <div className="flex items-center gap-1 text-[11px] text-text-secondary dark:text-slate-400 font-semibold truncate min-w-0">
+                  <span className="text-gray-300 dark:text-slate-600">|</span>
+                  <span className="truncate">
+                    {t('totalSpent', language)}: <strong className="text-text-main dark:text-slate-100 font-black">{formatRupiah(totals.finalTotal)}</strong>
+                  </span>
+                  <span className="text-[10px] opacity-80 whitespace-nowrap flex-shrink-0">
+                    ({t('unitsCount', language, { qty: totals.totalQuantity })})
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* Aksi Cepat: Kosongkan dan Checkout */}
-            <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
               {cartItems.length > 0 && (
                 <>
                   <button
@@ -490,11 +495,11 @@ export const ShoppingPage: React.FC = () => {
                       e.stopPropagation();
                       setIsClearCartConfirmOpen(true);
                     }}
-                    className="w-8 h-8 sm:w-9 sm:h-9 bg-gray-100/90 dark:bg-slate-700/80 hover:bg-red-50 dark:hover:bg-rose-950/70 border border-gray-200 dark:border-slate-600 text-danger dark:text-rose-400 rounded-xl transition-all cursor-pointer flex items-center justify-center shadow-xs active:scale-95 flex-shrink-0"
+                    className="w-9 h-9 bg-gray-100/90 dark:bg-slate-700/80 hover:bg-red-50 dark:hover:bg-rose-950/70 border border-gray-200 dark:border-slate-600 text-danger dark:text-rose-400 rounded-xl transition-all cursor-pointer flex items-center justify-center shadow-xs active:scale-95 flex-shrink-0"
                     title={t('clearCartBtn', language)}
                     aria-label={t('clearCartBtn', language)}
                   >
-                    <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <Trash2 className="w-4 h-4" />
                   </button>
 
                   <button
@@ -503,7 +508,7 @@ export const ShoppingPage: React.FC = () => {
                       e.stopPropagation();
                       setIsCheckoutDialogOpen(true);
                     }}
-                    className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs px-2.5 sm:px-3 py-2 rounded-xl shadow-soft transition-all flex items-center gap-1 cursor-pointer min-h-[34px] sm:min-h-[36px] flex-shrink-0 whitespace-nowrap"
+                    className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs px-3 py-2 rounded-xl shadow-soft transition-all flex items-center gap-1 cursor-pointer min-h-[36px] flex-shrink-0 whitespace-nowrap"
                     title={t('finishShoppingNow', language)}
                   >
                     <Check className="w-3.5 h-3.5 stroke-[2.5]" />

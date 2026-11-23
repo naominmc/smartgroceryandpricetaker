@@ -92,10 +92,10 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 flex justify-center pointer-events-none w-full max-w-full overflow-hidden box-border"
+      className="fixed bottom-0 left-0 right-0 z-40 flex justify-center pointer-events-none w-full max-w-full overflow-visible box-border"
       aria-label="Navigasi Utama"
     >
-      <div className="w-full max-w-full sm:max-w-[430px] pointer-events-auto relative box-border">
+      <div className="w-full max-w-full sm:max-w-[430px] pointer-events-auto relative box-border overflow-visible">
         {/* Warning Toast if User Tries to Change Section While Editing Profile */}
         {blockedToast && (
           <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-amber-500 text-slate-950 font-black text-[11px] px-3.5 py-1.5 rounded-full shadow-lg whitespace-nowrap animate-bounce flex items-center gap-1.5 z-50">
@@ -104,16 +104,16 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           </div>
         )}
 
-        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-none sm:rounded-t-2xl shadow-float dark:shadow-dark-float border-t border-border dark:border-slate-800 px-2.5 pt-1.5 pb-[max(env(safe-area-inset-bottom),8px)] flex items-center justify-around transition-colors w-full max-w-full box-border">
+        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-none sm:rounded-t-2xl shadow-float dark:shadow-dark-float border-t border-border dark:border-slate-800 px-2.5 pt-1.5 pb-[max(env(safe-area-inset-bottom),8px)] flex items-center justify-around transition-colors w-full max-w-full box-border relative overflow-visible">
           {/* Sisi Kiri: Belanja & Riwayat */}
           {leftNavItems.map(renderNavButton)}
 
           {/* Tengah: Tombol Floating Plus (Nonjol ke Atas) */}
-          <div className="relative flex-1 flex flex-col items-center justify-center">
+          <div className="relative flex-1 flex flex-col items-center justify-center overflow-visible">
             <button
               type="button"
               onClick={handleCenterPlusClick}
-              className="absolute -top-5 w-12 h-12 rounded-full bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 active:scale-90 text-white shadow-xl shadow-blue-600/40 border-4 border-white dark:border-slate-900 flex items-center justify-center transition-all cursor-pointer group z-10"
+              className="absolute -top-5 w-12 h-12 rounded-full bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 active:scale-90 text-white shadow-xl shadow-blue-600/40 border-4 border-white dark:border-slate-900 flex items-center justify-center transition-all cursor-pointer group z-30"
               title={t('addItemSimple', language)}
               aria-label={t('addItemSimple', language)}
             >
