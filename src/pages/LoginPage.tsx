@@ -267,7 +267,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
   return (
     <div
-      className={`min-h-screen relative flex justify-center items-start sm:py-6 bg-cover bg-center bg-no-repeat transition-colors duration-300 ${
+      className={`min-h-[100dvh] h-[100dvh] w-full overflow-hidden relative flex justify-center items-center sm:py-6 bg-cover bg-center bg-no-repeat transition-colors duration-300 ${
         isDark ? 'bg-slate-950 text-slate-100' : 'bg-gray-100 text-gray-900'
       }`}
       style={{
@@ -284,8 +284,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         </div>
       )}
 
-      {/* Main Viewport Container (Smartphone Max Width 430px) */}
-      <main className="w-full max-w-[430px] min-h-[100dvh] sm:min-h-[auto] sm:max-h-[920px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl text-text-main dark:text-dark-text flex flex-col relative shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] dark:shadow-dark-float sm:rounded-[36px] overflow-hidden border border-white/60 dark:border-slate-800 transition-colors duration-200">
+      {/* Main Viewport Container (Smartphone Max Width 430px, Centered Vertically on Laptop/Desktop) */}
+      <main className="w-full h-full sm:h-auto max-w-[430px] sm:max-h-[920px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl text-text-main dark:text-dark-text flex flex-col relative shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] dark:shadow-dark-float rounded-none sm:rounded-[36px] overflow-hidden border border-white/60 dark:border-slate-800 transition-colors duration-200">
         
         {/* Top Header Bar dengan 2 Tombol di Kiri (Suara & Tema dengan Warna Seragam), Logo Center, dan Bahasa di Kanan */}
         <header className="px-4 sm:px-5 pt-4 pb-3.5 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 dark:from-slate-900 dark:via-blue-950 dark:to-indigo-950 text-white shadow-md relative overflow-hidden flex items-center justify-between border-b dark:border-slate-800">
