@@ -39,8 +39,8 @@ class SyncService {
   private broadcastChannel: BroadcastChannel | null = null;
   public isApplyingRemote: boolean = false;
   private currentRevision: number = 0;
-  private lastAppliedSignature: string = '';
-  private lastLocalMutationTime: number = 0;
+  private lastAppliedDataSignature: string = '';
+  private unsubscribeSnapshot: (() => void) | null = null;
   private debounceTimer: any = null;
   private pollInterval: any = null;
   private listeners: Set<(state: SyncState) => void> = new Set();
@@ -61,10 +61,6 @@ class SyncService {
       const savedRev = localStorage.getItem('smart_grocery_revision');
       if (savedRev) {
         this.currentRevision = parseInt(savedRev, 10) || 0;
-      }
-      const savedMutation = localStorage.getItem('smart_grocery_last_mutation');
-      if (savedMutation) {
-        this.lastLocalMutationTime = parseInt(savedMutation, 10) || 0;
       }
     }
   }
@@ -123,18 +119,26 @@ class SyncService {
         // 1b. Firebase Firestore Realtime WebSocket Listener (instant sync)
     try {
       const syncDocRef = doc(firestore, 'sync', SINGLE_USER);
-      onSnapshot(syncDocRef, (docSnap) => {
-        if (docSnap.exists()) {
-          const remoteData = docSnap.data();
-          if (remoteData && remoteData.snapshot && remoteData.snapshot.user === SINGLE_USER) {
-            if (remoteData.snapshot.deviceId !== this.deviceId) {
-              this.applySnapshot(remoteData.snapshot, 'remote');
+      if (this.unsubscribeSnapshot) {
+        this.unsubscribeSnapshot();
+        this.unsubscribeSnapshot = null;
+      }
+      this.unsubscribeSnapshot = onSnapshot(
+        syncDocRef,
+        (docSnap) => {
+          if (docSnap.exists()) {
+            const remoteData = docSnap.data();
+            if (remoteData && remoteData.snapshot && remoteData.snapshot.user === SINGLE_USER) {
+              if (remoteData.snapshot.deviceId !== this.deviceId) {
+                this.applySnapshot(remoteData.snapshot, 'remote');
+              }
             }
           }
+        },
+        (err) => {
+          console.warn('Firestore snapshot listener note:', err);
         }
-      }, (err) => {
-        console.warn('Firestore snapshot listener note:', err);
-      });
+      );
     } catch (e) {
       console.warn('Could not initialize Firestore listener:', e);
     }
@@ -257,17 +261,6 @@ class SyncService {
   }
 
   /**
-   * Generates a signature for snapshot comparison
-   */
-  private generateSignature(snapshot: GrocerySnapshot): string {
-    const { cartItems, sessionLocation, sessionDate } = snapshot.data;
-    const cartSummary = (cartItems || [])
-      .map((c) => `${c.id}:${c.quantity}:${c.unitPrice}:${c.status}`)
-      .join('|');
-    return `${cartItems?.length || 0}_${cartSummary}_${sessionLocation}_${sessionDate}`;
-  }
-
-  /**
    * Applies an incoming snapshot from another device or tab
    */
   public async applySnapshot(
@@ -275,28 +268,24 @@ class SyncService {
     origin: 'local' | 'remote' | 'url' | 'initial',
     force: boolean = false
   ): Promise<boolean> {
-    if (!snapshot || snapshot.user !== SINGLE_USER) return false;
+    if (!snapshot || snapshot.user !== SINGLE_USER || !snapshot.data) return false;
 
     // Ignore echoes from self unless forced
     if (!force && snapshot.deviceId === this.deviceId) return false;
 
-    // Check signature to avoid redundant re-renders
-    const signature = this.generateSignature(snapshot);
-    if (!force && signature === this.lastAppliedSignature) {
+    // Fast check: compare full data JSON to avoid redundant identical DB writes
+    const incomingDataSignature = JSON.stringify(snapshot.data);
+    if (!force && incomingDataSignature === this.lastAppliedDataSignature) {
       return false;
     }
 
-    // Only skip if the local user is actively mutating right now (within 500ms debounce window)
-    if (!force && this.lastLocalMutationTime && (Date.now() - this.lastLocalMutationTime < 500)) {
+    // Only skip if the local user has an active pending debounce broadcast scheduled right now
+    if (!force && this.debounceTimer !== null) {
       return false;
     }
 
     this.isApplyingRemote = true;
-    this.lastAppliedSignature = signature;
-    this.lastLocalMutationTime = 0;
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('smart_grocery_last_mutation');
-    }
+    this.lastAppliedDataSignature = incomingDataSignature;
     if (snapshot.revision && snapshot.revision > this.currentRevision) {
       this.currentRevision = snapshot.revision;
       if (typeof window !== 'undefined') {
@@ -309,27 +298,23 @@ class SyncService {
     try {
       const { cartItems, budgets, transactions, sessionLocation, sessionDate } = snapshot.data;
 
-      // 1. Sync Cart Items (Additions, quantity updates, removals, and clearing)
-      if (Array.isArray(cartItems)) {
-        await db.transaction('rw', db.cartItems, async () => {
+      // 1. Atomically sync all tables in a single Dexie transaction
+      await db.transaction('rw', [db.cartItems, db.budgets, db.transactions], async () => {
+        if (Array.isArray(cartItems)) {
           await db.cartItems.clear();
           if (cartItems.length > 0) {
             await db.cartItems.bulkPut(cartItems);
           }
-        });
-      }
+        }
+        if (Array.isArray(budgets) && budgets.length > 0) {
+          await db.budgets.bulkPut(budgets);
+        }
+        if (Array.isArray(transactions) && transactions.length > 0) {
+          await db.transactions.bulkPut(transactions);
+        }
+      });
 
-      // 2. Sync Budgets
-      if (Array.isArray(budgets) && budgets.length > 0) {
-        await db.budgets.bulkPut(budgets);
-      }
-
-      // 3. Sync Transactions
-      if (Array.isArray(transactions) && transactions.length > 0) {
-        await db.transactions.bulkPut(transactions);
-      }
-
-      // 4. Sync Location & Date in Store
+      // 2. Sync Location & Date in Zustand Store
       if (sessionLocation) {
         useStore.getState().setSessionLocation(sessionLocation);
       }
@@ -349,6 +334,11 @@ class SyncService {
         lastOrigin: origin,
       });
 
+      // Notify window event so any custom listeners can trigger on snapshot
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('smart_grocery_remote_sync', { detail: snapshot }));
+      }
+
       return true;
     } catch (err) {
       console.error('Failed to apply snapshot:', err);
@@ -367,20 +357,20 @@ class SyncService {
   public notifyChange(): void {
     if (this.isApplyingRemote) return; // Do not broadcast mutations caused by receiving a remote snapshot
 
-    this.lastLocalMutationTime = Date.now();
     this.currentRevision += 1;
     if (typeof window !== 'undefined') {
       localStorage.setItem('smart_grocery_revision', this.currentRevision.toString());
-      localStorage.setItem('smart_grocery_last_mutation', this.lastLocalMutationTime.toString());
     }
 
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
+      this.debounceTimer = null;
     }
 
-    this.debounceTimer = setTimeout(() => {
-      this.broadcastSnapshot();
-    }, 200);
+    this.debounceTimer = setTimeout(async () => {
+      this.debounceTimer = null;
+      await this.broadcastSnapshot();
+    }, 150);
   }
 
   /**
@@ -392,12 +382,15 @@ class SyncService {
     try {
       this.updateState({ isSyncing: true });
       const snapshot = await this.takeSnapshot();
-      this.lastAppliedSignature = this.generateSignature(snapshot);
+
+      // Sanitize: strip undefined values so Firestore setDoc never throws Unsupported field value: undefined
+      const cleanSnapshot: GrocerySnapshot = JSON.parse(JSON.stringify(snapshot));
+      this.lastAppliedDataSignature = JSON.stringify(cleanSnapshot.data);
 
       // 1. Post to Local BroadcastChannel (instant multi-tab)
       if (this.broadcastChannel) {
         try {
-          this.broadcastChannel.postMessage(snapshot);
+          this.broadcastChannel.postMessage(cleanSnapshot);
         } catch (e) {
           // ignore
         }
@@ -407,7 +400,7 @@ class SyncService {
       try {
         const syncDocRef = doc(firestore, 'sync', SINGLE_USER);
         await setDoc(syncDocRef, {
-          snapshot,
+          snapshot: cleanSnapshot,
           updatedAt: Date.now(),
         });
       } catch (e) {
@@ -426,7 +419,7 @@ class SyncService {
         lastOrigin: 'local',
       });
 
-      return snapshot;
+      return cleanSnapshot;
     } catch (err) {
       console.error('Broadcast failed:', err);
       this.updateState({ isSyncing: false });
@@ -439,7 +432,8 @@ class SyncService {
    */
   public async generateShareUrl(): Promise<string> {
     const snapshot = await this.takeSnapshot();
-    const encoded = encodeURIComponent(JSON.stringify(snapshot));
+    const cleanSnapshot = JSON.parse(JSON.stringify(snapshot));
+    const encoded = encodeURIComponent(JSON.stringify(cleanSnapshot));
     const baseUrl =
       typeof window !== 'undefined'
         ? window.location.origin
