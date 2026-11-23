@@ -61,18 +61,18 @@ export const GroceryItemCard: React.FC<GroceryItemCardProps> = ({
 
   return (
     <div
-      className={`bg-card dark:bg-slate-800/90 rounded-card p-3.5 border transition-all duration-200 shadow-soft ${
+      className={`bg-card dark:bg-slate-800/90 rounded-card p-3.5 border transition-all duration-200 shadow-soft w-full max-w-full min-w-0 box-border overflow-hidden ${
         isCompleted
           ? 'bg-gray-50/70 dark:bg-slate-900/60 border-gray-200 dark:border-slate-800 opacity-75'
           : 'border-border dark:border-slate-700/80 hover:border-blue-200 dark:hover:border-blue-800'
       }`}
     >
-      <div className="flex items-start justify-between gap-2.5">
+      <div className="flex items-start justify-between gap-2 sm:gap-2.5 min-w-0 max-w-full">
         {/* Toggle Done Checkbox Icon Button */}
         <button
           type="button"
           onClick={() => onToggleStatus(item.id)}
-          className="mt-0.5 text-gray-300 dark:text-slate-600 hover:text-primary active:scale-95 transition-transform flex-shrink-0 min-h-[44px] min-w-[36px] flex items-center justify-center"
+          className="mt-0.5 text-gray-300 dark:text-slate-600 hover:text-primary active:scale-95 transition-transform flex-shrink-0 min-h-[40px] min-w-[32px] sm:min-w-[36px] flex items-center justify-center"
           aria-label={
             isCompleted
               ? language === 'zh'
@@ -95,13 +95,13 @@ export const GroceryItemCard: React.FC<GroceryItemCardProps> = ({
         </button>
 
         {/* Content Details */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-            <span className="text-[10px] font-semibold text-primary dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 px-2 py-0.5 rounded-md">
+        <div className="flex-1 min-w-0 max-w-full">
+          <div className="flex items-center gap-1.5 flex-wrap mb-0.5 min-w-0">
+            <span className="text-[10px] font-semibold text-primary dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 px-2 py-0.5 rounded-md truncate max-w-full">
               {translateCategory(item.categorySnapshot, language)}
             </span>
             {item.discounts.length > 0 && (
-              <span className="text-[10px] font-bold text-danger dark:text-rose-300 bg-red-50 dark:bg-rose-950/70 border border-red-100 dark:border-rose-900 px-1.5 py-0.5 rounded-md">
+              <span className="text-[10px] font-bold text-danger dark:text-rose-300 bg-red-50 dark:bg-rose-950/70 border border-red-100 dark:border-rose-900 px-1.5 py-0.5 rounded-md truncate max-w-full">
                 {language === 'zh' ? '折扣' : language === 'en' ? 'Discount' : 'Diskon'} {item.discounts.join('% + ')}% ({t('savingLabel', language, { amount: formatRupiah(calc.discountAmount) })})
               </span>
             )}
@@ -115,7 +115,7 @@ export const GroceryItemCard: React.FC<GroceryItemCardProps> = ({
             {item.nameSnapshot}
           </h3>
 
-          <div className="flex items-baseline gap-1.5 text-xs text-text-secondary dark:text-slate-400 mt-1">
+          <div className="flex items-baseline gap-1.5 text-xs text-text-secondary dark:text-slate-400 mt-1 flex-wrap min-w-0">
             <span>
               {formatRupiah(item.unitPrice)} / {item.unit}
             </span>
@@ -127,7 +127,7 @@ export const GroceryItemCard: React.FC<GroceryItemCardProps> = ({
           </div>
 
           {/* Last month price comparator (strict 1 baris utuh tanpa scroll) */}
-          <div className="mt-1 flex items-center">
+          <div className="mt-1 flex items-center min-w-0 max-w-full overflow-hidden">
             <PriceComparison
               currentPrice={item.unitPrice}
               previousPrice={item.previousUnitPrice}
@@ -138,11 +138,11 @@ export const GroceryItemCard: React.FC<GroceryItemCardProps> = ({
         </div>
 
         {/* Action icons: Edit & Delete */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
           <button
             type="button"
             onClick={() => onEdit(item)}
-            className="p-2 text-gray-400 dark:text-slate-400 hover:text-primary dark:hover:text-blue-400 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 active:scale-95 transition-colors min-h-[44px] min-w-[40px] flex items-center justify-center"
+            className="p-1.5 sm:p-2 text-gray-400 dark:text-slate-400 hover:text-primary dark:hover:text-blue-400 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 active:scale-95 transition-colors min-h-[38px] min-w-[34px] sm:min-h-[44px] sm:min-w-[40px] flex items-center justify-center cursor-pointer"
             title={language === 'zh' ? '编辑商品' : language === 'en' ? 'Edit item' : 'Edit barang'}
             aria-label={language === 'zh' ? '编辑商品' : language === 'en' ? 'Edit item' : 'Edit barang'}
           >
@@ -151,7 +151,7 @@ export const GroceryItemCard: React.FC<GroceryItemCardProps> = ({
           <button
             type="button"
             onClick={() => onDelete(item.id)}
-            className="p-2 text-gray-400 dark:text-slate-400 hover:text-danger dark:hover:text-rose-400 rounded-lg hover:bg-red-50 dark:hover:bg-rose-950 active:scale-95 transition-colors min-h-[44px] min-w-[40px] flex items-center justify-center"
+            className="p-1.5 sm:p-2 text-gray-400 dark:text-slate-400 hover:text-danger dark:hover:text-rose-400 rounded-lg hover:bg-red-50 dark:hover:bg-rose-950 active:scale-95 transition-colors min-h-[38px] min-w-[34px] sm:min-h-[44px] sm:min-w-[40px] flex items-center justify-center cursor-pointer"
             title={language === 'zh' ? '删除商品' : language === 'en' ? 'Delete item' : 'Hapus barang'}
             aria-label={language === 'zh' ? '删除商品' : language === 'en' ? 'Delete item' : 'Hapus barang'}
           >
@@ -161,7 +161,7 @@ export const GroceryItemCard: React.FC<GroceryItemCardProps> = ({
       </div>
 
       {/* Bottom Bar: Quantity Stepper & Final Total Price */}
-      <div className="flex items-center justify-between border-t border-gray-100 dark:border-slate-700/60 mt-3 pt-2.5">
+      <div className="flex items-center justify-between border-t border-gray-100 dark:border-slate-700/60 mt-3 pt-2.5 gap-2 min-w-0 max-w-full">
         {/* Thumb-friendly Stepper */}
         <div className="flex items-center bg-gray-100/80 dark:bg-slate-700/90 rounded-xl p-0.5 border border-gray-200 dark:border-slate-600">
           <button

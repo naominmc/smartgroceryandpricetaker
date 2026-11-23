@@ -56,9 +56,9 @@ export const PriceComparison: React.FC<PriceComparisonProps> = ({
 
   if (result.status === 'up') {
     return (
-      <div className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-semibold text-danger dark:text-rose-300 bg-red-50 dark:bg-rose-950/60 px-1.5 py-0.5 rounded-full border border-red-100 dark:border-rose-900 whitespace-nowrap flex-nowrap shrink-0 tracking-tight leading-tight">
-        <ArrowUpRight className="w-2.5 h-2.5 text-danger dark:text-rose-400 stroke-[2.5] shrink-0" />
-        <span className="whitespace-nowrap">
+      <div className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-semibold text-danger dark:text-rose-300 bg-red-50 dark:bg-rose-950/60 px-1.5 py-0.5 rounded-full border border-red-100 dark:border-rose-900 whitespace-nowrap max-w-full min-w-0 tracking-tight leading-tight">
+        <ArrowUpRight className="w-2.5 h-2.5 text-danger dark:text-rose-400 stroke-[2.5] flex-shrink-0" />
+        <span className="whitespace-nowrap truncate max-w-full">
           {t('prevMonthUp', language, {
             diff: formatRupiah(result.difference),
             pct: result.percentageChange,
@@ -71,9 +71,9 @@ export const PriceComparison: React.FC<PriceComparisonProps> = ({
 
   if (result.status === 'down') {
     return (
-      <div className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-semibold text-success dark:text-emerald-300 bg-green-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded-full border border-green-100 dark:border-emerald-900 whitespace-nowrap flex-nowrap shrink-0 tracking-tight leading-tight">
-        <ArrowDownRight className="w-2.5 h-2.5 text-success dark:text-emerald-400 stroke-[2.5] shrink-0" />
-        <span className="whitespace-nowrap">
+      <div className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-semibold text-success dark:text-emerald-300 bg-green-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded-full border border-green-100 dark:border-emerald-900 whitespace-nowrap max-w-full min-w-0 tracking-tight leading-tight">
+        <ArrowDownRight className="w-2.5 h-2.5 text-success dark:text-emerald-400 stroke-[2.5] flex-shrink-0" />
+        <span className="whitespace-nowrap truncate max-w-full">
           {t('prevMonthDown', language, {
             diff: formatRupiah(Math.abs(result.difference)),
             pct: result.percentageChange,
@@ -85,9 +85,9 @@ export const PriceComparison: React.FC<PriceComparisonProps> = ({
   }
 
   return (
-    <div className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-medium text-gray-600 dark:text-slate-300 bg-gray-100 dark:bg-slate-700 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-nowrap shrink-0 tracking-tight leading-tight">
-      <Minus className="w-2.5 h-2.5 text-gray-400 dark:text-slate-400 stroke-[2.5] shrink-0" />
-      <span className="whitespace-nowrap">{t('prevMonthStable', language, { amount: formatRupiah(result.previousPrice || 0) })}</span>
+    <div className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-medium text-gray-600 dark:text-slate-300 bg-gray-100 dark:bg-slate-700 px-1.5 py-0.5 rounded-full whitespace-nowrap max-w-full min-w-0 tracking-tight leading-tight">
+      <Minus className="w-2.5 h-2.5 text-gray-400 dark:text-slate-400 stroke-[2.5] flex-shrink-0" />
+      <span className="whitespace-nowrap truncate max-w-full">{t('prevMonthStable', language, { amount: formatRupiah(result.previousPrice || 0) })}</span>
     </div>
   );
 };

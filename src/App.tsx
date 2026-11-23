@@ -212,7 +212,7 @@ export const App: React.FC = () => {
 
   return (
     <div
-      className={`min-h-[100dvh] h-[100dvh] w-full overflow-hidden relative flex justify-center items-center sm:py-6 bg-cover bg-center bg-no-repeat transition-colors duration-300 ${
+      className={`min-h-[100dvh] h-[100dvh] w-full max-w-full overflow-x-hidden overflow-y-hidden relative flex justify-center items-center sm:py-6 bg-cover bg-center bg-no-repeat transition-colors duration-300 ${
         isDark ? 'bg-slate-950 text-slate-100' : 'bg-gray-100 text-gray-900'
       }`}
       style={{
@@ -222,10 +222,10 @@ export const App: React.FC = () => {
       }}
     >
       {/* Mobile Smartphone Viewport Frame (Fixed full screen on mobile, 430px frame on laptop/desktop) */}
-      <main className="w-full h-full sm:max-w-[430px] sm:h-[calc(100vh-3rem)] sm:max-h-[920px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl text-text-main dark:text-dark-text flex flex-col fixed inset-0 sm:relative sm:inset-auto shadow-none sm:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] dark:sm:shadow-dark-float rounded-none sm:rounded-[36px] overflow-hidden border-0 sm:border border-white/60 dark:border-slate-800 transition-colors duration-200">
+      <main className="w-full max-w-full sm:max-w-[430px] h-full sm:h-[calc(100vh-3rem)] sm:max-h-[920px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl text-text-main dark:text-dark-text flex flex-col fixed inset-0 sm:relative sm:inset-auto shadow-none sm:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] dark:sm:shadow-dark-float rounded-none sm:rounded-[36px] overflow-hidden border-0 sm:border border-white/60 dark:border-slate-800 transition-colors duration-200">
         
         {/* Top Header with App Logo & Name, Theme Mode Toggle, Sound Toggle, Scan, & Bank BCA */}
-        <header className="flex-shrink-0 px-4 pt-3.5 pb-2.5 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 dark:from-slate-900 dark:via-blue-950 dark:to-indigo-950 text-white shadow-md relative overflow-hidden border-b dark:border-slate-800">
+        <header className="flex-shrink-0 w-full max-w-full px-4 pt-3.5 pb-2.5 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 dark:from-slate-900 dark:via-blue-950 dark:to-indigo-950 text-white shadow-md relative overflow-hidden border-b dark:border-slate-800 box-border">
           {/* Subtle Background Pattern/Glow */}
           <div className="absolute -right-6 -top-6 w-28 h-28 bg-white/10 dark:bg-blue-500/10 rounded-full blur-xl pointer-events-none" />
           <div className="absolute left-1/3 -bottom-4 w-20 h-20 bg-amber-400/15 rounded-full blur-lg pointer-events-none" />
@@ -319,7 +319,7 @@ export const App: React.FC = () => {
         </header>
 
         {/* Content Area with Safe-Area Padding */}
-        <div id="app-scroll-container" className="flex-1 px-4 pt-0 pb-safe overflow-y-auto overscroll-contain">
+        <div id="app-scroll-container" className="flex-1 w-full max-w-full px-4 pt-0 pb-safe overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none box-border">
           {activeTab === 'shopping' && <ShoppingPage />}
           {activeTab === 'history' && <HistoryPage />}
           {activeTab === 'budget' && <BudgetPage />}

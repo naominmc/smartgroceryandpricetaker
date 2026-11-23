@@ -360,18 +360,18 @@ export const ShoppingPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 pt-3 pb-3">
+    <div className="space-y-4 pt-3 pb-3 w-full max-w-full min-w-0 overflow-x-hidden box-border">
       {/* PWA Installation Prompt if applicable */}
       <PWAInstallBanner />
 
       {/* Top Header: Belanja Bulanan di atas, Periode di bawah, sejajar dengan Lokasi & Kalender di sisi kanan */}
-      <div className="pt-1 flex items-center justify-between gap-2.5">
+      <div className="pt-1 flex items-center justify-between gap-2 sm:gap-2.5 max-w-full min-w-0">
         {/* Kiri: Judul Belanja Bulanan di atas, Periode di bawah */}
         <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-extrabold text-text-main dark:text-slate-100 tracking-tight leading-tight">
+          <h1 className="text-xl font-extrabold text-text-main dark:text-slate-100 tracking-tight leading-tight truncate">
             {language === 'zh' ? '月度购物清单' : language === 'en' ? 'Monthly Shopping' : 'Belanja Bulanan'}
           </h1>
-          <div className="text-xs text-text-secondary dark:text-slate-400 font-medium mt-0.5">
+          <div className="text-xs text-text-secondary dark:text-slate-400 font-medium mt-0.5 truncate">
             {formatPeriodLabel(currentPeriod, language)}
           </div>
         </div>
@@ -381,7 +381,7 @@ export const ShoppingPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsLocationModalOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-teal-50 dark:bg-teal-950/80 border border-teal-200/80 dark:border-teal-800/80 text-[#0f766e] dark:text-teal-400 hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-colors shadow-2xs cursor-pointer max-w-[140px] sm:max-w-[180px] min-h-[36px]"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-teal-50 dark:bg-teal-950/80 border border-teal-200/80 dark:border-teal-800/80 text-[#0f766e] dark:text-teal-400 hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-colors shadow-2xs cursor-pointer max-w-[130px] sm:max-w-[180px] min-h-[36px] min-w-0"
             title="Klik untuk memilih supermarket (Jabodetabek)"
           >
             <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-[#0f766e] dark:text-teal-400" />
@@ -431,23 +431,23 @@ export const ShoppingPage: React.FC = () => {
       )}
 
       {/* Sticky Floating Container: Budget Safety Card & Quick Checkout Bar */}
-      <div className="sticky top-0 z-20 space-y-2 pt-2.5 pb-2 bg-white/98 dark:bg-slate-900/98 backdrop-blur-md -mx-4 px-4 shadow-sm border-b border-gray-100 dark:border-slate-800 transition-all duration-200">
+      <div className="sticky top-0 z-20 space-y-2 pt-2.5 pb-2 bg-white/98 dark:bg-slate-900/98 backdrop-blur-md -mx-4 px-4 shadow-sm border-b border-gray-100 dark:border-slate-800 transition-all duration-200 w-auto max-w-full box-border">
         {isMinimized ? (
           /* Minimized Compact Floating Bar (~48px tinggi, seluruh kotak bisa diklik untuk buka detail) */
           <div
             onClick={() => setIsManualExpanded(true)}
-            className="bg-card dark:bg-slate-800 rounded-2xl p-2.5 border border-border dark:border-slate-700 shadow-soft flex items-center justify-between gap-2 animate-fade-in cursor-pointer hover:border-gray-300 dark:hover:border-slate-600 transition-colors"
+            className="bg-card dark:bg-slate-800 rounded-2xl p-2.5 border border-border dark:border-slate-700 shadow-soft flex items-center justify-between gap-1.5 sm:gap-2 animate-fade-in cursor-pointer hover:border-gray-300 dark:hover:border-slate-600 transition-colors w-full min-w-0 max-w-full box-border"
             title="Klik untuk melihat rincian anggaran"
           >
             {/* Info Sisa Anggaran & Total Belanja */}
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 flex-wrap">
+              <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap min-w-0">
                 {(() => {
                   const isRedStatus = budgetStatus.remaining <= 10000 || budgetStatus.level === 'exceeded' || budgetStatus.level === 'danger';
                   const isWarningStatus = !isRedStatus && budgetStatus.level === 'warning';
                   return (
                     <span
-                      className={`inline-flex items-center gap-1 text-[11px] font-extrabold ${
+                      className={`inline-flex items-center gap-1 text-[11px] font-extrabold whitespace-nowrap shrink-0 ${
                         isRedStatus
                           ? 'text-danger dark:text-rose-400'
                           : isWarningStatus
@@ -473,15 +473,15 @@ export const ShoppingPage: React.FC = () => {
                   );
                 })()}
 
-                <span className="text-[11px] text-text-secondary dark:text-slate-400 font-semibold truncate">
+                <span className="text-[11px] text-text-secondary dark:text-slate-400 font-semibold truncate max-w-full">
                   | {t('totalSpent', language)}: <strong className="text-text-main dark:text-slate-100 font-black">{formatRupiah(totals.finalTotal)}</strong>
-                  <span className="text-[10px] ml-0.5 opacity-80">({t('unitsCount', language, { qty: totals.totalQuantity })})</span>
+                  <span className="text-[10px] ml-0.5 opacity-80 whitespace-nowrap">({t('unitsCount', language, { qty: totals.totalQuantity })})</span>
                 </span>
               </div>
             </div>
 
             {/* Aksi Cepat: Kosongkan dan Checkout */}
-            <div className="flex items-center gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
               {cartItems.length > 0 && (
                 <>
                   <button
@@ -490,11 +490,11 @@ export const ShoppingPage: React.FC = () => {
                       e.stopPropagation();
                       setIsClearCartConfirmOpen(true);
                     }}
-                    className="w-9 h-9 bg-gray-100/90 dark:bg-slate-700/80 hover:bg-red-50 dark:hover:bg-rose-950/70 border border-gray-200 dark:border-slate-600 text-danger dark:text-rose-400 rounded-xl transition-all cursor-pointer flex items-center justify-center shadow-xs active:scale-95"
+                    className="w-8 h-8 sm:w-9 sm:h-9 bg-gray-100/90 dark:bg-slate-700/80 hover:bg-red-50 dark:hover:bg-rose-950/70 border border-gray-200 dark:border-slate-600 text-danger dark:text-rose-400 rounded-xl transition-all cursor-pointer flex items-center justify-center shadow-xs active:scale-95 flex-shrink-0"
                     title={t('clearCartBtn', language)}
                     aria-label={t('clearCartBtn', language)}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </button>
 
                   <button
@@ -503,7 +503,7 @@ export const ShoppingPage: React.FC = () => {
                       e.stopPropagation();
                       setIsCheckoutDialogOpen(true);
                     }}
-                    className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs px-3 py-2 rounded-xl shadow-soft transition-all flex items-center gap-1 cursor-pointer min-h-[36px]"
+                    className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs px-2.5 sm:px-3 py-2 rounded-xl shadow-soft transition-all flex items-center gap-1 cursor-pointer min-h-[34px] sm:min-h-[36px] flex-shrink-0 whitespace-nowrap"
                     title={t('finishShoppingNow', language)}
                   >
                     <Check className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -584,7 +584,7 @@ export const ShoppingPage: React.FC = () => {
 
       {/* Rekomendasi Barang dari Riwayat Pembelian (Beli Lagi 1-Klik - Maks 6 Item) */}
       {recommendations.length > 0 && (
-        <div className="bg-gradient-to-r from-amber-50/70 via-orange-50/40 to-blue-50/50 dark:from-slate-800 dark:to-slate-850 p-3.5 rounded-card border border-amber-200/70 dark:border-slate-700 shadow-soft space-y-2.5 animate-fade-in">
+        <div className="bg-gradient-to-r from-amber-50/70 via-orange-50/40 to-blue-50/50 dark:from-slate-800 dark:to-slate-850 p-3.5 rounded-card border border-amber-200/70 dark:border-slate-700 shadow-soft space-y-2.5 animate-fade-in w-full max-w-full min-w-0 box-border overflow-hidden">
           <div className="flex items-center justify-between">
             <div className="flex items-center text-xs font-bold text-text-main dark:text-slate-100">
               <span>{t('recommendationsTitle', language)}</span>
@@ -703,39 +703,39 @@ export const ShoppingPage: React.FC = () => {
 
       {/* Bottom Sticky Checkout Summary Bar */}
       {cartItems.length > 0 && (
-        <div className="bg-card/95 dark:bg-slate-800/95 backdrop-blur-md rounded-card p-4 border border-border dark:border-slate-700 shadow-float mt-4 space-y-3">
-          <div className="flex items-center justify-between text-xs text-text-secondary dark:text-slate-400">
-            <span>{t('totalBeforeDiscount', language, { qty: totals.totalQuantity })}</span>
-            <span className="font-semibold text-text-main dark:text-slate-200">{formatRupiah(totals.grossTotal)}</span>
+        <div className="bg-card/95 dark:bg-slate-800/95 backdrop-blur-md rounded-card p-4 border border-border dark:border-slate-700 shadow-float mt-4 space-y-3 w-full max-w-full min-w-0 box-border overflow-hidden">
+          <div className="flex items-center justify-between text-xs text-text-secondary dark:text-slate-400 gap-2 min-w-0">
+            <span className="truncate">{t('totalBeforeDiscount', language, { qty: totals.totalQuantity })}</span>
+            <span className="font-semibold text-text-main dark:text-slate-200 flex-shrink-0">{formatRupiah(totals.grossTotal)}</span>
           </div>
 
           {totals.discountTotal > 0 && (
-            <div className="flex items-center justify-between text-xs text-success dark:text-emerald-400 font-semibold">
-              <span className="flex items-center gap-1">
-                <TrendingDown className="w-3.5 h-3.5" />
-                {t('discountSavingsPromo', language)}
+            <div className="flex items-center justify-between text-xs text-success dark:text-emerald-400 font-semibold gap-2 min-w-0">
+              <span className="flex items-center gap-1 truncate">
+                <TrendingDown className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="truncate">{t('discountSavingsPromo', language)}</span>
               </span>
-              <span>-{formatRupiah(totals.discountTotal)}</span>
+              <span className="flex-shrink-0">-{formatRupiah(totals.discountTotal)}</span>
             </div>
           )}
 
           {/* Payment Method Badge */}
-          <div className="flex items-center justify-between text-xs pt-1 border-t border-gray-100/80 dark:border-slate-700">
-            <span className="text-gray-500 dark:text-slate-400 flex items-center gap-1">
-              <CreditCard className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-              {t('paymentSourceShort', language)}
+          <div className="flex items-center justify-between text-xs pt-1 border-t border-gray-100/80 dark:border-slate-700 gap-2 min-w-0">
+            <span className="text-gray-500 dark:text-slate-400 flex items-center gap-1 truncate">
+              <CreditCard className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+              <span className="truncate">{t('paymentSourceShort', language)}</span>
             </span>
-            <span className="font-bold text-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 px-2 py-0.5 rounded-lg border border-blue-100 dark:border-blue-900">
+            <span className="font-bold text-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 px-2 py-0.5 rounded-lg border border-blue-100 dark:border-blue-900 truncate max-w-[140px] flex-shrink-0">
               {selectedPaymentMethod}
             </span>
           </div>
 
-          <div className="flex items-center justify-between border-t border-gray-100 dark:border-slate-700 pt-2">
-            <div>
-              <span className="text-[11px] text-text-secondary dark:text-slate-400 block font-medium">
+          <div className="flex items-center justify-between border-t border-gray-100 dark:border-slate-700 pt-2 gap-2 min-w-0">
+            <div className="min-w-0 flex-1">
+              <span className="text-[11px] text-text-secondary dark:text-slate-400 block font-medium truncate">
                 {t('finalTotalCheckout', language)}
               </span>
-              <span className="text-xl font-extrabold text-primary dark:text-blue-400">
+              <span className="text-xl font-extrabold text-primary dark:text-blue-400 truncate block">
                 {formatRupiah(totals.finalTotal)}
               </span>
             </div>
@@ -743,7 +743,7 @@ export const ShoppingPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsCheckoutDialogOpen(true)}
-              className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs px-4 py-3 rounded-xl shadow-soft transition-all min-h-[48px] flex items-center gap-1.5"
+              className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl shadow-soft transition-all min-h-[44px] sm:min-h-[48px] flex items-center gap-1.5 flex-shrink-0 cursor-pointer whitespace-nowrap"
             >
               <Check className="w-4 h-4 stroke-[2.5]" />
               <span>{t('finishShoppingNow', language)}</span>
