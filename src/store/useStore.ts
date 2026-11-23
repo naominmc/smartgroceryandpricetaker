@@ -40,6 +40,7 @@ interface AppState {
   // Sound Effects (Pop on click, Cha-ching on checkout)
   isSoundEnabled: boolean;
   toggleSound: () => void;
+  setSoundEnabled: (enabled: boolean) => void;
 
   // User Profile
   username: string;
@@ -210,6 +211,16 @@ export const useStore = create<AppState>((set, get) => {
       soundService.setEnabled(next);
       set({ isSoundEnabled: next });
       if (next) soundService.pop();
+      if (typeof window !== 'undefined' && (window as any).__smart_grocery_notify_sync) {
+        (window as any).__smart_grocery_notify_sync();
+      }
+    },
+    setSoundEnabled: (enabled: boolean) => {
+      soundService.setEnabled(enabled);
+      set({ isSoundEnabled: enabled });
+      if (typeof window !== 'undefined' && (window as any).__smart_grocery_notify_sync) {
+        (window as any).__smart_grocery_notify_sync();
+      }
     },
 
     // User profile "naomiiracle" requested by user

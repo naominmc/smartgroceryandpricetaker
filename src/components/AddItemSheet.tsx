@@ -36,7 +36,7 @@ const itemSchema = z.object({
     (v) => (!v || String(v).trim() === '' ? 'Beras dan bahan pokok' : String(v).trim()),
     z.string()
   ),
-  unit: z.string().default('pcs'),
+  unit: z.preprocess((v) => (!v || String(v).trim() === '' ? 'pcs' : String(v).trim()), z.string()),
   quantity: z.preprocess(
     (v) => (v === '' || v === null || v === undefined || isNaN(Number(v)) ? 1 : Number(v)),
     z.number().min(0.01, 'Kuantitas harus lebih dari 0')
@@ -113,7 +113,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
     defaultValues: {
       name: '',
       category: '',
-      unit: 'pcs',
+      unit: '',
       quantity: '' as unknown as number,
       unitPrice: '' as unknown as number,
       discounts: [],
@@ -122,6 +122,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
 
   const watchedName = watch('name') || '';
   const watchedCategory = watch('category') || '';
+  const watchedUnit = watch('unit') || '';
   const watchedQty = Number(watch('quantity')) > 0 ? Number(watch('quantity')) : 1;
   const watchedPrice = Number(watch('unitPrice')) || 0;
   const watchedDiscounts = watch('discounts') || [];
@@ -231,7 +232,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
       reset({
         name: '',
         category: '',
-        unit: 'pcs',
+        unit: '',
         quantity: '' as unknown as number,
         unitPrice: '' as unknown as number,
         discounts: [],
@@ -639,7 +640,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
               ) : (
                 <select
                   {...register('unit')}
-                  value={watch('unit') || 'pcs'}
+                  value={watchedUnit}
                   onChange={(e) => {
                     if (e.target.value === 'custom') {
                       setCustomUnit(true);
@@ -648,14 +649,19 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
                       setValue('unit', e.target.value, { shouldValidate: true });
                     }
                   }}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm min-h-[44px] bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 cursor-pointer"
+                  className={`w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm min-h-[44px] bg-white dark:bg-slate-800 cursor-pointer ${
+                    !watchedUnit ? 'text-gray-400 dark:text-slate-500' : 'text-text-main dark:text-slate-100'
+                  }`}
                 >
+                  <option value="" disabled hidden className="text-gray-400 dark:text-slate-500">
+                    {language === 'zh' ? '选择单位...' : language === 'en' ? 'Select unit...' : 'Pilih Satuan...'}
+                  </option>
                   {STANDARD_UNITS.filter((u) => u !== 'custom').map((unit) => (
-                    <option key={unit} value={unit}>
+                    <option key={unit} value={unit} className="text-text-main dark:text-slate-100 bg-white dark:bg-slate-800">
                       {unit}
                     </option>
                   ))}
-                  <option value="custom">{t('customUnitPrompt', language)}</option>
+                  <option value="custom" className="text-text-main dark:text-slate-100 bg-white dark:bg-slate-800">{t('customUnitPrompt', language)}</option>
                 </select>
               )}
             </div>

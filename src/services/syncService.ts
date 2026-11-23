@@ -16,6 +16,7 @@ export interface GrocerySnapshotData {
   language?: 'id' | 'en' | 'zh';
   currency?: string;
   cacheResetAt?: number;
+  isSoundEnabled?: boolean;
 }
 
 export interface GrocerySnapshot {
@@ -255,6 +256,7 @@ class SyncService {
       themeMode,
       language,
       currency,
+      isSoundEnabled,
     } = useStore.getState();
 
     this.currentRevision += 1;
@@ -284,6 +286,7 @@ class SyncService {
           typeof window !== 'undefined'
             ? parseInt(localStorage.getItem('smart_grocery_cache_reset_at') || '0', 10) || undefined
             : undefined,
+        isSoundEnabled: typeof isSoundEnabled === 'boolean' ? isSoundEnabled : true,
       },
     };
   }
@@ -333,6 +336,7 @@ class SyncService {
         themeMode,
         language,
         currency,
+        isSoundEnabled,
       } = snapshot.data;
 
       // 1. Atomically sync all tables in a single Dexie transaction
@@ -382,6 +386,9 @@ class SyncService {
       }
       if (currency && currency !== store.currency) {
         store.setCurrency(currency);
+      }
+      if (typeof isSoundEnabled === 'boolean' && isSoundEnabled !== store.isSoundEnabled) {
+        store.setSoundEnabled(isSoundEnabled);
       }
 
       // Check and apply remote cache clear across devices

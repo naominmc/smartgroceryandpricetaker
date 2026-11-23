@@ -59,6 +59,11 @@ export const translations = {
     minUsername: '⚠️ Username minimal 3 karakter.',
     minPassword: '⚠️ Kata sandi akun minimal 6 karakter.',
     googleConnecting: 'Menghubungkan akun Google...',
+    googleSignUpTitle: 'Lengkapi Akun Google',
+    googleSignUpDesc: 'Tentukan username & kata sandi untuk akun Google Anda:',
+    googleVerifyPassword: 'Verifikasi Kata Sandi Akun Google',
+    googleVerifyPasswordDesc: 'Masukkan kata sandi akun Google Anda untuk melanjutkan:',
+    googleAccCreated: 'Akun Google berhasil dibuat! Silakan masuk dengan kata sandi Anda 🚀',
     langLabel: 'Bahasa',
 
     // Profile Page
@@ -438,6 +443,11 @@ export const translations = {
     minUsername: '⚠️ Username must be at least 3 characters.',
     minPassword: '⚠️ Password must be at least 6 characters.',
     googleConnecting: 'Connecting to Google account...',
+    googleSignUpTitle: 'Complete Google Account',
+    googleSignUpDesc: 'Set a username and password for your Google account:',
+    googleVerifyPassword: 'Verify Google Account Password',
+    googleVerifyPasswordDesc: 'Enter your password to continue with your Google account:',
+    googleAccCreated: 'Google account created! Please sign in with your password 🚀',
     langLabel: 'Language',
 
     // Profile Page
@@ -817,6 +827,11 @@ export const translations = {
     minUsername: '⚠️ 用户名至少3个字符。',
     minPassword: '⚠️ 密码至少6个字符。',
     googleConnecting: '正在连接 Google 账户...',
+    googleSignUpTitle: '完善谷歌账户',
+    googleSignUpDesc: '请为您的谷歌账户设置用户名与密码：',
+    googleVerifyPassword: '验证谷歌账户密码',
+    googleVerifyPasswordDesc: '请输入您的谷歌账户密码以继续：',
+    googleAccCreated: '谷歌账户创建成功！请使用密码登录 🚀',
     langLabel: '语言',
 
     // Profile Page

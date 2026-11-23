@@ -1,5 +1,25 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, setDoc, onSnapshot, getDoc, getDocFromServer } from 'firebase/firestore';
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  onSnapshot,
+  getDoc,
+  getDocFromServer,
+  collection,
+  query,
+  where,
+  getDocs,
+} from 'firebase/firestore';
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  updateProfile,
+} from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBM3tpTLKm-W8YIasQ2gwBdBbKVmuS8p_E",
@@ -12,5 +32,25 @@ const firebaseConfig = {
 
 export const app = initializeApp(firebaseConfig);
 export const firestore = getFirestore(app);
-export { doc, setDoc, onSnapshot, getDoc, getDocFromServer };
+export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
+
+export {
+  doc,
+  setDoc,
+  onSnapshot,
+  getDoc,
+  getDocFromServer,
+  collection,
+  query,
+  where,
+  getDocs,
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  updateProfile,
+};
+
 
