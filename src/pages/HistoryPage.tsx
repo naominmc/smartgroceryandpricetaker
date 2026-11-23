@@ -41,7 +41,7 @@ const getMonthOptions = (lang: string) => [
 const DAY_OPTIONS = Array.from({ length: 31 }, (_, i) => String(i + 1));
 
 export const HistoryPage: React.FC = () => {
-  const { language } = useStore();
+  const { language, currency } = useStore();
   const MONTH_OPTIONS = useMemo(() => getMonthOptions(language), [language]);
   const [selectedDay, setSelectedDay] = useState<string>('all');
   const [selectedMonth, setSelectedMonth] = useState<string>('all');

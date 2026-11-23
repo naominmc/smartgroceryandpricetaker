@@ -28,7 +28,7 @@ export const GroceryItemCard: React.FC<GroceryItemCardProps> = ({
   isIncreaseDisabled = false,
   onSetQuantity,
 }) => {
-  const { language } = useStore();
+  const { language, currency } = useStore();
   const calc = calculateItemSubtotals(item.quantity, item.unitPrice, item.discounts);
   const isCompleted = item.status === 'completed';
 

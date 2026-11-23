@@ -54,6 +54,7 @@ export const ShoppingPage: React.FC = () => {
     isOnline,
     setIsOnline,
     language,
+    currency,
   } = useStore();
 
   const currentPeriod = useMemo(() => {

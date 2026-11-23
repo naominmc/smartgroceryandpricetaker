@@ -33,6 +33,10 @@ interface AppState {
   language: AppLanguage;
   setLanguage: (lang: AppLanguage) => void;
 
+  // Currency Selection (e.g. IDR, USD, SGD, EUR, JPY, CNY, SAR, AED)
+  currency: string;
+  setCurrency: (currency: string) => void;
+
   // Sound Effects (Pop on click, Cha-ching on checkout)
   isSoundEnabled: boolean;
   toggleSound: () => void;
@@ -184,6 +188,21 @@ export const useStore = create<AppState>((set, get) => {
       }
     },
 
+    // Currency
+    currency: initialProfile.currency || 'ID Rupiah Indonesia (Rp - IDR)',
+    setCurrency: (c: string) => {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('sg_currency', c);
+      }
+      set((state) => ({
+        currency: c,
+        userProfile: { ...state.userProfile, currency: c },
+      }));
+      if (typeof window !== 'undefined' && (window as any).__smart_grocery_notify_sync) {
+        (window as any).__smart_grocery_notify_sync();
+      }
+    },
+
     // Sound effects toggle
     isSoundEnabled: soundService.isEnabled(),
     toggleSound: () => {
@@ -221,6 +240,7 @@ export const useStore = create<AppState>((set, get) => {
         return {
           userProfile: nextProfile,
           username: nextProfile.username,
+          currency: data.currency !== undefined ? data.currency : state.currency,
         };
       });
       if (typeof window !== 'undefined' && (window as any).__smart_grocery_notify_sync) {

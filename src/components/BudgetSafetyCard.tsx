@@ -18,7 +18,7 @@ export const BudgetSafetyCard: React.FC<BudgetSafetyCardProps> = ({
   totalSavings,
   onEditBudget,
 }) => {
-  const { language } = useStore();
+  const { language, currency } = useStore();
   const { limit, activeTotal, remaining, percentage, level, excessAmount } = budgetStatus;
 
   const localizedMessage =

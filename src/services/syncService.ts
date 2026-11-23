@@ -14,6 +14,7 @@ export interface GrocerySnapshotData {
   userProfile?: any;
   themeMode?: 'light' | 'dark';
   language?: 'id' | 'en' | 'zh';
+  currency?: string;
 }
 
 export interface GrocerySnapshot {
@@ -246,6 +247,7 @@ class SyncService {
       userProfile,
       themeMode,
       language,
+      currency,
     } = useStore.getState();
 
     this.currentRevision += 1;
@@ -270,6 +272,7 @@ class SyncService {
         userProfile: userProfile || undefined,
         themeMode: themeMode || 'light',
         language: language || 'id',
+        currency: currency || userProfile?.currency || 'ID Rupiah Indonesia (Rp - IDR)',
       },
     };
   }
@@ -318,6 +321,7 @@ class SyncService {
         userProfile,
         themeMode,
         language,
+        currency,
       } = snapshot.data;
 
       // 1. Atomically sync all tables in a single Dexie transaction
@@ -345,7 +349,7 @@ class SyncService {
         }
       });
 
-      // 2. Sync Location, Date, Bank, Profile, Theme, and Language in Zustand Store
+      // 2. Sync Location, Date, Bank, Profile, Theme, Language, and Currency in Zustand Store
       const store = useStore.getState();
       if (sessionLocation && sessionLocation !== store.sessionLocation) {
         store.setSessionLocation(sessionLocation);
@@ -364,6 +368,9 @@ class SyncService {
       }
       if (language && language !== store.language) {
         store.setLanguage(language);
+      }
+      if (currency && currency !== store.currency) {
+        store.setCurrency(currency);
       }
 
       const timeStr = new Date().toLocaleTimeString('id-ID', {

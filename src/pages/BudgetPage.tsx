@@ -24,7 +24,7 @@ import { formatPeriodLabel, getCurrentMonthPeriod } from '../utils/priceComparis
 import { t, translateCategory } from '../utils/i18n';
 
 export const BudgetPage: React.FC = () => {
-  const { username, selectedPaymentMethod, language } = useStore();
+  const { username, selectedPaymentMethod, language, currency } = useStore();
   const [currentPeriod] = useState(getCurrentMonthPeriod());
   const [budgetLimitInput, setBudgetLimitInput] = useState('1200000');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);

@@ -1,18 +1,24 @@
+import { useStore } from '../store/useStore';
+
 /**
  * Formatter and parser for multi-currency display (IDR, USD, SGD, EUR, JPY, CNY, SAR, AED)
  */
 
 export function getActiveCurrency(): { symbol: string; code: string } {
-  if (typeof window !== 'undefined') {
-    const raw = localStorage.getItem('sg_currency') || '';
-    if (raw.includes('USD') || (raw.includes('$') && !raw.includes('S$'))) return { symbol: '$', code: 'USD' };
-    if (raw.includes('SGD') || raw.includes('S$')) return { symbol: 'S$', code: 'SGD' };
-    if (raw.includes('EUR') || raw.includes('€')) return { symbol: '€', code: 'EUR' };
-    if (raw.includes('CNY') || raw.includes('Cina') || raw.includes('Yuan')) return { symbol: '¥', code: 'CNY' };
-    if (raw.includes('JPY') || raw.includes('Japanese') || raw.includes('Yen')) return { symbol: '¥', code: 'JPY' };
-    if (raw.includes('SAR') || raw.includes('Riyadh') || raw.includes('Riyal')) return { symbol: 'SR', code: 'SAR' };
-    if (raw.includes('AED') || raw.includes('Dirham')) return { symbol: 'AED', code: 'AED' };
+  let raw = '';
+  try {
+    raw = useStore.getState().currency;
+  } catch (e) {}
+  if (!raw && typeof window !== 'undefined') {
+    raw = localStorage.getItem('sg_currency') || '';
   }
+  if (raw.includes('USD') || (raw.includes('$') && !raw.includes('S$'))) return { symbol: '$', code: 'USD' };
+  if (raw.includes('SGD') || raw.includes('S$')) return { symbol: 'S$', code: 'SGD' };
+  if (raw.includes('EUR') || raw.includes('€')) return { symbol: '€', code: 'EUR' };
+  if (raw.includes('CNY') || raw.includes('Cina') || raw.includes('Yuan')) return { symbol: '¥', code: 'CNY' };
+  if (raw.includes('JPY') || raw.includes('Japanese') || raw.includes('Yen')) return { symbol: '¥', code: 'JPY' };
+  if (raw.includes('SAR') || raw.includes('Riyadh') || raw.includes('Riyal')) return { symbol: 'SR', code: 'SAR' };
+  if (raw.includes('AED') || raw.includes('Dirham')) return { symbol: 'AED', code: 'AED' };
   return { symbol: 'Rp', code: 'IDR' };
 }
 

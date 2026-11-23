@@ -45,6 +45,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
     setIsEditingProfile,
     language,
     setLanguage,
+    currency: storeCurrency,
+    setCurrency: setStoreCurrency,
   } = useStore();
 
   const [pendingLangChange, setPendingLangChange] = useState<AppLanguage | null>(null);
@@ -133,8 +135,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
     setFullName(userProfile.fullName);
     setUsername(userProfile.username);
     setBio(userProfile.bio);
-    setCurrency(userProfile.currency || 'ID Rupiah Indonesia (Rp - IDR)');
-  }, [userProfile]);
+    setCurrency(storeCurrency || userProfile.currency || 'ID Rupiah Indonesia (Rp - IDR)');
+  }, [userProfile, storeCurrency]);
 
   useEffect(() => {
     return () => {
@@ -757,16 +759,18 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
         </label>
 
         <select
-          value={currency}
+          value={storeCurrency || currency || userProfile.currency || 'ID Rupiah Indonesia (Rp - IDR)'}
           onChange={(e) => {
-            setCurrency(e.target.value);
-            updateUserProfile({ currency: e.target.value });
+            const nextCur = e.target.value;
+            setCurrency(nextCur);
+            setStoreCurrency(nextCur);
+            updateUserProfile({ currency: nextCur });
             showToast(
               language === 'zh'
-                ? `货币已设置为 ${e.target.value}`
+                ? `货币已设置为 ${nextCur}`
                 : language === 'en'
-                ? `Currency set to ${e.target.value}`
-                : `Mata uang diatur ke ${e.target.value}`
+                ? `Currency set to ${nextCur}`
+                : `Mata uang diatur ke ${nextCur}`
             );
           }}
           className="w-full text-xs font-bold py-2.5 px-3 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-h-[42px]"
