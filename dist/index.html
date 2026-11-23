@@ -2423,7 +2423,7 @@
           if (!snap || snap.user !== 'naomiiracle') return;
           if (!force && snap.deviceId === this.deviceId) return;
           if (!force && snap.timestamp && AppState.lastLocalMutation && snap.timestamp < AppState.lastLocalMutation) return;
-          if (!force && AppState.lastLocalMutation && (Date.now() - AppState.lastLocalMutation < 15000)) return;
+          if (!force && AppState.lastLocalMutation && (Date.now() - AppState.lastLocalMutation < 30000)) return;
           const sig = this.signature(snap.data);
           if (!force && sig === this.lastSignature) return;
 
@@ -2432,7 +2432,11 @@
           this.lastApplied = snap.timestamp;
 
           try {
-            if (snap.data.cart) AppState.cart = snap.data.cart;
+            if (Array.isArray(snap.data.cart)) {
+              if (snap.data.cart.length > 0 || AppState.cart.length === 0 || force) {
+                AppState.cart = snap.data.cart;
+              }
+            }
             if (snap.data.budgetCap) AppState.budgetCap = snap.data.budgetCap;
             if (snap.data.sessionLocation) {
               AppState.sessionLocation = snap.data.sessionLocation;

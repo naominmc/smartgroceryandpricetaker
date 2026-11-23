@@ -91,29 +91,48 @@ export const groceryService = {
     category: ProductCategory,
     unit: string
   ): Promise<{ product: Product; previousPrice: number | null }> {
-    const trimmedName = name.trim();
+    const trimmedName = (name || '').trim() || 'Barang Belanja';
     const normalized = trimmedName.toLowerCase();
 
-    // Check if product exists in catalog
-    let product = await db.products.where('normalizedName').equals(normalized).first();
+    try {
+      // Check if product exists in catalog
+      let product = await db.products.where('normalizedName').equals(normalized).first();
 
-    if (!product) {
-      product = {
-        id: `prod-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
-        name: trimmedName,
-        normalizedName: normalized,
-        category,
-        unit,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+      if (!product) {
+        product = {
+          id: `prod-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+          name: trimmedName,
+          normalizedName: normalized,
+          category,
+          unit,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        await db.products.put(product);
+      }
+
+      // Lookup previous month price for this product
+      let previousPrice: number | null = null;
+      try {
+        previousPrice = await this.getPreviousMonthPrice(product.id, normalized, unit);
+      } catch (e) {}
+
+      return { product, previousPrice };
+    } catch (err) {
+      console.warn('Fallback in findOrCreateProduct:', err);
+      return {
+        product: {
+          id: `prod-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+          name: trimmedName,
+          normalizedName: normalized,
+          category,
+          unit,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        previousPrice: null,
       };
-      await db.products.put(product);
     }
-
-    // Lookup previous month price for this product
-    const previousPrice = await this.getPreviousMonthPrice(product.id, normalized, unit);
-
-    return { product, previousPrice };
   },
 
   /**
@@ -125,48 +144,55 @@ export const groceryService = {
     normalizedName?: string,
     _unit?: string
   ): Promise<number | null> {
-    const { sessionDate } = useStore.getState();
-    const currentPeriod = sessionDate ? sessionDate.substring(0, 7) : getCurrentMonthPeriod();
-    const prevPeriod = getPreviousMonthPeriod(currentPeriod);
-    let pastTransactions = await db.transactions.where('period').equals(prevPeriod).toArray();
+    try {
+      const { sessionDate } = useStore.getState();
+      const currentPeriod = sessionDate ? sessionDate.substring(0, 7) : getCurrentMonthPeriod();
+      const prevPeriod = getPreviousMonthPeriod(currentPeriod);
+      let pastTransactions = await db.transactions.where('period').equals(prevPeriod).toArray();
 
-    // Fallback: if none in that period, query all past transactions
-    if (!pastTransactions || pastTransactions.length === 0) {
-      pastTransactions = await db.transactions.toArray();
-    }
+      // Fallback: if none in that period, query all past transactions
+      if (!pastTransactions || pastTransactions.length === 0) {
+        pastTransactions = await db.transactions.toArray();
+      }
 
-    if (!pastTransactions || pastTransactions.length === 0) {
-      return null;
-    }
+      if (!pastTransactions || pastTransactions.length === 0) {
+        return null;
+      }
 
-    // Search from newest to oldest within that month
-    pastTransactions.sort(
-      (a, b) => new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime()
-    );
+      // Search from newest to oldest within that month
+      pastTransactions.sort(
+        (a, b) => new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime()
+      );
 
-    const norm = (normalizedName || '').trim().toLowerCase();
+      const norm = (normalizedName || '').trim().toLowerCase();
 
-    for (const tx of pastTransactions) {
-      for (const item of tx.items) {
-        const itemNorm = (item.nameSnapshot || '').trim().toLowerCase();
-        const matchesProduct =
-          item.productId === productId ||
-          (norm.length > 0 && itemNorm === norm);
+      for (const tx of pastTransactions) {
+        if (!tx || !Array.isArray(tx.items)) continue;
+        for (const item of tx.items) {
+          if (!item) continue;
+          const itemNorm = (item.nameSnapshot || '').trim().toLowerCase();
+          const matchesProduct =
+            item.productId === productId ||
+            (norm.length > 0 && itemNorm === norm);
 
-        const matchesKeyword =
-          norm.length > 0 &&
-          ((norm.includes('beras') && itemNorm.includes('beras')) ||
-            (norm.includes('telur') && itemNorm.includes('telur')) ||
-            (norm.includes('garam') && itemNorm.includes('garam')) ||
-            (norm.includes('minyak') && itemNorm.includes('minyak')));
+          const matchesKeyword =
+            norm.length > 0 &&
+            ((norm.includes('beras') && itemNorm.includes('beras')) ||
+              (norm.includes('telur') && itemNorm.includes('telur')) ||
+              (norm.includes('garam') && itemNorm.includes('garam')) ||
+              (norm.includes('minyak') && itemNorm.includes('minyak')));
 
-        if ((matchesProduct || matchesKeyword) && item.unitPrice > 0) {
-          return item.unitPrice;
+          if ((matchesProduct || matchesKeyword) && Number(item.unitPrice) > 0) {
+            return item.unitPrice;
+          }
         }
       }
-    }
 
-    return null;
+      return null;
+    } catch (err) {
+      console.warn('Error in getPreviousMonthPrice:', err);
+      return null;
+    }
   },
 
   /**
@@ -203,12 +229,14 @@ export const groceryService = {
       );
       if (existing && Number(existing.unitPrice) === safeUnitPrice) {
         const updatedQty = (Number(existing.quantity) || 1) + safeQty;
+        const updatedDiscounts = Array.isArray(data.discounts) && data.discounts.length > 0 ? data.discounts : (existing.discounts || []);
         await db.cartItems.update(existing.id, {
           quantity: updatedQty,
+          discounts: updatedDiscounts,
           updatedAt: new Date().toISOString(),
         });
         syncService.notifyChange();
-        return { ...existing, quantity: updatedQty };
+        return { ...existing, quantity: updatedQty, discounts: updatedDiscounts };
       }
     } catch (e) {
       console.warn('Error checking existing cart items:', e);

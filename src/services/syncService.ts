@@ -40,6 +40,7 @@ class SyncService {
   public isApplyingRemote: boolean = false;
   private currentRevision: number = 0;
   private lastAppliedSignature: string = '';
+  private lastLocalMutationTime: number = 0;
   private debounceTimer: any = null;
   private pollInterval: any = null;
   private listeners: Set<(state: SyncState) => void> = new Set();
@@ -56,9 +57,15 @@ class SyncService {
   constructor() {
     this.deviceId = this.getOrCreateDeviceId();
     this.state.deviceId = this.deviceId;
-    const savedRev = localStorage.getItem('smart_grocery_revision');
-    if (savedRev) {
-      this.currentRevision = parseInt(savedRev, 10) || 0;
+    if (typeof window !== 'undefined') {
+      const savedRev = localStorage.getItem('smart_grocery_revision');
+      if (savedRev) {
+        this.currentRevision = parseInt(savedRev, 10) || 0;
+      }
+      const savedMutation = localStorage.getItem('smart_grocery_last_mutation');
+      if (savedMutation) {
+        this.lastLocalMutationTime = parseInt(savedMutation, 10) || 0;
+      }
     }
   }
 
@@ -266,8 +273,18 @@ class SyncService {
     // Ignore echoes from self unless forced
     if (!force && snapshot.deviceId === this.deviceId) return false;
 
+    // Do not overwrite if local state was modified within the last 30 seconds
+    if (!force && this.lastLocalMutationTime && Date.now() - this.lastLocalMutationTime < 30000) {
+      return false;
+    }
+
     // Check revision: NEVER overwrite newer local state with an older remote snapshot!
     if (!force && snapshot.revision && this.currentRevision && snapshot.revision < this.currentRevision) {
+      return false;
+    }
+
+    // Never overwrite newer local state with an older remote timestamp
+    if (!force && snapshot.timestamp && this.lastLocalMutationTime && snapshot.timestamp < this.lastLocalMutationTime) {
       return false;
     }
 
@@ -291,14 +308,19 @@ class SyncService {
     try {
       const { cartItems, budgets, transactions, sessionLocation, sessionDate } = snapshot.data;
 
-      // 1. Sync Cart Items (Full replace to match the sender device 100%)
+      // 1. Sync Cart Items (Never wipe local items with empty remote cart unless forced)
       if (Array.isArray(cartItems)) {
-        await db.transaction('rw', db.cartItems, async () => {
-          await db.cartItems.clear();
-          if (cartItems.length > 0) {
-            await db.cartItems.bulkPut(cartItems);
-          }
-        });
+        const localItems = await db.cartItems.toArray();
+        if (cartItems.length === 0 && localItems.length > 0 && !force) {
+          // Keep existing local cart items safely
+        } else {
+          await db.transaction('rw', db.cartItems, async () => {
+            await db.cartItems.clear();
+            if (cartItems.length > 0) {
+              await db.cartItems.bulkPut(cartItems);
+            }
+          });
+        }
       }
 
       // 2. Sync Budgets
@@ -349,9 +371,11 @@ class SyncService {
   public notifyChange(): void {
     if (this.isApplyingRemote) return; // Do not broadcast mutations caused by receiving a remote snapshot
 
+    this.lastLocalMutationTime = Date.now();
     this.currentRevision += 1;
     if (typeof window !== 'undefined') {
       localStorage.setItem('smart_grocery_revision', this.currentRevision.toString());
+      localStorage.setItem('smart_grocery_last_mutation', this.lastLocalMutationTime.toString());
     }
 
     if (this.debounceTimer) {
