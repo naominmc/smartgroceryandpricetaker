@@ -64,13 +64,6 @@ export const PWAInstallBanner: React.FC = () => {
       ? 'Install on Home Screen (PWA)'
       : 'Pasang di Layar Utama (PWA)';
 
-  const bannerDesc =
-    language === 'zh'
-      ? '推购物车时无需网络即可快速打开'
-      : language === 'en'
-      ? 'Fast access while pushing cart without internet'
-      : 'Bisa dibuka cepat saat dorong troli tanpa internet';
-
   const bannerBtn =
     language === 'zh'
       ? '安装'
