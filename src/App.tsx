@@ -21,6 +21,7 @@ import { CreditCard, Scan, Sun, Moon, Volume2, VolumeX } from 'lucide-react';
 export const App: React.FC = () => {
   const {
     activeTab,
+    setActiveTab,
     username,
     selectedPaymentMethod,
     isScannerOpen,
@@ -164,6 +165,7 @@ export const App: React.FC = () => {
   };
 
   const handleLogout = () => {
+    setActiveTab('shopping');
     setIsAuthenticated(false);
     if (typeof window !== 'undefined') {
       localStorage.removeItem('smart_grocery_authenticated');
@@ -192,6 +194,7 @@ export const App: React.FC = () => {
     return (
       <LoginPage
         onLogin={() => {
+          setActiveTab('shopping');
           setIsAuthenticated(true);
           if (typeof window !== 'undefined') {
             localStorage.setItem('smart_grocery_authenticated', 'true');

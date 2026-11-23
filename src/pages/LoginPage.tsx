@@ -68,6 +68,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     language,
     setLanguage,
     updateUserProfile,
+    setActiveTab,
   } = useStore();
 
   const [activeAuthTab, setActiveAuthTab] = useState<'signin' | 'signup'>('signin');
@@ -123,6 +124,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           }) +
           ' WIB',
       });
+      setActiveTab('shopping');
       setIsLoading(false);
       onLogin();
     }, 450);
@@ -256,6 +258,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             }) +
             ' WIB',
         });
+        setActiveTab('shopping');
         setIsLoading(false);
         onLogin();
       }, 450);
