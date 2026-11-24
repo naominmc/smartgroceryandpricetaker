@@ -19,8 +19,7 @@ import { useStore } from '../store/useStore';
 import { t, getLanguageDisplayName } from '../utils/i18n';
 import { soundService } from '../utils/sound';
 import { LanguageSelectorModal } from '../components/LanguageSelectorModal';
-import { authService, getLocalAccounts } from '../services/authService';
-import { GoogleAuthModal, type GoogleAccount } from '../components/GoogleAuthModal';
+import { authService } from '../services/authService';
 import { pwaService } from '../utils/pwa';
 import { syncService } from '../services/syncService';
 import { SplashScreen } from '../components/SplashScreen';
@@ -52,7 +51,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
-  const [isGoogleChooserOpen, setIsGoogleChooserOpen] = useState(false);
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
   const [showSplash, setShowSplash] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -180,98 +178,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
   // Realtime check for local duplicates in signup mode
   const cleanUsername = usernameInput.trim().replace(/^@/, '').toLowerCase();
-  const registeredAccounts = getLocalAccounts();
-  const isUsernameTaken =
-    activeAuthTab === 'signup' &&
-    cleanUsername.length >= 3 &&
-    registeredAccounts.some((acc) => acc.username.toLowerCase() === cleanUsername);
-
   const cleanEmail = emailInput.trim().toLowerCase();
-  const isEmailTaken =
-    activeAuthTab === 'signup' &&
-    cleanEmail.length > 3 &&
-    registeredAccounts.some((acc) => acc.email.toLowerCase() === cleanEmail);
+  const [isUsernameTaken, setIsUsernameTaken] = useState(false);
+  const [isEmailTaken, setIsEmailTaken] = useState(false);
 
-  // Tangani pemilihan akun Google via Chooser Popup (Fallback andal jika Firebase Auth belum diaktifkan di Console)
-  const handleGoogleContinue = async (account: GoogleAccount) => {
-    setIsGoogleChooserOpen(false);
-    setIsLoading(true);
-    try {
-      const cleanEmail = account.email.trim().toLowerCase();
-      const fullName = account.name.trim() || cleanEmail.split('@')[0];
-      const username = (cleanEmail.split('@')[0] || 'user').replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
-      const avatarUrl = account.avatarImg || '';
-
-      // Cari apakah akun sudah ada di Firestore / local storage
-      let existingAcc = await authService.findAccount(cleanEmail);
-      if (!existingAcc) {
-        // Otomatis daftarkan akun baru jika belum ada
-        existingAcc = await authService.registerAccount({
-          fullName,
-          username,
-          email: cleanEmail,
-          password: `google_${Date.now()}`,
-          avatarUrl,
-          isGoogleLinked: true,
-        });
-      } else {
-        if (!existingAcc.isGoogleLinked || (avatarUrl && !existingAcc.avatarUrl)) {
-          existingAcc.isGoogleLinked = true;
-          if (avatarUrl && !existingAcc.avatarUrl) existingAcc.avatarUrl = avatarUrl;
-          await authService.saveAccountToFirestore(existingAcc);
-        }
-      }
-
-      updateUserProfile({
-        fullName: existingAcc.fullName || fullName,
-        username: existingAcc.username || username,
-        email: existingAcc.email || cleanEmail,
-        avatarUrl: existingAcc.avatarUrl || avatarUrl || userProfile.avatarUrl,
-        passwordMasked: existingAcc.password,
-        isGoogleLinked: true,
-        loginTime:
-          new Date().toLocaleDateString(language === 'zh' ? 'zh-CN' : language === 'en' ? 'en-US' : 'id-ID', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-          }) +
-          ', ' +
-          new Date().toLocaleTimeString(language === 'zh' ? 'zh-CN' : language === 'en' ? 'en-US' : 'id-ID', {
-            hour: '2-digit',
-            minute: '2-digit',
-          }) +
-          ' WIB',
-      });
-
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('sg_password', existingAcc.password);
-        localStorage.setItem('sg_fullName', existingAcc.fullName || fullName);
-        localStorage.setItem('sg_username', existingAcc.username || username);
-        localStorage.setItem('sg_email', existingAcc.email || cleanEmail);
-        localStorage.setItem('smart_grocery_authenticated', 'true');
-      }
-
-      if (existingAcc.isPwaDismissed) {
-        pwaService.setDismissed(true);
-        updateUserProfile({ isPwaDismissed: true });
-      }
-      syncService.reconnect();
-
-      setIsLoading(false);
-      showToast(t('signInSuccess', language, { name: existingAcc.fullName || fullName }));
-
-      setTimeout(() => {
-        setActiveTab('shopping');
-        onLogin();
-      }, 350);
-    } catch (err: any) {
-      console.error('handleGoogleContinue error:', err);
-      setIsLoading(false);
-      showToast(t('googleConnectionFailed', language), 'error');
-    }
-  };
-
-  // Jalankan alur Google OAuth Asli (Popup untuk desktop, Redirect untuk mobile iOS/Safari)
+  // Jalankan alur Google OAuth Asli menggunakan Firebase Auth SDK (signInWithPopup / signInWithRedirect)
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
@@ -291,10 +202,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             : 'Koneksi Google batal atau ditutup. Silakan coba lagi.',
           'error'
         );
+      } else if (err?.code === 'auth/unauthorized-domain') {
+        showToast('Domain belum diizinkan di Firebase Console. Tambahkan domain ini ke Authorized Domains.', 'error');
       } else {
-        // Fallback otomatis jika Firebase Auth belum diaktifkan di console (auth/configuration-not-found)
-        // Buka modal Google Account Chooser asli agar pengguna tetap bisa masuk dengan akun Google-nya
-        setIsGoogleChooserOpen(true);
+        showToast(
+          err?.message ? `Koneksi Google gagal: ${err.message}` : t('googleConnectionFailed', language),
+          'error'
+        );
       }
     }
   };
@@ -342,14 +256,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         showToast(t('registeredSuccessRedirect', language));
       } catch (err: any) {
         setIsLoading(false);
-        if (err?.message === 'EMAIL_EXISTS') {
+        if (err?.code === 'auth/email-already-in-use') {
+          setIsEmailTaken(true);
           showToast(t('emailTaken', language), 'error');
-        } else if (err?.message === 'USERNAME_EXISTS') {
-          showToast(t('usernameTaken', language), 'error');
-        } else if (err?.message === 'WEAK_PASSWORD') {
+        } else if (err?.code === 'auth/weak-password') {
           showToast(t('minPassword', language), 'error');
+        } else if (err?.code === 'auth/invalid-email') {
+          showToast(t('invalidEmail', language), 'error');
         } else {
-          showToast('Pendaftaran gagal. Silakan coba lagi.', 'error');
+          showToast(`Pendaftaran gagal: ${err?.message || 'Silakan coba lagi.'}`, 'error');
         }
       }
     } else {
@@ -366,14 +281,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
       setIsLoading(true);
       try {
-        const account = await authService.loginWithCredentials(inputQuery, passwordInput);
+        const { user, account } = await authService.loginWithCredentials(inputQuery, passwordInput);
 
         updateUserProfile({
           fullName: account.fullName,
           username: account.username,
           email: account.email,
           avatarUrl: account.avatarUrl || userProfile.avatarUrl,
-          passwordMasked: account.password,
           isGoogleLinked: !!account.isGoogleLinked,
           loginTime:
             new Date().toLocaleDateString(language === 'zh' ? 'zh-CN' : language === 'en' ? 'en-US' : 'id-ID', {
@@ -390,10 +304,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         });
 
         if (typeof window !== 'undefined') {
-          localStorage.setItem('sg_password', account.password);
           localStorage.setItem('sg_fullName', account.fullName);
           localStorage.setItem('sg_username', account.username);
           localStorage.setItem('sg_email', account.email);
+          localStorage.setItem('smart_grocery_authenticated', 'true');
         }
 
         if (account.isPwaDismissed) {
@@ -411,19 +325,22 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         }, 400);
       } catch (err: any) {
         setIsLoading(false);
-        if (err?.message === 'ACCOUNT_NOT_FOUND') {
+        if (err?.code === 'auth/user-not-found' || err?.code === 'auth/invalid-credential') {
           showToast(t('accountNotFound', language), 'error');
-          // Arahkan pengguna baru untuk membuat akun terlebih dahulu
           setActiveAuthTab('signup');
           if (inputQuery.includes('@')) {
             setEmailInput(inputQuery);
           } else {
             setUsernameInput(inputQuery.replace(/^@/, ''));
           }
-        } else if (err?.message === 'WRONG_PASSWORD') {
+        } else if (err?.code === 'auth/wrong-password') {
           showToast(t('wrongPassword', language), 'error');
+        } else if (err?.code === 'auth/invalid-email') {
+          showToast(t('invalidEmail', language), 'error');
+        } else if (err?.code === 'auth/too-many-requests') {
+          showToast('⚠️ Terlalu banyak percobaan gagal. Silakan coba beberapa saat lagi.', 'error');
         } else {
-          showToast('Gagal masuk. Periksa kembali email & kata sandi.', 'error');
+          showToast(`Gagal masuk: ${err?.message || 'Periksa kembali email & kata sandi.'}`, 'error');
         }
       }
     }
@@ -835,13 +752,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           </footer>
         </div>
       </main>
-
-      {/* Pop-Up Akun Google Asli (Google Account Chooser) */}
-      <GoogleAuthModal
-        isOpen={isGoogleChooserOpen}
-        onClose={() => setIsGoogleChooserOpen(false)}
-        onContinue={handleGoogleContinue}
-      />
     </div>
   );
 };

@@ -17,6 +17,7 @@ import { soundService } from './utils/sound';
 import { t } from './utils/i18n';
 import type { ProductCategory } from './types';
 import { CreditCard, Scan, Sun, Moon, Volume2, VolumeX } from 'lucide-react';
+import { auth, onAuthStateChanged, signOut, type User, doc, firestore, getDoc } from './services/firebase';
 
 export const App: React.FC = () => {
   const {
@@ -37,14 +38,65 @@ export const App: React.FC = () => {
     triggerRefresh,
   } = useStore();
   const [isInitialized, setIsInitialized] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('smart_grocery_authenticated') === 'true';
-    }
-    return false;
-  });
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+
+  // Pantau sesi autentikasi Firebase asli secara realtime (onAuthStateChanged)
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setCurrentUser(user);
+      if (user) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('smart_grocery_authenticated', 'true');
+        }
+        // Sinkronisasi data profil dari Firestore / Auth
+        const email = (user.email || '').toLowerCase();
+        const fullName = user.displayName || email.split('@')[0] || 'User';
+        const photo = user.photoURL || '';
+        const isGoogle = user.providerData.some((p) => p.providerId === 'google.com');
+
+        try {
+          const userDocSnap = await getDoc(doc(firestore, 'users', email));
+          if (userDocSnap.exists()) {
+            const data = userDocSnap.data();
+            useStore.getState().updateUserProfile({
+              fullName: data.fullName || fullName,
+              username: data.username || email.split('@')[0],
+              email: email,
+              avatarUrl: photo || data.avatarUrl,
+              isGoogleLinked: isGoogle || !!data.isGoogleLinked,
+            });
+          } else {
+            useStore.getState().updateUserProfile({
+              fullName,
+              username: email.split('@')[0],
+              email: email,
+              avatarUrl: photo,
+              isGoogleLinked: isGoogle,
+            });
+          }
+        } catch {
+          useStore.getState().updateUserProfile({
+            fullName,
+            username: email.split('@')[0],
+            email: email,
+            avatarUrl: photo,
+            isGoogleLinked: isGoogle,
+          });
+        }
+        syncService.reconnect();
+      } else {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('smart_grocery_authenticated');
+        }
+      }
+      setIsAuthChecking(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const getShortPaymentName = (method: string): string => {
     if (!method) return 'BCA';
@@ -169,27 +221,35 @@ export const App: React.FC = () => {
     soundService.playSuccess();
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('sg_just_logged_out', 'true');
-    }
-    setActiveTab('shopping');
-    setIsAuthenticated(false);
-    if (typeof window !== 'undefined') {
       localStorage.removeItem('smart_grocery_authenticated');
     }
+    setActiveTab('shopping');
+    try {
+      await signOut(auth);
+    } catch (e) {
+      console.warn('Sign out error:', e);
+    }
+    setCurrentUser(null);
   };
 
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-sky-50 to-amber-50 dark:from-slate-900 dark:to-slate-950 flex items-center justify-center p-4">
+        <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin mx-auto" />
+      </div>
+    );
+  }
+
   // Tampilkan Halaman Login / Welcome saat pertama kali membuka web atau saat logout
-  if (!isAuthenticated) {
+  // Hanya izinkan masuk jika onAuthStateChanged Firebase Auth mengembalikan user terautentikasi
+  if (!currentUser) {
     return (
       <LoginPage
         onLogin={() => {
           setActiveTab('shopping');
-          setIsAuthenticated(true);
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('smart_grocery_authenticated', 'true');
-          }
         }}
       />
     );

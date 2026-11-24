@@ -21,15 +21,18 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   updateProfile,
+  onAuthStateChanged,
+  type User,
 } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBM3tpTLKm-W8YIasQ2gwBdBbKVmuS8p_E",
-  authDomain: "smartgroceryandpricetaker.firebaseapp.com",
-  projectId: "smartgroceryandpricetaker",
-  storageBucket: "smartgroceryandpricetaker.firebasestorage.app",
-  messagingSenderId: "778352839650",
-  appId: "1:778352839650:web:26ce782031900d6fdc47bb"
+  apiKey: "AIzaSyDsQJnaG88UWoliGvAOU5cvf9ctJrIJ4Rg",
+  authDomain: "grocerytracker-9ef9b.firebaseapp.com",
+  projectId: "grocerytracker-9ef9b",
+  storageBucket: "grocerytracker-9ef9b.firebasestorage.app",
+  messagingSenderId: "788986834823",
+  appId: "1:788986834823:web:ec633464913ad15537ed22",
+  measurementId: "G-YC612QM83L",
 };
 
 export const app = initializeApp(firebaseConfig);
@@ -55,6 +58,6 @@ export {
   createUserWithEmailAndPassword,
   signOut,
   updateProfile,
+  onAuthStateChanged,
+  type User,
 };
-
-
