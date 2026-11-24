@@ -393,9 +393,9 @@ export const ShoppingPage: React.FC = () => {
 
       {/* Top Header: Bulan dan Tahun (Tanpa Teks "Belanja Bulanan"), Sejajar dengan Lokasi & Kalender */}
       <div className="pt-1 flex items-center justify-between gap-2 sm:gap-2.5 max-w-full min-w-0">
-        {/* Kiri: Menampilkan Bulan dan Tahun dengan ukuran font seperti sebelumnya agar lokasi lebih leluasa */}
+        {/* Kiri: Menampilkan Bulan dan Tahun warna hitam dengan ukuran font kompak */}
         <div className="min-w-0 flex-shrink-0">
-          <span className="text-xs text-text-secondary dark:text-slate-400 font-medium truncate block">
+          <span className="text-xs text-text-main dark:text-slate-100 font-bold truncate block">
             {formatPeriodLabel(currentPeriod, language)}
           </span>
         </div>
