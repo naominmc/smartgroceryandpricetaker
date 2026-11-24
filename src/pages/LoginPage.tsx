@@ -20,7 +20,6 @@ import { t, getLanguageDisplayName } from '../utils/i18n';
 import { soundService } from '../utils/sound';
 import { LanguageSelectorModal } from '../components/LanguageSelectorModal';
 import { authService, getLocalAccounts } from '../services/authService';
-import { GoogleAuthModal, type GoogleAccount } from '../components/GoogleAuthModal';
 import { pwaService } from '../utils/pwa';
 import { syncService } from '../services/syncService';
 import { SplashScreen } from '../components/SplashScreen';
@@ -63,22 +62,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     return true;
   });
 
-  // Google OAuth Popup & Flow State
-  const [isGoogleChooserOpen, setIsGoogleChooserOpen] = useState(false);
-  const [selectedGoogleUser, setSelectedGoogleUser] = useState<GoogleAccount | null>(null);
 
-  // Modal Verifikasi Password untuk Akun Google yang Sudah Terdaftar
-  const [isPasswordVerifyOpen, setIsPasswordVerifyOpen] = useState(false);
-  const [verifyPasswordInput, setVerifyPasswordInput] = useState('');
-  const [showVerifyPassword, setShowVerifyPassword] = useState(false);
-
-  // Modal Pendaftaran Akun Google Baru (Wajib Username & Kata Sandi)
-  const [isGoogleRegisterOpen, setIsGoogleRegisterOpen] = useState(false);
-  const [googleRegFullName, setGoogleRegFullName] = useState('');
-  const [googleRegEmail, setGoogleRegEmail] = useState('');
-  const [googleRegUsername, setGoogleRegUsername] = useState('');
-  const [googleRegPassword, setGoogleRegPassword] = useState('');
-  const [showGoogleRegPassword, setShowGoogleRegPassword] = useState(false);
 
   const isDark = themeMode === 'dark';
 
@@ -89,84 +73,38 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     }, 3500);
   };
 
-  // Alur Ketika Pengguna Menekan "Continue" pada Layar Konfirmasi Google (Screenshot 3)
-  const handleGoogleContinue = async (account: GoogleAccount) => {
-    setIsGoogleChooserOpen(false);
-    setSelectedGoogleUser(account);
-    const cleanEmail = account.email.trim().toLowerCase();
-
+  // Tangani Keberhasilan Autentikasi Akun Google Asli (baik via Popup maupun Redirect)
+  const handleGoogleSuccess = async (googleUser: any) => {
     setIsLoading(true);
     try {
-      const existing = await authService.findAccount(cleanEmail);
-      setIsLoading(false);
+      const email = googleUser.email?.trim().toLowerCase() || '';
+      const fullName = googleUser.displayName || email.split('@')[0] || 'Pengguna Google';
+      const username = (email.split('@')[0] || 'user').replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
+      const avatarUrl = googleUser.photoURL || '';
 
-      if (existing) {
-        // KASUS 1: Akun Google SUDAH TERDAFTAR -> Wajib masukkan kata sandi (password)
-        const accountPassword = existing.password || (cleanEmail === 'naomi@mutiarabangsa.sch.id' ? 'naomi12345' : '');
-        setVerifyPasswordInput(accountPassword);
-        setShowVerifyPassword(false);
-        setIsPasswordVerifyOpen(true);
+      let account = await authService.findAccount(email);
+      if (!account) {
+        account = await authService.registerAccount({
+          fullName,
+          username,
+          email,
+          password: `google_${googleUser.uid}`,
+          avatarUrl,
+          isGoogleLinked: true,
+        });
       } else {
-        // KASUS 2: Akun Google BELUM TERDAFTAR -> Arahkan lengkapi akun (Wajib username & kata sandi)
-        setGoogleRegFullName(account.name);
-        setGoogleRegEmail(cleanEmail);
-        const autoUser = (cleanEmail.split('@')[0] || 'user').replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
-        setGoogleRegUsername(autoUser);
-        setGoogleRegPassword('');
-        setShowGoogleRegPassword(false);
-        setIsGoogleRegisterOpen(true);
-      }
-    } catch (err) {
-      setIsLoading(false);
-      // Fallback ke modal registrasi jika pencarian offline
-      setGoogleRegFullName(account.name);
-      setGoogleRegEmail(cleanEmail);
-      setGoogleRegUsername((cleanEmail.split('@')[0] || 'user').toLowerCase());
-      setGoogleRegPassword('');
-      setIsGoogleRegisterOpen(true);
-    }
-  };
-
-  // Submit Verifikasi Kata Sandi untuk Akun Google yang Sudah Terdaftar
-  const handleVerifyPasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedGoogleUser) return;
-    if (!verifyPasswordInput.trim()) {
-      showToast(t('fillPassword', language));
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      let account: RegisteredAccount;
-      try {
-        account = await authService.loginWithCredentials(
-          selectedGoogleUser.email,
-          verifyPasswordInput
-        );
-      } catch (loginErr: any) {
-        // Jika password berbeda tapi pemilik akun terverifikasi lewat Google Auth Modal:
-        // Sesuaikan kata sandi akun mengikuti kata sandi yang dimasukkan pengguna
-        const existingAcc = await authService.findAccount(selectedGoogleUser.email);
-        if (existingAcc) {
-          existingAcc.password = verifyPasswordInput.trim();
-          existingAcc.isGoogleLinked = true;
-          const local = getLocalAccounts();
-          const updated = local.map((a) =>
-            a.email.toLowerCase() === existingAcc.email.toLowerCase() ? existingAcc : a
-          );
-          saveLocalAccounts(updated);
-          account = existingAcc;
-        } else {
-          throw loginErr;
+        if (!account.isGoogleLinked || (avatarUrl && !account.avatarUrl)) {
+          account.isGoogleLinked = true;
+          if (avatarUrl && !account.avatarUrl) account.avatarUrl = avatarUrl;
+          await authService.saveAccountToFirestore(account);
         }
       }
 
       updateUserProfile({
-        fullName: account.fullName,
-        username: account.username,
-        email: account.email,
-        avatarUrl: account.avatarUrl || selectedGoogleUser.avatarImg || userProfile.avatarUrl,
+        fullName: account.fullName || fullName,
+        username: account.username || username,
+        email: account.email || email,
+        avatarUrl: account.avatarUrl || avatarUrl || userProfile.avatarUrl,
         passwordMasked: account.password,
         isGoogleLinked: true,
         loginTime:
@@ -185,9 +123,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
       if (typeof window !== 'undefined') {
         localStorage.setItem('sg_password', account.password);
-        localStorage.setItem('sg_fullName', account.fullName);
-        localStorage.setItem('sg_username', account.username);
-        localStorage.setItem('sg_email', account.email);
+        localStorage.setItem('sg_fullName', account.fullName || fullName);
+        localStorage.setItem('sg_username', account.username || username);
+        localStorage.setItem('sg_email', account.email || email);
         localStorage.setItem('smart_grocery_authenticated', 'true');
       }
 
@@ -197,86 +135,28 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       }
       syncService.reconnect();
 
-      setIsPasswordVerifyOpen(false);
       setIsLoading(false);
-      showToast(t('signInSuccess', language, { name: account.fullName }));
+      showToast(t('signInSuccess', language, { name: account.fullName || fullName }));
 
       setTimeout(() => {
         setActiveTab('shopping');
         onLogin();
       }, 350);
     } catch (err: any) {
+      console.error('Google Auth Success error:', err);
       setIsLoading(false);
-      showToast(t('wrongPassword', language));
+      showToast(t('googleConnectionFailed', language));
     }
   };
 
-  // Submit Pendaftaran Akun Baru dari Google (Wajib Isi Username & Kata Sandi)
-  const handleGoogleRegisterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedGoogleUser) return;
-
-    const cleanFullName = googleRegFullName.trim() || selectedGoogleUser.name;
-    const cleanUser = googleRegUsername.trim().replace(/^@/, '');
-    const cleanPass = googleRegPassword.trim();
-    const cleanEmail = googleRegEmail.trim().toLowerCase();
-
-    if (!cleanFullName || cleanFullName.length < 3) {
-      showToast(t('minFullName', language));
-      return;
-    }
-    if (!cleanUser || cleanUser.length < 3) {
-      showToast(t('minUsername', language));
-      return;
-    }
-    if (!cleanPass || cleanPass.length < 6) {
-      showToast(t('minPassword', language));
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await authService.registerAccount({
-        fullName: cleanFullName,
-        username: cleanUser,
-        email: cleanEmail,
-        password: cleanPass,
-        isGoogleLinked: true,
-        avatarUrl: selectedGoogleUser.avatarImg || '',
-      });
-
-      setIsLoading(false);
-      setIsGoogleRegisterOpen(false);
-
-      // Sesuai Instruksi: "setelah pembuatan akun selesai wajib melakukan sign in / login ulang terlebih dahulu sebelum masuk ke aplikasi"
-      setActiveAuthTab('signin');
-      setEmailInput(cleanEmail);
-      setPasswordInput('');
-      showToast('Pendaftaran akun Smart Grocery via Google berhasil! Silakan masuk dengan kata sandi Anda 🚀');
-    } catch (err: any) {
-      setIsLoading(false);
-      if (err?.message === 'USERNAME_EXISTS') {
-        showToast(t('usernameTaken', language));
-      } else if (err?.message === 'EMAIL_EXISTS') {
-        showToast(t('emailTaken', language));
-      } else {
-        showToast('Gagal membuat akun. Silakan coba lagi.');
-      }
-    }
-  };
-
-  // Tangani hasil Redirect OAuth Google jika ada sesi redirect tersisa
+  // Tangani hasil Redirect OAuth Google saat kembali dari proses login Google
   useEffect(() => {
     let isMounted = true;
     const checkRedirect = async () => {
       try {
         const redirectUser = await authService.checkRedirectResult();
         if (redirectUser && redirectUser.email && isMounted) {
-          handleGoogleContinue({
-            name: redirectUser.displayName || redirectUser.email.split('@')[0],
-            email: redirectUser.email,
-            avatarImg: redirectUser.photoURL,
-          });
+          await handleGoogleSuccess(redirectUser);
         }
       } catch (err: any) {
         console.warn('OAuth redirect check error:', err);
@@ -303,11 +183,35 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     cleanEmail.length > 3 &&
     registeredAccounts.some((acc) => acc.email.toLowerCase() === cleanEmail);
 
-  // Buka Pop-Up Akun Google Asli (Screenshot 2 & 3)
-  const handleGoogleLogin = () => {
-    setIsGoogleChooserOpen(true);
+  // Jalankan alur Google OAuth Asli (Popup untuk desktop, Redirect untuk mobile iOS/Safari)
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    try {
+      const result = await authService.initiateGoogleAuth();
+      if (result.mode === 'popup' && result.user) {
+        await handleGoogleSuccess(result.user);
+      }
+    } catch (err: any) {
+      setIsLoading(false);
+      if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
+        showToast(
+          language === 'zh'
+            ? '已取消 Google 登录。'
+            : language === 'en'
+            ? 'Google sign-in was canceled.'
+            : 'Koneksi Google batal atau ditutup. Silakan coba lagi.'
+        );
+      } else {
+        showToast(
+          language === 'zh'
+            ? 'Google 登录失败，请重试。'
+            : language === 'en'
+            ? 'Google sign-in failed. Please try again.'
+            : 'Koneksi Google gagal. Silakan coba lagi.'
+        );
+      }
+    }
   };
-
   const handleSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -835,241 +739,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           </footer>
         </div>
       </main>
-
-      {/* 1. Pop-Up Konfirmasi Akun Google Asli (Screenshot 2 & 3: Choose Account -> You'll share this info) */}
-      <GoogleAuthModal
-        isOpen={isGoogleChooserOpen}
-        onClose={() => setIsGoogleChooserOpen(false)}
-        onContinue={handleGoogleContinue}
-      />
-
-      {/* 2. Modal Verifikasi Kata Sandi untuk Akun Google yang Sudah Terdaftar */}
-      {isPasswordVerifyOpen && selectedGoogleUser && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-xs animate-fade-in"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="w-full max-w-sm bg-white dark:bg-slate-900 rounded-3xl p-5 shadow-2xl border border-gray-200 dark:border-slate-800 space-y-4 animate-slide-up text-left">
-            <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-slate-800">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-950 flex items-center justify-center">
-                  <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
-                    <path
-                      fill="#4285F4"
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                    />
-                    <path
-                      fill="#34A853"
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    />
-                    <path
-                      fill="#FBBC05"
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                    />
-                    <path
-                      fill="#EA4335"
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-gray-900 dark:text-slate-100 leading-tight">
-                    Verifikasi Kata Sandi Akun
-                  </h3>
-                  <p className="text-[11px] text-gray-500 dark:text-slate-400 truncate max-w-[210px]">
-                    {selectedGoogleUser.email}
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsPasswordVerifyOpen(false)}
-                className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <p className="text-xs text-gray-600 dark:text-slate-300">
-              Akun Google ini sudah terdaftar. Masukkan kata sandi akun Anda untuk masuk:
-            </p>
-
-            <form onSubmit={handleVerifyPasswordSubmit} className="space-y-3">
-              <div>
-                <label className="block text-[11px] font-bold text-gray-700 dark:text-slate-300 mb-1">
-                  Kata Sandi Akun Google <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type={showVerifyPassword ? 'text' : 'password'}
-                    placeholder="Masukkan kata sandi akun Google"
-                    value={verifyPasswordInput}
-                    onChange={(e) => setVerifyPasswordInput(e.target.value)}
-                    className="w-full pl-8 pr-9 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-gray-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary min-h-[40px]"
-                    required
-                    autoFocus
-                  />
-                  <Lock className="w-3.5 h-3.5 text-gray-400 dark:text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                  <button
-                    type="button"
-                    onClick={() => setShowVerifyPassword(!showVerifyPassword)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300"
-                  >
-                    {showVerifyPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setIsPasswordVerifyOpen(false)}
-                  className="flex-1 py-2 px-3 rounded-xl border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-300 font-bold text-xs hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer"
-                >
-                  {t('cancelBtn', language)}
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="flex-1 py-2 px-3 rounded-xl bg-primary hover:bg-blue-600 text-white font-bold text-xs shadow-sm cursor-pointer"
-                >
-                  {isLoading ? t('processing', language) : 'Masuk ke Aplikasi →'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* 3. Modal Lengkapi Pendaftaran Akun Smart Grocery via Shortcut Akun Google */}
-      {isGoogleRegisterOpen && selectedGoogleUser && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-xs animate-fade-in"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="w-full max-w-sm bg-white dark:bg-slate-900 rounded-3xl p-5 shadow-2xl border border-gray-200 dark:border-slate-800 space-y-3.5 animate-slide-up text-left">
-            <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-slate-800">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-950 flex items-center justify-center">
-                  <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
-                    <path
-                      fill="#4285F4"
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                    />
-                    <path
-                      fill="#34A853"
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    />
-                    <path
-                      fill="#FBBC05"
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                    />
-                    <path
-                      fill="#EA4335"
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-gray-900 dark:text-slate-100 leading-tight">
-                    Lengkapi Pembuatan Akun
-                  </h3>
-                  <p className="text-[11px] text-gray-500 dark:text-slate-400 truncate max-w-[210px]">
-                    via {googleRegEmail}
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsGoogleRegisterOpen(false)}
-                className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <p className="text-xs text-gray-600 dark:text-slate-300 leading-relaxed">
-              Daftarkan akun Smart Grocery Anda menggunakan shortcut akun Google ini tanpa perlu mengetik ulang email. Tentukan username dan kata sandi baru untuk akun Smart Grocery Anda:
-            </p>
-
-            <form onSubmit={handleGoogleRegisterSubmit} className="space-y-3">
-              <div>
-                <label className="block text-[11px] font-bold text-gray-700 dark:text-slate-300 mb-1">
-                  Nama Lengkap
-                </label>
-                <input
-                  type="text"
-                  value={googleRegFullName}
-                  onChange={(e) => setGoogleRegFullName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-gray-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary min-h-[38px]"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold text-gray-700 dark:text-slate-300 mb-1">
-                  Username <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">@</span>
-                  <input
-                    type="text"
-                    value={googleRegUsername}
-                    onChange={(e) => setGoogleRegUsername(e.target.value)}
-                    className="w-full pl-7 pr-3 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-gray-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary min-h-[38px]"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold text-gray-700 dark:text-slate-300 mb-1">
-                  Kata Sandi Akun Smart Grocery <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type={showGoogleRegPassword ? 'text' : 'password'}
-                    placeholder="Minimal 6 karakter"
-                    value={googleRegPassword}
-                    onChange={(e) => setGoogleRegPassword(e.target.value)}
-                    className="w-full pl-8 pr-9 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-gray-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary min-h-[38px]"
-                    required
-                  />
-                  <Lock className="w-3.5 h-3.5 text-gray-400 dark:text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                  <button
-                    type="button"
-                    onClick={() => setShowGoogleRegPassword(!showGoogleRegPassword)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300"
-                  >
-                    {showGoogleRegPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex gap-2 pt-1.5">
-                <button
-                  type="button"
-                  onClick={() => setIsGoogleRegisterOpen(false)}
-                  className="flex-1 py-2 px-3 rounded-xl border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-300 font-bold text-xs hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer"
-                >
-                  {t('cancelBtn', language)}
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="flex-1 py-2 px-3 rounded-xl bg-primary hover:bg-blue-600 text-white font-bold text-xs shadow-sm cursor-pointer whitespace-nowrap"
-                >
-                  {isLoading ? t('processing', language) : 'Daftar Akun Smart Grocery →'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

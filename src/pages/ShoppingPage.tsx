@@ -67,6 +67,7 @@ export const ShoppingPage: React.FC = () => {
   const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
   const [checkoutSuccessMessage, setCheckoutSuccessMessage] = useState<string | null>(null);
   const [checkoutErrorMessage, setCheckoutErrorMessage] = useState<string | null>(null);
+  const [budgetWarningMessage, setBudgetWarningMessage] = useState<string | null>(null);
   const [itemToDelete, setItemToDelete] = useState<CartItem | null>(null);
   const [isClearCartConfirmOpen, setIsClearCartConfirmOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -305,6 +306,24 @@ export const ShoppingPage: React.FC = () => {
           discounts: data.discounts,
         });
       } else {
+        // Validasi batas anggaran ketat saat penambahan barang baru
+        if (budgetLimit > 0) {
+          const itemCost = calculateItemSubtotals(data.quantity, data.unitPrice, data.discounts).finalSubtotal;
+          if (totals.finalTotal >= budgetLimit || itemCost > budgetStatus.remaining) {
+            try {
+              soundService.error();
+            } catch {}
+            setBudgetWarningMessage(
+              language === 'zh'
+                ? `商品金额 (${formatRupiah(itemCost)}) 超出剩余预算 (${formatRupiah(budgetStatus.remaining)})！`
+                : language === 'en'
+                ? `Item total (${formatRupiah(itemCost)}) exceeds remaining budget (${formatRupiah(budgetStatus.remaining)})!`
+                : `Peringatan: Harga barang (${formatRupiah(itemCost)}) melebihi sisa anggaran (${formatRupiah(budgetStatus.remaining)})!`
+            );
+            setTimeout(() => setBudgetWarningMessage(null), 3500);
+            return;
+          }
+        }
         await groceryService.addItemToCart(data);
       }
       try {
@@ -361,19 +380,24 @@ export const ShoppingPage: React.FC = () => {
 
   return (
     <div className="space-y-4 pt-3 pb-3 w-full max-w-full min-w-0 box-border">
+      {/* Toast Peringatan Batas Anggaran */}
+      {budgetWarningMessage && (
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-rose-600 dark:bg-rose-700 text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-2xl border border-white/20 animate-fade-in flex items-center gap-2 max-w-[90%] text-center">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <span>{budgetWarningMessage}</span>
+        </div>
+      )}
+
       {/* PWA Installation Prompt if applicable */}
       <PWAInstallBanner />
 
-      {/* Top Header: Belanja Bulanan di atas, Periode di bawah, sejajar dengan Lokasi & Kalender di sisi kanan */}
+      {/* Top Header: Bulan dan Tahun (Tanpa Teks "Belanja Bulanan"), Sejajar dengan Lokasi & Kalender */}
       <div className="pt-1 flex items-center justify-between gap-2 sm:gap-2.5 max-w-full min-w-0">
-        {/* Kiri: Judul Belanja Bulanan di atas, Periode di bawah */}
+        {/* Kiri: Menampilkan Bulan dan Tahun Saja Sesuai Permintaan */}
         <div className="min-w-0 flex-1">
           <h1 className="text-xl font-extrabold text-text-main dark:text-slate-100 tracking-tight leading-tight truncate">
-            {language === 'zh' ? '月度购物清单' : language === 'en' ? 'Monthly Shopping' : 'Belanja Bulanan'}
-          </h1>
-          <div className="text-xs text-text-secondary dark:text-slate-400 font-medium mt-0.5 truncate">
             {formatPeriodLabel(currentPeriod, language)}
-          </div>
+          </h1>
         </div>
 
         {/* Kanan: Lokasi Supermarket & Ikon Kalender */}
@@ -610,10 +634,34 @@ export const ShoppingPage: React.FC = () => {
                     const existingItem = cartItems.find(
                       (ci) => (ci.nameSnapshot || (ci as any).name || '').toLowerCase() === rec.name.toLowerCase()
                     );
-                    if (existingItem) {
-                      if (budgetLimit > 0 && totals.finalTotal >= budgetLimit) {
+
+                    // Hitung biaya penambahan 1 unit barang
+                    const unitDiscounts = existingItem ? (existingItem.discounts || []) : (rec.discounts || []);
+                    const unitPrice = existingItem ? existingItem.unitPrice : rec.lastUnitPrice;
+                    const unitAddCalc = calculateItemSubtotals(1, unitPrice, unitDiscounts);
+                    const additionalCost = unitAddCalc.finalSubtotal;
+
+                    // Perketat validasi anggaran: blokir jika penambahan membuat belanja melebihi pagu anggaran
+                    if (budgetLimit > 0) {
+                      if (totals.finalTotal >= budgetLimit || additionalCost > budgetStatus.remaining) {
+                        try {
+                          soundService.error();
+                        } catch {}
+                        setBudgetWarningMessage(
+                          language === 'zh'
+                            ? `添加 ${rec.name} (${formatRupiah(additionalCost)}) 将超出剩余预算 (${formatRupiah(budgetStatus.remaining)})！`
+                            : language === 'en'
+                            ? `Adding ${rec.name} (${formatRupiah(additionalCost)}) exceeds remaining budget (${formatRupiah(budgetStatus.remaining)})!`
+                            : `Peringatan: Menambahkan ${rec.name} (${formatRupiah(additionalCost)}) akan melebihi sisa anggaran (${formatRupiah(budgetStatus.remaining)})!`
+                        );
+                        setTimeout(() => {
+                          setBudgetWarningMessage(null);
+                        }, 3500);
                         return;
                       }
+                    }
+
+                    if (existingItem) {
                       await groceryService.adjustQuantity(existingItem.id, 1);
                       playBeep(1400, 0.04);
                     } else {

@@ -303,12 +303,8 @@ class AuthService {
       const res = await signInWithPopup(auth, googleProvider);
       return { mode: 'popup', user: res.user };
     } catch (err: any) {
-      // Fallback ke redirect jika popup diblokir browser desktop
-      if (
-        err?.code === 'auth/popup-blocked' ||
-        err?.code === 'auth/popup-closed-by-user' ||
-        err?.code === 'auth/cancelled-popup-request'
-      ) {
+      // Fallback ke redirect jika popup diblokir oleh browser
+      if (err?.code === 'auth/popup-blocked') {
         await signInWithRedirect(auth, googleProvider);
         return { mode: 'redirect' };
       }
