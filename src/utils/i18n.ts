@@ -309,7 +309,7 @@ export const translations = {
     selectCategory: 'Pilih kategori produk',
     itemNameLabel: 'Nama Barang / Produk',
     unitPriceLabel: 'Harga Satuan',
-    quantityLabel: 'Jumlah (Kuantitas)',
+    quantityLabel: 'Jumlah',
     saveChangesBtn: 'Simpan Perubahan',
     addToCartBtn: 'Tambahkan ke Troli Belanja',
 

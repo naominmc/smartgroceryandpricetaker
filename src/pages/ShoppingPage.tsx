@@ -34,7 +34,7 @@ import { PWAInstallBanner } from '../components/PWAInstallBanner';
 import { LocationPickerModal, SUPERMARKET_PRESETS } from '../components/LocationPickerModal';
 import { syncService } from '../services/syncService';
 import { calculateCartTotals, evaluateBudgetSafety, calculateItemSubtotals } from '../utils/calculations';
-import { formatRupiah, formatNumberWithDots } from '../utils/currency';
+import { formatRupiah, formatNumberWithDots, getActiveCurrency } from '../utils/currency';
 import { formatPeriodLabel, getCurrentMonthPeriod } from '../utils/priceComparison';
 import { t } from '../utils/i18n';
 import type { CartItem, ProductCategory } from '../types';
@@ -802,7 +802,7 @@ export const ShoppingPage: React.FC = () => {
             <div className="space-y-2 mb-4">
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-sm text-gray-400 dark:text-slate-500">
-                  Rp
+                  {getActiveCurrency().symbol}
                 </span>
                 <input
                   type="text"

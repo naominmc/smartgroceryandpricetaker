@@ -10,7 +10,7 @@ import type { ProductCategory, CartItem } from '../types';
 import { PRODUCT_CATEGORIES, STANDARD_UNITS } from '../types';
 import { DiscountEditor } from './DiscountEditor';
 import { calculateItemSubtotals } from '../utils/calculations';
-import { formatRupiah, getActiveCurrency, formatNumberWithDots } from '../utils/currency';
+import { formatRupiah, getActiveCurrency, formatNumberWithDots, convertIdrToCurrency, convertCurrencyToIdr } from '../utils/currency';
 import { useStore } from '../store/useStore';
 import { t, translateCategory } from '../utils/i18n';
 
@@ -81,7 +81,8 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
   remainingBudget,
   budgetLimit = 0,
 }) => {
-  const { language } = useStore();
+  const { language, currency } = useStore();
+  const activeCurr = getActiveCurrency();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customUnit, setCustomUnit] = useState(false);
 
@@ -157,8 +158,10 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
     } catch { }
   };
 
-  // Realtime calculation preview
-  const liveCalc = calculateItemSubtotals(watchedQty, watchedPrice, watchedDiscounts);
+  // Realtime calculation preview: convert entered price to base IDR for calculations and budget checking
+  const enteredPriceNum = parseFloat(String(watchedPrice || '').replace(',', '.')) || 0;
+  const watchedPriceInIdr = convertCurrencyToIdr(enteredPriceNum);
+  const liveCalc = calculateItemSubtotals(watchedQty, watchedPriceInIdr, watchedDiscounts);
 
   // Check if item exceeds remaining budget (Proactive prevent)
   const isBudgetRestricted =
@@ -224,7 +227,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
         category: editingItem.categorySnapshot,
         unit: editingItem.unit,
         quantity: editingItem.quantity,
-        unitPrice: editingItem.unitPrice,
+        unitPrice: convertIdrToCurrency(editingItem.unitPrice),
         discounts: editingItem.discounts || [],
       });
     } else {
@@ -238,7 +241,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
         discounts: [],
       });
     }
-  }, [editingItem, isOpen, reset]);
+  }, [editingItem, isOpen, reset, currency]);
 
   if (!isOpen) return null;
 
@@ -257,10 +260,11 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
       return;
     }
 
-    let finalUnitPrice = Math.round(Number(data.unitPrice) || 0);
+    const enteredPrice = parseFloat(String(data.unitPrice || '').replace(',', '.')) || 0;
+    let finalUnitPriceInIdr = convertCurrencyToIdr(enteredPrice);
 
     // If unit price was left blank, check recommendations by product name / keyword
-    if (finalUnitPrice <= 0) {
+    if (finalUnitPriceInIdr <= 0) {
       const typed = trimmedName.toLowerCase();
       const match = recommendations.find((r) => {
         const rName = (r.name || '').toLowerCase();
@@ -275,9 +279,9 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
         );
       });
       if (match && match.lastUnitPrice > 0) {
-        finalUnitPrice = match.lastUnitPrice;
+        finalUnitPriceInIdr = match.lastUnitPrice;
       } else {
-        finalUnitPrice = 10000; // safe default fallback so submission never blocks
+        finalUnitPriceInIdr = 10000; // safe default fallback in IDR so submission never blocks
       }
     }
 
@@ -303,7 +307,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
         category: (data.category || 'Beras dan bahan pokok') as ProductCategory,
         unit: data.unit || 'pcs',
         quantity: safeQty,
-        unitPrice: Math.max(0, finalUnitPrice),
+        unitPrice: Math.max(0, finalUnitPriceInIdr),
         discounts: Array.isArray(data.discounts) ? data.discounts : [],
       });
       onClose();
@@ -407,7 +411,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
                       const isStd = STANDARD_UNITS.includes(rec.unit);
                       setCustomUnit(!isStd);
                       setValue('unit', rec.unit || 'pcs', { shouldValidate: true, shouldDirty: true });
-                      setValue('unitPrice', rec.lastUnitPrice || 0, { shouldValidate: true, shouldDirty: true });
+                      setValue('unitPrice', convertIdrToCurrency(rec.lastUnitPrice || 0), { shouldValidate: true, shouldDirty: true });
                       setValue('discounts', rec.discounts || [], { shouldValidate: true, shouldDirty: true });
                     }}
                     className="flex-shrink-0 min-w-[130px] max-w-[155px] text-left text-[11px] font-semibold bg-white dark:bg-slate-800 hover:bg-amber-100/80 dark:hover:bg-amber-900/60 text-slate-800 dark:text-slate-100 p-2 rounded-xl border border-amber-200/80 dark:border-slate-700 shadow-2xs transition-all active:scale-95 flex flex-col justify-between min-h-[44px] cursor-pointer"
@@ -471,7 +475,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
                         );
                       });
                       if (match && match.lastUnitPrice > 0) {
-                        setValue('unitPrice', match.lastUnitPrice, { shouldValidate: true, shouldDirty: true });
+                        setValue('unitPrice', convertIdrToCurrency(match.lastUnitPrice), { shouldValidate: true, shouldDirty: true });
                         setValue('category', match.category, { shouldValidate: true, shouldDirty: true });
                         const isStd = STANDARD_UNITS.includes(match.unit);
                         setCustomUnit(!isStd);
@@ -537,7 +541,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
                           const isStd = STANDARD_UNITS.includes(rec.unit);
                           setCustomUnit(!isStd);
                           setValue('unit', rec.unit || 'pcs', { shouldValidate: true, shouldDirty: true });
-                          setValue('unitPrice', rec.lastUnitPrice || 0, { shouldValidate: true, shouldDirty: true });
+                          setValue('unitPrice', convertIdrToCurrency(rec.lastUnitPrice || 0), { shouldValidate: true, shouldDirty: true });
                           setValue('discounts', rec.discounts || [], { shouldValidate: true, shouldDirty: true });
                         }
                       }}
@@ -670,41 +674,72 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
           {/* Harga Satuan */}
           <div>
             <label className="block text-xs font-bold text-text-main dark:text-slate-200 mb-1">
-              {t('unitPriceLabel', language)} ({getActiveCurrency().symbol}) <span className="text-danger">*</span>
+              {t('unitPriceLabel', language)} ({activeCurr.symbol}) <span className="text-danger">*</span>
             </label>
             <div className="relative">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-sm text-gray-400">
-                {getActiveCurrency().symbol}
+                {activeCurr.symbol}
               </span>
               <Controller
                 name="unitPrice"
                 control={control}
                 render={({ field }) => (
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="Contoh: 15.000"
-                    value={
-                      field.value === 0 || field.value === '0' || field.value === '' || field.value === null || field.value === undefined
-                        ? ''
-                        : formatNumberWithDots(field.value)
-                    }
-                    onChange={(e) => {
-                      const digits = e.target.value.replace(/\D/g, '');
-                      if (digits === '') {
-                        field.onChange('');
-                      } else {
-                        const num = parseInt(digits, 10);
-                        field.onChange(isNaN(num) ? '' : num);
+                  activeCurr.decimals === 0 ? (
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder={activeCurr.placeholder}
+                      value={
+                        field.value === 0 || field.value === '0' || field.value === '' || field.value === null || field.value === undefined
+                          ? ''
+                          : formatNumberWithDots(field.value)
                       }
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === '-' || e.key === 'Subtract') {
-                        e.preventDefault();
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, '');
+                        if (digits === '') {
+                          field.onChange('');
+                        } else {
+                          const num = parseInt(digits, 10);
+                          field.onChange(isNaN(num) ? '' : num);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === '-' || e.key === 'Subtract') {
+                          e.preventDefault();
+                        }
+                      }}
+                      className={`w-full ${activeCurr.symbol.length > 2 ? 'pl-14' : activeCurr.symbol.length > 1 ? 'pl-10' : 'pl-8'} pr-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm font-bold min-h-[44px]`}
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder={activeCurr.placeholder}
+                      value={
+                        field.value === 0 || field.value === '0' || field.value === '' || field.value === null || field.value === undefined
+                          ? ''
+                          : String(field.value)
                       }
-                    }}
-                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm font-bold min-h-[44px]"
-                  />
+                      onChange={(e) => {
+                        let val = e.target.value.replace(',', '.');
+                        val = val.replace(/[^0-9.]/g, '');
+                        const parts = val.split('.');
+                        if (parts.length > 2) {
+                          val = parts[0] + '.' + parts.slice(1).join('');
+                        }
+                        if (parts.length === 2 && parts[1].length > activeCurr.decimals) {
+                          val = parts[0] + '.' + parts[1].slice(0, activeCurr.decimals);
+                        }
+                        field.onChange(val);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === '-' || e.key === 'Subtract') {
+                          e.preventDefault();
+                        }
+                      }}
+                      className={`w-full ${activeCurr.symbol.length > 2 ? 'pl-14' : activeCurr.symbol.length > 1 ? 'pl-10' : 'pl-8'} pr-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm font-bold min-h-[44px]`}
+                    />
+                  )
                 )}
               />
             </div>
@@ -735,7 +770,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
                   {t('estimateItemTotal', language)}
                 </span>
                 <span className="text-xs text-gray-500 dark:text-slate-300">
-                  {watchedQty} {watch('unit')} × {formatRupiah(watchedPrice)}
+                  {watchedQty} {watch('unit')} × {formatRupiah(watchedPriceInIdr)}
                 </span>
               </div>
             </div>
