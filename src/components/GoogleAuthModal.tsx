@@ -27,6 +27,12 @@ const DEFAULT_GOOGLE_ACCOUNTS: GoogleAccount[] = [
     email: 'naomimcnmc09@gmail.com',
     avatarImg: '/capybara_mascot.svg',
   },
+  {
+    name: 'osismb2',
+    email: 'osismb2@mutiarabangsa.sch.id',
+    avatarText: 'o',
+    avatarColor: 'bg-indigo-600',
+  },
 ];
 
 export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({

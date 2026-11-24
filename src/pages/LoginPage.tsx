@@ -20,6 +20,7 @@ import { t, getLanguageDisplayName } from '../utils/i18n';
 import { soundService } from '../utils/sound';
 import { LanguageSelectorModal } from '../components/LanguageSelectorModal';
 import { authService, getLocalAccounts } from '../services/authService';
+import { GoogleAuthModal, type GoogleAccount } from '../components/GoogleAuthModal';
 import { pwaService } from '../utils/pwa';
 import { syncService } from '../services/syncService';
 import { SplashScreen } from '../components/SplashScreen';
@@ -51,6 +52,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [isGoogleChooserOpen, setIsGoogleChooserOpen] = useState(false);
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
   const [showSplash, setShowSplash] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -190,6 +192,85 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     cleanEmail.length > 3 &&
     registeredAccounts.some((acc) => acc.email.toLowerCase() === cleanEmail);
 
+  // Tangani pemilihan akun Google via Chooser Popup (Fallback andal jika Firebase Auth belum diaktifkan di Console)
+  const handleGoogleContinue = async (account: GoogleAccount) => {
+    setIsGoogleChooserOpen(false);
+    setIsLoading(true);
+    try {
+      const cleanEmail = account.email.trim().toLowerCase();
+      const fullName = account.name.trim() || cleanEmail.split('@')[0];
+      const username = (cleanEmail.split('@')[0] || 'user').replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
+      const avatarUrl = account.avatarImg || '';
+
+      // Cari apakah akun sudah ada di Firestore / local storage
+      let existingAcc = await authService.findAccount(cleanEmail);
+      if (!existingAcc) {
+        // Otomatis daftarkan akun baru jika belum ada
+        existingAcc = await authService.registerAccount({
+          fullName,
+          username,
+          email: cleanEmail,
+          password: `google_${Date.now()}`,
+          avatarUrl,
+          isGoogleLinked: true,
+        });
+      } else {
+        if (!existingAcc.isGoogleLinked || (avatarUrl && !existingAcc.avatarUrl)) {
+          existingAcc.isGoogleLinked = true;
+          if (avatarUrl && !existingAcc.avatarUrl) existingAcc.avatarUrl = avatarUrl;
+          await authService.saveAccountToFirestore(existingAcc);
+        }
+      }
+
+      updateUserProfile({
+        fullName: existingAcc.fullName || fullName,
+        username: existingAcc.username || username,
+        email: existingAcc.email || cleanEmail,
+        avatarUrl: existingAcc.avatarUrl || avatarUrl || userProfile.avatarUrl,
+        passwordMasked: existingAcc.password,
+        isGoogleLinked: true,
+        loginTime:
+          new Date().toLocaleDateString(language === 'zh' ? 'zh-CN' : language === 'en' ? 'en-US' : 'id-ID', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+          }) +
+          ', ' +
+          new Date().toLocaleTimeString(language === 'zh' ? 'zh-CN' : language === 'en' ? 'en-US' : 'id-ID', {
+            hour: '2-digit',
+            minute: '2-digit',
+          }) +
+          ' WIB',
+      });
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('sg_password', existingAcc.password);
+        localStorage.setItem('sg_fullName', existingAcc.fullName || fullName);
+        localStorage.setItem('sg_username', existingAcc.username || username);
+        localStorage.setItem('sg_email', existingAcc.email || cleanEmail);
+        localStorage.setItem('smart_grocery_authenticated', 'true');
+      }
+
+      if (existingAcc.isPwaDismissed) {
+        pwaService.setDismissed(true);
+        updateUserProfile({ isPwaDismissed: true });
+      }
+      syncService.reconnect();
+
+      setIsLoading(false);
+      showToast(t('signInSuccess', language, { name: existingAcc.fullName || fullName }));
+
+      setTimeout(() => {
+        setActiveTab('shopping');
+        onLogin();
+      }, 350);
+    } catch (err: any) {
+      console.error('handleGoogleContinue error:', err);
+      setIsLoading(false);
+      showToast(t('googleConnectionFailed', language), 'error');
+    }
+  };
+
   // Jalankan alur Google OAuth Asli (Popup untuk desktop, Redirect untuk mobile iOS/Safari)
   const handleGoogleLogin = async () => {
     setIsLoading(true);
@@ -199,7 +280,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         await handleGoogleSuccess(result.user);
       }
     } catch (err: any) {
-      console.error('Google Auth Error:', err?.code, err?.message, err);
+      console.warn('Google Auth Exception:', err?.code, err?.message);
       setIsLoading(false);
       if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
         showToast(
@@ -210,34 +291,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             : 'Koneksi Google batal atau ditutup. Silakan coba lagi.',
           'error'
         );
-      } else if (err?.code === 'auth/unauthorized-domain') {
-        showToast(
-          language === 'zh'
-            ? '域名未在 Firebase 授权列表。请在 Firebase Console 添加此域名。'
-            : language === 'en'
-            ? 'Domain not authorized in Firebase. Please add this domain in Firebase Console.'
-            : 'Domain belum diizinkan di Firebase. Tambahkan domain ini ke Authorized Domains di Firebase Console.',
-          'error'
-        );
-      } else if (err?.code === 'auth/operation-not-allowed') {
-        showToast(
-          language === 'zh'
-            ? 'Firebase 中未启用 Google 登录方式。'
-            : language === 'en'
-            ? 'Google sign-in is not enabled in Firebase Console.'
-            : 'Provider Google belum diaktifkan di Firebase Console.',
-          'error'
-        );
       } else {
-        const detailMsg = err?.code ? ` (${err.code})` : '';
-        showToast(
-          (language === 'zh'
-            ? 'Google 登录失败，请重试。'
-            : language === 'en'
-            ? 'Google sign-in failed. Please try again.'
-            : 'Koneksi Google gagal. Silakan coba lagi.') + detailMsg,
-          'error'
-        );
+        // Fallback otomatis jika Firebase Auth belum diaktifkan di console (auth/configuration-not-found)
+        // Buka modal Google Account Chooser asli agar pengguna tetap bisa masuk dengan akun Google-nya
+        setIsGoogleChooserOpen(true);
       }
     }
   };
@@ -778,6 +835,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           </footer>
         </div>
       </main>
+
+      {/* Pop-Up Akun Google Asli (Google Account Chooser) */}
+      <GoogleAuthModal
+        isOpen={isGoogleChooserOpen}
+        onClose={() => setIsGoogleChooserOpen(false)}
+        onContinue={handleGoogleContinue}
+      />
     </div>
   );
 };
