@@ -67,7 +67,6 @@ export const ShoppingPage: React.FC = () => {
   const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
   const [checkoutSuccessMessage, setCheckoutSuccessMessage] = useState<string | null>(null);
   const [checkoutErrorMessage, setCheckoutErrorMessage] = useState<string | null>(null);
-  const [budgetWarningMessage, setBudgetWarningMessage] = useState<string | null>(null);
   const [itemToDelete, setItemToDelete] = useState<CartItem | null>(null);
   const [isClearCartConfirmOpen, setIsClearCartConfirmOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -313,14 +312,6 @@ export const ShoppingPage: React.FC = () => {
             try {
               soundService.error();
             } catch {}
-            setBudgetWarningMessage(
-              language === 'zh'
-                ? `商品金额 (${formatRupiah(itemCost)}) 超出剩余预算 (${formatRupiah(budgetStatus.remaining)})！`
-                : language === 'en'
-                ? `Item total (${formatRupiah(itemCost)}) exceeds remaining budget (${formatRupiah(budgetStatus.remaining)})!`
-                : `Peringatan: Harga barang (${formatRupiah(itemCost)}) melebihi sisa anggaran (${formatRupiah(budgetStatus.remaining)})!`
-            );
-            setTimeout(() => setBudgetWarningMessage(null), 3500);
             return;
           }
         }
@@ -380,13 +371,6 @@ export const ShoppingPage: React.FC = () => {
 
   return (
     <div className="space-y-4 pt-3 pb-3 w-full max-w-full min-w-0 box-border">
-      {/* Toast Peringatan Batas Anggaran */}
-      {budgetWarningMessage && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-rose-600 dark:bg-rose-700 text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-2xl border border-white/20 animate-fade-in flex items-center gap-2 max-w-[90%] text-center">
-          <AlertCircle className="w-4 h-4 flex-shrink-0" />
-          <span>{budgetWarningMessage}</span>
-        </div>
-      )}
 
       {/* PWA Installation Prompt if applicable */}
       <PWAInstallBanner />
@@ -623,43 +607,27 @@ export const ShoppingPage: React.FC = () => {
 
           <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar scroll-smooth">
             {recommendations.slice(0, 6).map((rec) => {
-              const inCart = cartItems.some(
+              const existingItem = cartItems.find(
                 (ci) => (ci.nameSnapshot || (ci as any).name || '').toLowerCase() === rec.name.toLowerCase()
               );
+              const inCart = !!existingItem;
+
+              // Hitung biaya penambahan 1 unit barang
+              const unitDiscounts = existingItem ? (existingItem.discounts || []) : (rec.discounts || []);
+              const unitPrice = existingItem ? existingItem.unitPrice : rec.lastUnitPrice;
+              const unitAddCalc = calculateItemSubtotals(1, unitPrice, unitDiscounts);
+              const additionalCost = unitAddCalc.finalSubtotal;
+
+              // Tombol otomatis disabled/tidak bisa dipencet jika melebihi anggaran (seperti pada isi troli)
+              const isAddDisabled = budgetLimit > 0 && (totals.finalTotal >= budgetLimit || additionalCost > budgetStatus.remaining);
+
               return (
                 <button
                   key={rec.name}
                   type="button"
+                  disabled={isAddDisabled}
                   onClick={async () => {
-                    const existingItem = cartItems.find(
-                      (ci) => (ci.nameSnapshot || (ci as any).name || '').toLowerCase() === rec.name.toLowerCase()
-                    );
-
-                    // Hitung biaya penambahan 1 unit barang
-                    const unitDiscounts = existingItem ? (existingItem.discounts || []) : (rec.discounts || []);
-                    const unitPrice = existingItem ? existingItem.unitPrice : rec.lastUnitPrice;
-                    const unitAddCalc = calculateItemSubtotals(1, unitPrice, unitDiscounts);
-                    const additionalCost = unitAddCalc.finalSubtotal;
-
-                    // Perketat validasi anggaran: blokir jika penambahan membuat belanja melebihi pagu anggaran
-                    if (budgetLimit > 0) {
-                      if (totals.finalTotal >= budgetLimit || additionalCost > budgetStatus.remaining) {
-                        try {
-                          soundService.error();
-                        } catch {}
-                        setBudgetWarningMessage(
-                          language === 'zh'
-                            ? `添加 ${rec.name} (${formatRupiah(additionalCost)}) 将超出剩余预算 (${formatRupiah(budgetStatus.remaining)})！`
-                            : language === 'en'
-                            ? `Adding ${rec.name} (${formatRupiah(additionalCost)}) exceeds remaining budget (${formatRupiah(budgetStatus.remaining)})!`
-                            : `Peringatan: Menambahkan ${rec.name} (${formatRupiah(additionalCost)}) akan melebihi sisa anggaran (${formatRupiah(budgetStatus.remaining)})!`
-                        );
-                        setTimeout(() => {
-                          setBudgetWarningMessage(null);
-                        }, 3500);
-                        return;
-                      }
-                    }
+                    if (isAddDisabled) return;
 
                     if (existingItem) {
                       await groceryService.adjustQuantity(existingItem.id, 1);
@@ -675,13 +643,28 @@ export const ShoppingPage: React.FC = () => {
                       });
                     }
                   }}
-                  className={`flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-2xl border text-left transition-all active:scale-95 shadow-2xs min-h-[44px] ${
-                    inCart
-                      ? 'bg-blue-50 dark:bg-blue-950/70 border-blue-300 dark:border-blue-700 text-blue-950 dark:text-blue-100'
-                      : 'bg-white dark:bg-slate-800 border-gray-200/90 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-600 text-text-main dark:text-slate-100'
+                  className={`flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-2xl border text-left transition-all shadow-2xs min-h-[44px] ${
+                    isAddDisabled
+                      ? 'opacity-35 cursor-not-allowed pointer-events-none select-none bg-gray-100/80 dark:bg-slate-800/60 border-gray-200 dark:border-slate-700 text-gray-400 dark:text-slate-500'
+                      : inCart
+                      ? 'bg-blue-50 dark:bg-blue-950/70 border-blue-300 dark:border-blue-700 text-blue-950 dark:text-blue-100 active:scale-95 cursor-pointer'
+                      : 'bg-white dark:bg-slate-800 border-gray-200/90 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-600 text-text-main dark:text-slate-100 active:scale-95 cursor-pointer'
                   }`}
+                  title={
+                    isAddDisabled
+                      ? language === 'zh'
+                        ? '已超出剩余预算，无法再增加'
+                        : language === 'en'
+                        ? 'Exceeds remaining budget, cannot add more'
+                        : 'Melebihi sisa anggaran, tidak dapat menambah'
+                      : undefined
+                  }
                 >
-                  <div className="w-7 h-7 rounded-xl bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 flex items-center justify-center flex-shrink-0">
+                  <div className={`w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                    isAddDisabled
+                      ? 'bg-gray-200/70 dark:bg-slate-700 text-gray-400 dark:text-slate-500'
+                      : 'bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300'
+                  }`}>
                     <History className="w-3.5 h-3.5" />
                   </div>
                   <div className="min-w-0 pr-1">
@@ -693,7 +676,11 @@ export const ShoppingPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex-shrink-0 pl-1 border-l border-gray-200 dark:border-slate-700">
-                    <span className="text-[10px] font-bold text-primary dark:text-blue-300 bg-blue-50 dark:bg-blue-900/50 px-2 py-1 rounded-lg">
+                    <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${
+                      isAddDisabled
+                        ? 'bg-gray-200/60 dark:bg-slate-700 text-gray-400 dark:text-slate-500'
+                        : 'text-primary dark:text-blue-300 bg-blue-50 dark:bg-blue-900/50'
+                    }`}>
                       {inCart ? '+1' : t('buyAgain', language)}
                     </span>
                   </div>

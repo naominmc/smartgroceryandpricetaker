@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Plus, Trash2, Tag, Percent } from 'lucide-react';
 import { calculateTieredDiscount } from '../utils/discount';
 import { formatRupiah } from '../utils/currency';
@@ -18,9 +18,19 @@ export const DiscountEditor: React.FC<DiscountEditorProps> = ({
 }) => {
   const { language } = useStore();
   const result = calculateTieredDiscount(basePrice, discounts);
+  const [isAddingNewTier, setIsAddingNewTier] = useState(false);
+
+  // Preset diskon: tanpa 30%, langsung ke 50% (sesuai instruksi: "diskon 30% apus jadi langsung ke 50%")
+  const PRESETS = [5, 10, 15, 20, 25, 50];
 
   const handleAddTier = () => {
-    onChange([...discounts, 10]);
+    // Tombol '+' wajib ditekan terlebih dahulu untuk menambah tahap diskon baru
+    if (discounts.length === 0) {
+      onChange([10]);
+    } else {
+      onChange([...discounts, 10]);
+    }
+    setIsAddingNewTier(true);
   };
 
   const handleUpdateTier = (index: number, value: number) => {
@@ -33,14 +43,31 @@ export const DiscountEditor: React.FC<DiscountEditorProps> = ({
   const handleRemoveTier = (index: number) => {
     const next = discounts.filter((_, i) => i !== index);
     onChange(next);
+    setIsAddingNewTier(false);
   };
 
-  const handleAddPreset = (percent: number) => {
+  const handlePresetClick = (percent: number) => {
     if (discounts.length === 0) {
       onChange([percent]);
+      setIsAddingNewTier(false);
+    } else if (isAddingNewTier) {
+      // Pengguna baru saja menekan '+' untuk menambah tahap diskon baru
+      const next = [...discounts];
+      next[next.length - 1] = percent;
+      onChange(next);
+      setIsAddingNewTier(false);
     } else {
-      onChange([...discounts, percent]);
+      // Menghindari kepencet 2 kali padahal diskon cuman 1:
+      // Jika pengguna TIDAK menekan '+', klik preset hanya mengganti nilai diskon yang ada (tidak menambah tahap baru)
+      const next = [...discounts];
+      next[next.length - 1] = percent;
+      onChange(next);
     }
+  };
+
+  const handleClear = () => {
+    onChange([]);
+    setIsAddingNewTier(false);
   };
 
   return (
@@ -50,37 +77,44 @@ export const DiscountEditor: React.FC<DiscountEditorProps> = ({
           <Tag className="w-3.5 h-3.5 text-primary dark:text-blue-400" />
           <span>{t('tierDiscountTitle', language)}</span>
         </div>
-        <button
-          type="button"
-          onClick={handleAddTier}
-          className="inline-flex items-center gap-1 text-xs font-semibold text-primary dark:text-blue-400 hover:text-primary-hover px-2.5 py-1 bg-blue-50 dark:bg-blue-950/70 hover:bg-blue-100 rounded-lg transition-colors min-h-[36px]"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>{t('addTierBtn', language)}</span>
-        </button>
+
+        <div className="flex items-center gap-2">
+          {discounts.length > 0 && (
+            <button
+              type="button"
+              onClick={handleClear}
+              className="text-[11px] font-semibold text-danger dark:text-rose-400 hover:underline px-1.5 py-0.5 rounded transition-colors cursor-pointer"
+              title={t('clearAllDiscounts', language)}
+            >
+              {language === 'zh' ? '清空' : language === 'en' ? 'Reset' : 'Reset'}
+            </button>
+          )}
+
+          {/* Tombol icon plus saja sesuai instruksi: "kata tahap diskon ilangin pake icon plus aja" */}
+          <button
+            type="button"
+            onClick={handleAddTier}
+            className="w-8 h-8 flex items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/70 border border-blue-200/60 dark:border-blue-800 text-primary dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-all cursor-pointer active:scale-95 shadow-2xs"
+            title={t('addTierBtn', language)}
+            aria-label={t('addTierBtn', language)}
+          >
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+          </button>
+        </div>
       </div>
 
-      {/* Quick Presets */}
-      <div className="flex flex-wrap gap-1.5">
-        {[5, 10, 15, 20, 25, 30, 50].map((preset) => (
+      {/* Quick Presets: 1 Baris Saja (6 tombol [5, 10, 15, 20, 25, 50] sejajar tanpa 30%) */}
+      <div className="grid grid-cols-6 gap-1.5 w-full">
+        {PRESETS.map((preset) => (
           <button
             key={preset}
             type="button"
-            onClick={() => handleAddPreset(preset)}
-            className="text-[11px] font-medium px-2 py-1 bg-white dark:bg-slate-700 text-gray-800 dark:text-slate-200 border border-gray-200 dark:border-slate-600 rounded-md hover:border-primary hover:text-primary dark:hover:text-blue-400 transition-colors active:scale-95 min-h-[32px]"
+            onClick={() => handlePresetClick(preset)}
+            className="text-[11px] font-bold py-1.5 px-0.5 text-center bg-white dark:bg-slate-700 text-gray-800 dark:text-slate-200 border border-gray-200 dark:border-slate-600 rounded-xl hover:border-primary hover:text-primary dark:hover:text-blue-400 transition-colors active:scale-95 min-h-[32px] truncate"
           >
             +{preset}%
           </button>
         ))}
-        {discounts.length > 0 && (
-          <button
-            type="button"
-            onClick={() => onChange([])}
-            className="text-[11px] font-medium px-2 py-1 bg-red-50 dark:bg-rose-950/70 text-danger dark:text-rose-300 border border-red-200 dark:border-rose-900 rounded-md hover:bg-red-100 transition-colors active:scale-95 min-h-[32px]"
-          >
-            {t('clearAllDiscounts', language)}
-          </button>
-        )}
       </div>
 
       {/* Discount Tiers List */}
