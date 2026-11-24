@@ -24,11 +24,11 @@ export const DiscountEditor: React.FC<DiscountEditorProps> = ({
   const PRESETS = [5, 10, 15, 20, 25, 50];
 
   const handleAddTier = () => {
-    // Tombol '+' wajib ditekan terlebih dahulu untuk menambah tahap diskon baru
+    // Tombol '+' ditekan untuk menambah tahap diskon baru yang kosong (0) agar pengguna bisa mengisi sendiri nilainya
     if (discounts.length === 0) {
-      onChange([10]);
+      onChange([0]);
     } else {
-      onChange([...discounts, 10]);
+      onChange([...discounts, 0]);
     }
     setIsAddingNewTier(true);
   };
@@ -139,9 +139,13 @@ export const DiscountEditor: React.FC<DiscountEditorProps> = ({
                   inputMode="numeric"
                   min="0"
                   max="100"
+                  autoFocus={isAddingNewTier && idx === discounts.length - 1}
                   value={discount === 0 ? '' : discount}
                   placeholder="0"
-                  onChange={(e) => handleUpdateTier(idx, parseFloat(e.target.value) || 0)}
+                  onChange={(e) => {
+                    handleUpdateTier(idx, parseFloat(e.target.value) || 0);
+                    setIsAddingNewTier(false);
+                  }}
                   className="w-full text-right font-bold text-sm pr-7 pl-2 py-1.5 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none min-h-[40px]"
                 />
                 <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 dark:text-slate-400 font-semibold text-xs pointer-events-none">

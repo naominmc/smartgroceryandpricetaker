@@ -308,7 +308,7 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
         unit: data.unit || 'pcs',
         quantity: safeQty,
         unitPrice: Math.max(0, finalUnitPriceInIdr),
-        discounts: Array.isArray(data.discounts) ? data.discounts : [],
+        discounts: Array.isArray(data.discounts) ? data.discounts.filter((d) => Number(d) > 0) : [],
       });
       onClose();
     } catch (err) {
