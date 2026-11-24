@@ -50,6 +50,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
   const [showSplash, setShowSplash] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -62,15 +63,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     return true;
   });
 
-
-
   const isDark = themeMode === 'dark';
 
-  const showToast = (msg: string) => {
+  const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
     setToastMessage(msg);
+    setToastType(type);
     setTimeout(() => {
       setToastMessage(null);
-    }, 3500);
+    }, 4500);
   };
 
   // Tangani Keberhasilan Autentikasi Akun Google Asli (baik via Popup maupun Redirect)
@@ -159,7 +159,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           await handleGoogleSuccess(redirectUser);
         }
       } catch (err: any) {
-        console.warn('OAuth redirect check error:', err);
+        console.error('OAuth redirect check error:', err);
+        if (isMounted && err?.code) {
+          if (err.code === 'auth/unauthorized-domain') {
+            showToast('Domain belum diizinkan di Firebase. Tambahkan domain ini ke Authorized Domains di Firebase Console.', 'error');
+          } else if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+            showToast(`Koneksi Google gagal (${err.code}). Silakan coba lagi.`, 'error');
+          }
+        }
       }
     };
 
@@ -192,6 +199,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         await handleGoogleSuccess(result.user);
       }
     } catch (err: any) {
+      console.error('Google Auth Error:', err?.code, err?.message, err);
       setIsLoading(false);
       if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
         showToast(
@@ -199,15 +207,36 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             ? '已取消 Google 登录。'
             : language === 'en'
             ? 'Google sign-in was canceled.'
-            : 'Koneksi Google batal atau ditutup. Silakan coba lagi.'
+            : 'Koneksi Google batal atau ditutup. Silakan coba lagi.',
+          'error'
         );
-      } else {
+      } else if (err?.code === 'auth/unauthorized-domain') {
         showToast(
           language === 'zh'
+            ? '域名未在 Firebase 授权列表。请在 Firebase Console 添加此域名。'
+            : language === 'en'
+            ? 'Domain not authorized in Firebase. Please add this domain in Firebase Console.'
+            : 'Domain belum diizinkan di Firebase. Tambahkan domain ini ke Authorized Domains di Firebase Console.',
+          'error'
+        );
+      } else if (err?.code === 'auth/operation-not-allowed') {
+        showToast(
+          language === 'zh'
+            ? 'Firebase 中未启用 Google 登录方式。'
+            : language === 'en'
+            ? 'Google sign-in is not enabled in Firebase Console.'
+            : 'Provider Google belum diaktifkan di Firebase Console.',
+          'error'
+        );
+      } else {
+        const detailMsg = err?.code ? ` (${err.code})` : '';
+        showToast(
+          (language === 'zh'
             ? 'Google 登录失败，请重试。'
             : language === 'en'
             ? 'Google sign-in failed. Please try again.'
-            : 'Koneksi Google gagal. Silakan coba lagi.'
+            : 'Koneksi Google gagal. Silakan coba lagi.') + detailMsg,
+          'error'
         );
       }
     }
@@ -218,23 +247,23 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     if (activeAuthTab === 'signup') {
       const cleanFullName = fullNameInput.trim();
       if (!cleanFullName || cleanFullName.length < 3) {
-        showToast(t('minFullName', language));
+        showToast(t('minFullName', language), 'error');
         return;
       }
 
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!cleanEmail || !emailRegex.test(cleanEmail)) {
-        showToast(t('invalidEmail', language));
+        showToast(t('invalidEmail', language), 'error');
         return;
       }
 
       if (!cleanUsername || cleanUsername.length < 3) {
-        showToast(t('minUsername', language));
+        showToast(t('minUsername', language), 'error');
         return;
       }
 
       if (!passwordInput.trim() || passwordInput.trim().length < 6) {
-        showToast(t('minPassword', language));
+        showToast(t('minPassword', language), 'error');
         return;
       }
 
@@ -257,24 +286,24 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       } catch (err: any) {
         setIsLoading(false);
         if (err?.message === 'EMAIL_EXISTS') {
-          showToast(t('emailTaken', language));
+          showToast(t('emailTaken', language), 'error');
         } else if (err?.message === 'USERNAME_EXISTS') {
-          showToast(t('usernameTaken', language));
+          showToast(t('usernameTaken', language), 'error');
         } else if (err?.message === 'WEAK_PASSWORD') {
-          showToast(t('minPassword', language));
+          showToast(t('minPassword', language), 'error');
         } else {
-          showToast('Pendaftaran gagal. Silakan coba lagi.');
+          showToast('Pendaftaran gagal. Silakan coba lagi.', 'error');
         }
       }
     } else {
       // SIGN IN (MASUK)
       const inputQuery = emailInput.trim();
       if (!inputQuery) {
-        showToast(t('fillEmailUser', language));
+        showToast(t('fillEmailUser', language), 'error');
         return;
       }
       if (!passwordInput.trim()) {
-        showToast(t('fillPassword', language));
+        showToast(t('fillPassword', language), 'error');
         return;
       }
 
@@ -326,7 +355,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       } catch (err: any) {
         setIsLoading(false);
         if (err?.message === 'ACCOUNT_NOT_FOUND') {
-          showToast(t('accountNotFound', language));
+          showToast(t('accountNotFound', language), 'error');
           // Arahkan pengguna baru untuk membuat akun terlebih dahulu
           setActiveAuthTab('signup');
           if (inputQuery.includes('@')) {
@@ -335,9 +364,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             setUsernameInput(inputQuery.replace(/^@/, ''));
           }
         } else if (err?.message === 'WRONG_PASSWORD') {
-          showToast(t('wrongPassword', language));
+          showToast(t('wrongPassword', language), 'error');
         } else {
-          showToast('Gagal masuk. Periksa kembali email & kata sandi.');
+          showToast('Gagal masuk. Periksa kembali email & kata sandi.', 'error');
         }
       }
     }
@@ -369,8 +398,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
       {/* Toast Alert */}
       {toastMessage && (
-        <div className="fixed top-5 z-50 bg-gray-900/95 dark:bg-slate-800/95 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg border border-white/20 animate-fade-in flex items-center gap-2 max-w-[90%] text-center">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+        <div
+          className={`fixed top-5 z-50 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg border animate-fade-in flex items-center gap-2 max-w-[90%] text-center ${
+            toastType === 'error'
+              ? 'bg-rose-900/95 dark:bg-rose-950/95 border-rose-500/40 text-rose-100'
+              : 'bg-gray-900/95 dark:bg-slate-800/95 border-white/20'
+          }`}
+        >
+          {toastType === 'error' ? (
+            <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+          ) : (
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+          )}
           <span>{toastMessage}</span>
         </div>
       )}
