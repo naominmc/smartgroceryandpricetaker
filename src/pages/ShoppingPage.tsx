@@ -393,19 +393,19 @@ export const ShoppingPage: React.FC = () => {
 
       {/* Top Header: Bulan dan Tahun (Tanpa Teks "Belanja Bulanan"), Sejajar dengan Lokasi & Kalender */}
       <div className="pt-1 flex items-center justify-between gap-2 sm:gap-2.5 max-w-full min-w-0">
-        {/* Kiri: Menampilkan Bulan dan Tahun Saja Sesuai Permintaan */}
-        <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-extrabold text-text-main dark:text-slate-100 tracking-tight leading-tight truncate">
+        {/* Kiri: Menampilkan Bulan dan Tahun dengan ukuran font seperti sebelumnya agar lokasi lebih leluasa */}
+        <div className="min-w-0 flex-shrink-0">
+          <span className="text-xs text-text-secondary dark:text-slate-400 font-medium truncate block">
             {formatPeriodLabel(currentPeriod, language)}
-          </h1>
+          </span>
         </div>
 
         {/* Kanan: Lokasi Supermarket & Ikon Kalender */}
-        <div className="flex items-center gap-1.5 flex-shrink-0">
+        <div className="flex items-center gap-1.5 min-w-0 flex-1 justify-end">
           <button
             type="button"
             onClick={() => setIsLocationModalOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-teal-50 dark:bg-teal-950/80 border border-teal-200/80 dark:border-teal-800/80 text-[#0f766e] dark:text-teal-400 hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-colors shadow-2xs cursor-pointer max-w-[130px] sm:max-w-[180px] min-h-[36px] min-w-0"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-teal-50 dark:bg-teal-950/80 border border-teal-200/80 dark:border-teal-800/80 text-[#0f766e] dark:text-teal-400 hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-colors shadow-2xs cursor-pointer max-w-[210px] sm:max-w-[280px] min-h-[36px] min-w-0"
             title="Klik untuk memilih supermarket (Jabodetabek)"
           >
             <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-[#0f766e] dark:text-teal-400" />
