@@ -162,7 +162,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         console.error('OAuth redirect check error:', err);
         if (isMounted && err?.code) {
           if (err.code === 'auth/unauthorized-domain') {
-            showToast('Domain belum diizinkan di Firebase. Tambahkan domain ini ke Authorized Domains di Firebase Console.', 'error');
+            const currentHostname = typeof window !== 'undefined' ? window.location.hostname : 'smartgroceryandpricetaker.vercel.app';
+            showToast(`Domain (${currentHostname}) belum diizinkan di Firebase. Tambahkan domain ini ke Authorized Domains di Firebase Console.`, 'error');
           } else if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
             showToast(`Koneksi Google gagal (${err.code}). Silakan coba lagi.`, 'error');
           }
@@ -203,7 +204,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           'error'
         );
       } else if (err?.code === 'auth/unauthorized-domain') {
-        showToast('Domain belum diizinkan di Firebase Console. Tambahkan domain ini ke Authorized Domains.', 'error');
+        const currentHostname = typeof window !== 'undefined' ? window.location.hostname : 'smartgroceryandpricetaker.vercel.app';
+        showToast(`Domain (${currentHostname}) belum diizinkan di Firebase. Tambahkan domain ini ke Authorized Domains di Firebase Console.`, 'error');
       } else {
         showToast(
           err?.message ? `Koneksi Google gagal: ${err.message}` : t('googleConnectionFailed', language),
