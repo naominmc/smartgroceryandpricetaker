@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   AlertTriangle,
   AlertOctagon,
+  X,
 } from 'lucide-react';
 import { db } from '../db/database';
 import { groceryService } from '../services/groceryService';
@@ -75,6 +76,8 @@ export const ShoppingPage: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isManualExpanded, setIsManualExpanded] = useState<boolean | null>(null);
   const [budgetUnsetToast, setBudgetUnsetToast] = useState<string | null>(null);
+  const [budgetOverWarningToast, setBudgetOverWarningToast] = useState<string | null>(null);
+  const [budgetModalError, setBudgetModalError] = useState<string | null>(null);
 
   const showBudgetUnsetWarning = () => {
     const message =
@@ -89,6 +92,23 @@ export const ShoppingPage: React.FC = () => {
     } catch {}
     setTimeout(() => {
       setBudgetUnsetToast(null);
+    }, 4500);
+  };
+
+  const showOverBudgetWarning = (projectedTotal: number, limit: number, itemName?: string) => {
+    try {
+      soundService.error();
+    } catch {}
+    const itemPrefix = itemName ? `Menambahkan/mengubah "${itemName}" ` : 'Aksi ini ';
+    const message =
+      language === 'zh'
+        ? `${itemPrefix}将使总支出（${formatRupiah(projectedTotal)}）超出预算上限（${formatRupiah(limit)}）！`
+        : language === 'en'
+        ? `${itemPrefix}will cause total spending (${formatRupiah(projectedTotal)}) to exceed budget limit (${formatRupiah(limit)})!`
+        : `${itemPrefix}akan membuat total belanja (${formatRupiah(projectedTotal)}) melebihi batas anggaran (${formatRupiah(limit)})!`;
+    setBudgetOverWarningToast(message);
+    setTimeout(() => {
+      setBudgetOverWarningToast(null);
     }, 4500);
   };
 
@@ -257,18 +277,18 @@ export const ShoppingPage: React.FC = () => {
     const item = cartItems.find((i) => i.id === id);
     if (!item) return;
 
-    if (budgetLimit > 0) {
-      const unitAddCalc = calculateItemSubtotals(1, item.unitPrice, item.discounts);
-      const projectedTotal = totals.finalTotal + unitAddCalc.finalSubtotal;
-      if (totals.finalTotal >= budgetLimit || projectedTotal > budgetLimit || unitAddCalc.finalSubtotal > budgetStatus.remaining) {
-        try {
-          soundService.error();
-        } catch {}
-        return;
-      }
+    const unitAddCalc = calculateItemSubtotals(1, item.unitPrice, item.discounts);
+    const projectedTotal = totals.finalTotal + unitAddCalc.finalSubtotal;
+    if (projectedTotal > budgetLimit) {
+      showOverBudgetWarning(projectedTotal, budgetLimit, item.nameSnapshot);
+      return;
     }
 
-    await groceryService.adjustQuantity(id, 1);
+    try {
+      await groceryService.adjustQuantity(id, 1);
+    } catch {
+      showOverBudgetWarning(projectedTotal, budgetLimit, item.nameSnapshot);
+    }
   };
 
   const handleSetQty = async (id: string, newQty: number) => {
@@ -285,14 +305,17 @@ export const ShoppingPage: React.FC = () => {
       const addedUnits = safeQty - item.quantity;
       const additionalCalc = calculateItemSubtotals(addedUnits, item.unitPrice, item.discounts);
       const projectedTotal = totals.finalTotal + additionalCalc.finalSubtotal;
-      if (totals.finalTotal >= budgetLimit || projectedTotal > budgetLimit || additionalCalc.finalSubtotal > budgetStatus.remaining) {
-        try {
-          soundService.error();
-        } catch {}
+      if (projectedTotal > budgetLimit) {
+        showOverBudgetWarning(projectedTotal, budgetLimit, item.nameSnapshot);
         return;
       }
     }
-    await groceryService.updateCartItem(id, { quantity: safeQty });
+
+    try {
+      await groceryService.updateCartItem(id, { quantity: safeQty });
+    } catch {
+      soundService.error();
+    }
   };
 
   const handleDecreaseQty = async (id: string) => {
@@ -344,7 +367,23 @@ export const ShoppingPage: React.FC = () => {
     discounts: number[];
   }) => {
     try {
+      // Blokir mutlak jika batas anggaran belum diatur (limit <= 0)
+      if (budgetLimit <= 0) {
+        showBudgetUnsetWarning();
+        return;
+      }
+
       if (editingItem) {
+        // Zero Over-Budget Guard saat edit barang yang ada di troli
+        const oldItemCost = calculateItemSubtotals(editingItem.quantity, editingItem.unitPrice, editingItem.discounts).finalSubtotal;
+        const newItemCost = calculateItemSubtotals(data.quantity, data.unitPrice, data.discounts).finalSubtotal;
+        const projectedTotal = totals.finalTotal - oldItemCost + newItemCost;
+
+        if (projectedTotal > budgetLimit) {
+          showOverBudgetWarning(projectedTotal, budgetLimit, data.name);
+          return;
+        }
+
         await groceryService.updateCartItem(editingItem.id, {
           nameSnapshot: data.name,
           categorySnapshot: data.category,
@@ -354,23 +393,15 @@ export const ShoppingPage: React.FC = () => {
           discounts: data.discounts,
         });
       } else {
-        // Blokir mutlak jika batas anggaran belum diatur (limit <= 0)
-        if (budgetLimit <= 0) {
-          showBudgetUnsetWarning();
+        // Zero Over-Budget Guard saat tambah barang baru
+        const itemCost = calculateItemSubtotals(data.quantity, data.unitPrice, data.discounts).finalSubtotal;
+        const projectedTotal = totals.finalTotal + itemCost;
+
+        if (projectedTotal > budgetLimit) {
+          showOverBudgetWarning(projectedTotal, budgetLimit, data.name);
           return;
         }
 
-        // Validasi batas anggaran ketat saat penambahan barang baru
-        if (budgetLimit > 0) {
-          const itemCost = calculateItemSubtotals(data.quantity, data.unitPrice, data.discounts).finalSubtotal;
-          const projectedTotal = totals.finalTotal + itemCost;
-          if (totals.finalTotal >= budgetLimit || projectedTotal > budgetLimit || itemCost > budgetStatus.remaining) {
-            try {
-              soundService.error();
-            } catch {}
-            return;
-          }
-        }
         await groceryService.addItemToCart(data);
       }
       try {
@@ -378,18 +409,39 @@ export const ShoppingPage: React.FC = () => {
       } catch (e) {
         // sound optional
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Gagal menyimpan barang ke troli:', err);
     }
   };
 
   const handleSaveBudgetLimit = async () => {
+    setBudgetModalError(null);
     const rawDigits = (newBudgetInput || '0').replace(/\D/g, '');
     const parsed = parseInt(rawDigits, 10);
     const finalVal = isNaN(parsed) || parsed < 0 ? 0 : parsed;
-    await groceryService.setBudget(currentPeriod, finalVal);
-    setBudgetLimit(finalVal);
-    setIsEditingBudget(false);
+
+    // Zero Over-Budget Guard: Batas baru tidak boleh lebih kecil dari total belanja aktif di troli
+    if (totals.finalTotal > 0 && finalVal < totals.finalTotal) {
+      try {
+        soundService.error();
+      } catch {}
+      const msg =
+        language === 'zh'
+          ? `新预算上限（${formatRupiah(finalVal)}）不能低于购物车当前商品总额（${formatRupiah(totals.finalTotal)}）！请先调整购物车中的商品数量。`
+          : language === 'en'
+          ? `New budget limit (${formatRupiah(finalVal)}) cannot be less than active cart total (${formatRupiah(totals.finalTotal)})! Please adjust cart items first.`
+          : `Batas anggaran baru (${formatRupiah(finalVal)}) tidak boleh lebih kecil dari total belanja aktif di troli (${formatRupiah(totals.finalTotal)})! Kurangi barang/jumlah belanja di troli terlebih dahulu.`;
+      setBudgetModalError(msg);
+      return;
+    }
+
+    try {
+      await groceryService.setBudget(currentPeriod, finalVal);
+      setBudgetLimit(finalVal);
+      setIsEditingBudget(false);
+    } catch (err: any) {
+      setBudgetModalError(err.message || 'Gagal menyimpan batas anggaran');
+    }
   };
 
   const handleConfirmCheckout = async () => {
@@ -482,11 +534,28 @@ export const ShoppingPage: React.FC = () => {
             type="button"
             onClick={() => {
               setBudgetUnsetToast(null);
+              setBudgetModalError(null);
               setIsEditingBudget(true);
             }}
             className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] px-2.5 py-1.5 rounded-xl transition-all shrink-0 cursor-pointer shadow-xs active:scale-95"
           >
             {t('setLimit', language)}
+          </button>
+        </div>
+      )}
+
+      {budgetOverWarningToast && (
+        <div className="bg-red-50 dark:bg-rose-950/80 border border-red-300 dark:border-rose-800 text-danger dark:text-rose-200 px-4 py-3 rounded-2xl flex items-center justify-between gap-2.5 text-xs animate-fade-in shadow-soft">
+          <div className="flex items-center gap-2 min-w-0">
+            <AlertCircle className="w-4 h-4 text-danger dark:text-rose-400 flex-shrink-0" />
+            <span className="font-semibold">{budgetOverWarningToast}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setBudgetOverWarningToast(null)}
+            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 rounded-lg cursor-pointer"
+          >
+            <X className="w-4 h-4" />
           </button>
         </div>
       )}
@@ -689,10 +758,7 @@ export const ShoppingPage: React.FC = () => {
               // Validasi batas anggaran ketat: jika belanja aktif sudah mencapai/melebihi limit, atau penambahan unit membuat belanja melebihi pagu anggaran
               const isBudgetUnset = budgetLimit <= 0;
               const isOverBudget =
-                budgetLimit > 0 &&
-                (totals.finalTotal >= budgetLimit ||
-                  projectedTotal > budgetLimit ||
-                  additionalCost > budgetStatus.remaining);
+                budgetLimit > 0 && projectedTotal > budgetLimit;
 
               return (
                 <button
@@ -704,7 +770,10 @@ export const ShoppingPage: React.FC = () => {
                       showBudgetUnsetWarning();
                       return;
                     }
-                    if (isOverBudget) return;
+                    if (isOverBudget) {
+                      showOverBudgetWarning(projectedTotal, budgetLimit, rec.name);
+                      return;
+                    }
 
                     if (existingItem) {
                       await handleIncreaseQty(existingItem.id);
@@ -864,6 +933,13 @@ export const ShoppingPage: React.FC = () => {
             <p className="text-xs text-text-secondary dark:text-slate-400 mb-4">
               {t('setMonthlyBudgetDesc', language, { period: formatPeriodLabel(currentPeriod, language) })}
             </p>
+
+            {budgetModalError && (
+              <div className="mb-3 p-2.5 rounded-xl bg-red-50 dark:bg-rose-950/80 border border-red-200 dark:border-rose-800 text-danger dark:text-rose-300 text-xs flex items-center gap-2 animate-fade-in">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span className="font-semibold">{budgetModalError}</span>
+              </div>
+            )}
 
             <div className="space-y-2 mb-4">
               <div className="relative">

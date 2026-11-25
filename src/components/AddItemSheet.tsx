@@ -163,15 +163,21 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
   const watchedPriceInIdr = convertCurrencyToIdr(enteredPriceNum);
   const liveCalc = calculateItemSubtotals(watchedQty, watchedPriceInIdr, watchedDiscounts);
 
-  // Check if budget is not set (limit <= 0)
-  const isBudgetUnset = !editingItem && (!budgetLimit || budgetLimit <= 0);
+  // Existing item cost in IDR (if editing an existing item in cart)
+  const oldItemCost = editingItem
+    ? calculateItemSubtotals(editingItem.quantity, editingItem.unitPrice, editingItem.discounts).finalSubtotal
+    : 0;
 
-  // Check if item exceeds remaining budget (Proactive prevent)
+  // The maximum cost available for this item (including what it already occupies in cart)
+  const availableForThisItem = (remainingBudget !== undefined ? remainingBudget : 0) + oldItemCost;
+
+  // Check if budget is not set (limit <= 0)
+  const isBudgetUnset = !budgetLimit || budgetLimit <= 0;
+
+  // Check if item exceeds remaining/available budget (Proactive prevent)
   const isBudgetRestricted =
     budgetLimit > 0 &&
-    remainingBudget !== undefined &&
-    !editingItem &&
-    liveCalc.finalSubtotal > remainingBudget;
+    liveCalc.finalSubtotal > availableForThisItem;
 
   // Recommendations from purchase history
   const allTransactions = useLiveQuery(() => db.transactions.toArray()) || [];
@@ -293,6 +299,10 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
     }
 
     const safeQty = Math.max(1, Number(data.quantity) || 1);
+    const itemCost = calculateItemSubtotals(safeQty, finalUnitPriceInIdr, data.discounts || []).finalSubtotal;
+    if (budgetLimit > 0 && itemCost > availableForThisItem) {
+      return;
+    }
 
     try {
       setIsSubmitting(true);
@@ -813,10 +823,10 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
                 <span>
                   ⚠️{' '}
                   {language === 'zh'
-                    ? `商品金额 (${formatRupiah(liveCalc.finalSubtotal)}) 超出剩余预算 (${formatRupiah(remainingBudget || 0)})`
+                    ? `商品金额 (${formatRupiah(liveCalc.finalSubtotal)}) 超出可用预算 (${formatRupiah(availableForThisItem)})`
                     : language === 'en'
-                      ? `Item total (${formatRupiah(liveCalc.finalSubtotal)}) exceeds remaining budget (${formatRupiah(remainingBudget || 0)})`
-                      : `Harga barang (${formatRupiah(liveCalc.finalSubtotal)}) melebihi sisa anggaran (${formatRupiah(remainingBudget || 0)})`}
+                      ? `Item total (${formatRupiah(liveCalc.finalSubtotal)}) exceeds available budget (${formatRupiah(availableForThisItem)})`
+                      : `Harga barang (${formatRupiah(liveCalc.finalSubtotal)}) melebihi batas anggaran tersedia (${formatRupiah(availableForThisItem)})`}
                 </span>
               </div>
             )}

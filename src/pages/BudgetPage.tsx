@@ -109,6 +109,19 @@ export const BudgetPage: React.FC = () => {
       );
       return;
     }
+    // Zero Over-Budget Guard: Batas baru tidak boleh lebih kecil dari total belanja aktif di troli
+    if (activeTotals.finalTotal > 0 && parsed < activeTotals.finalTotal) {
+      soundService.error();
+      setErrorMessage(
+        language === 'zh'
+          ? `预算上限（${formatRupiah(parsed)}）不能低于购物车当前商品总额（${formatRupiah(activeTotals.finalTotal)}）！请先调整购物车中的商品。`
+          : language === 'en'
+          ? `Budget limit (${formatRupiah(parsed)}) cannot be less than active cart total (${formatRupiah(activeTotals.finalTotal)})! Please adjust cart items first.`
+          : `Batas anggaran (${formatRupiah(parsed)}) tidak boleh lebih kecil dari total belanja aktif di troli (${formatRupiah(activeTotals.finalTotal)})! Kurangi barang/jumlah belanja di troli terlebih dahulu.`
+      );
+      return;
+    }
+
     await groceryService.setBudget(currentPeriod, parsed);
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3000);

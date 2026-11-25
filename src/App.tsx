@@ -14,6 +14,7 @@ import { syncService } from './services/syncService';
 import { groceryService } from './services/groceryService';
 import { soundService } from './utils/sound';
 import { t } from './utils/i18n';
+import { calculateCartTotals, calculateItemSubtotals } from './utils/calculations';
 import type { ProductCategory } from './types';
 import { Scan, Sun, Moon, Volume2, VolumeX } from 'lucide-react';
 import { auth, onAuthStateChanged, signOut, type User, doc, firestore, getDoc, onSnapshot } from './services/firebase';
@@ -239,9 +240,27 @@ export const App: React.FC = () => {
       soundService.error();
       return;
     }
-    await groceryService.addItemToCart(item);
-    setActiveTab('shopping');
-    soundService.playSuccess();
+
+    // Zero Over-Budget Guard: Cek penambahan barang barcode tidak boleh over-budget
+    const cartItems = await db.cartItems.toArray();
+    const currentTotal = calculateCartTotals(cartItems).finalTotal;
+    const itemCost = calculateItemSubtotals(item.quantity, item.unitPrice, item.discounts).finalSubtotal;
+    const projectedTotal = currentTotal + itemCost;
+
+    if (projectedTotal > budgetLimit) {
+      setActiveTab('shopping');
+      soundService.error();
+      return;
+    }
+
+    try {
+      await groceryService.addItemToCart(item);
+      setActiveTab('shopping');
+      soundService.playSuccess();
+    } catch {
+      setActiveTab('shopping');
+      soundService.error();
+    }
   };
 
   const handleLogout = async () => {

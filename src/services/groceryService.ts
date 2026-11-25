@@ -241,6 +241,19 @@ export const groceryService = {
     const safeUnitPrice = Math.max(0, Math.round(Number(data.unitPrice) || 0));
     const safeQty = Math.max(1, Number(data.quantity) || 1);
 
+    // Zero Over-Budget Guard: Cek batas anggaran sebelum menambahkan ke troli
+    const budget = await this.getBudget();
+    const budgetLimit = budget?.limit || 0;
+    const allCart = await db.cartItems.toArray();
+    const currentCartTotal = calculateCartTotals(allCart).finalTotal;
+    const newItemCost = calculateItemSubtotals(safeQty, safeUnitPrice, data.discounts || []).finalSubtotal;
+    if (budgetLimit <= 0) {
+      throw new Error('Batas anggaran belum ditentukan!');
+    }
+    if (currentCartTotal + newItemCost > budgetLimit) {
+      throw new Error(`Penambahan ${safeName} melebihi batas anggaran!`);
+    }
+
     // If active item already exists with exact same name and price, increment quantity
     try {
       const allActive = await db.cartItems.toArray();
@@ -294,6 +307,28 @@ export const groceryService = {
     const item = await db.cartItems.get(id);
     if (!item) throw new Error('Item tidak ditemukan');
 
+    // Zero Over-Budget Guard: Cek apakah perubahan harga, kuantitas, atau diskon membuat over-budget
+    if (updates.quantity !== undefined || updates.unitPrice !== undefined || updates.discounts !== undefined) {
+      const budget = await this.getBudget();
+      const budgetLimit = budget?.limit || 0;
+      const allCart = await db.cartItems.toArray();
+      const oldItemCost = calculateItemSubtotals(item.quantity, item.unitPrice, item.discounts).finalSubtotal;
+      const newQty = updates.quantity !== undefined ? updates.quantity : item.quantity;
+      const newPrice = updates.unitPrice !== undefined ? updates.unitPrice : item.unitPrice;
+      const newDiscounts = updates.discounts !== undefined ? updates.discounts : (item.discounts || []);
+      const newItemCost = calculateItemSubtotals(newQty, newPrice, newDiscounts).finalSubtotal;
+      const currentCartTotal = calculateCartTotals(allCart).finalTotal;
+      const projectedTotal = currentCartTotal - oldItemCost + newItemCost;
+      if (newItemCost > oldItemCost) {
+        if (budgetLimit <= 0) {
+          throw new Error('Batas anggaran belum ditentukan!');
+        }
+        if (projectedTotal > budgetLimit) {
+          throw new Error('Perubahan barang melebihi batas anggaran!');
+        }
+      }
+    }
+
     const updated: CartItem = {
       ...item,
       ...updates,
@@ -342,6 +377,20 @@ export const groceryService = {
   async adjustQuantity(id: string, delta: number): Promise<void> {
     const item = await db.cartItems.get(id);
     if (!item) return;
+
+    if (delta > 0) {
+      const budget = await this.getBudget();
+      const budgetLimit = budget?.limit || 0;
+      const allCart = await db.cartItems.toArray();
+      const currentCartTotal = calculateCartTotals(allCart).finalTotal;
+      const additionalCost = calculateItemSubtotals(delta, item.unitPrice, item.discounts).finalSubtotal;
+      if (budgetLimit <= 0) {
+        throw new Error('Batas anggaran belum ditentukan!');
+      }
+      if (currentCartTotal + additionalCost > budgetLimit) {
+        throw new Error('Penambahan kuantitas melebihi batas anggaran!');
+      }
+    }
 
     const newQty = Math.max(1, item.quantity + delta);
     await db.cartItems.update(id, {
@@ -423,6 +472,14 @@ export const groceryService = {
 
   async setBudget(period: string, limit: number): Promise<Budget> {
     const safeLimit = Math.max(0, Math.round(Number(limit) || 0));
+
+    // Zero Over-Budget Guard: Batas baru tidak boleh lebih kecil dari total belanja aktif di troli
+    const allCart = await db.cartItems.toArray();
+    const currentCartTotal = calculateCartTotals(allCart).finalTotal;
+    if (safeLimit > 0 && currentCartTotal > 0 && safeLimit < currentCartTotal) {
+      throw new Error(`Batas anggaran (${safeLimit}) tidak boleh lebih kecil dari total belanja di troli (${currentCartTotal})!`);
+    }
+
     this.setLastBudgetLimit(safeLimit);
 
     let budget = await db.budgets.where('period').equals(period).first();
