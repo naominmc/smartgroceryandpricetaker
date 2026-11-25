@@ -68,3 +68,19 @@ export const PAYMENT_ACCOUNTS: PaymentAccount[] = [
 ];
 
 export const DEFAULT_PAYMENT_ACCOUNT = PAYMENT_ACCOUNTS[0]; // Bank BCA
+
+export const getShortPaymentName = (method: string, lang: string = 'id'): string => {
+  if (!method) return 'BCA';
+  if (method.includes('Alipay')) return 'Alipay';
+  if (method.includes('Visa')) return 'VISA';
+  if (method.includes('Mastercard')) return 'MC';
+  if (method.includes('GoPay') || method.includes('QRIS')) return 'GoPay';
+  if (method.includes('Mandiri')) return 'Mandiri';
+  if (method.includes('Blu')) return 'Blu BCA';
+  if (method.includes('Tunai') || method.includes('Cash')) {
+    return lang === 'zh' ? '现金' : lang === 'en' ? 'Cash' : 'Tunai';
+  }
+  if (method.includes('BCA')) return 'BCA';
+  return method.replace('Bank ', '').split(' ')[0] || 'Bank';
+};
+

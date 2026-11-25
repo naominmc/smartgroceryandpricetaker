@@ -76,6 +76,23 @@ export const ShoppingPage: React.FC = () => {
   const [isClearCartConfirmOpen, setIsClearCartConfirmOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isManualExpanded, setIsManualExpanded] = useState<boolean | null>(null);
+  const [budgetUnsetToast, setBudgetUnsetToast] = useState<string | null>(null);
+
+  const showBudgetUnsetWarning = () => {
+    const message =
+      language === 'zh'
+        ? '尚未设置预算上限！请先通过“设置预算”按钮设置预算。'
+        : language === 'en'
+        ? 'Budget limit is not set! Please set your budget limit first via "Set Limit".'
+        : 'Batas anggaran belum diatur! Silakan atur batas anggaran terlebih dahulu melalui tombol "Atur Batas".';
+    setBudgetUnsetToast(message);
+    try {
+      soundService.error();
+    } catch {}
+    setTimeout(() => {
+      setBudgetUnsetToast(null);
+    }, 4500);
+  };
 
   // Active Selected City (Default: JABODETABEK if none selected)
   const selectedCity = useMemo(() => {
@@ -234,6 +251,11 @@ export const ShoppingPage: React.FC = () => {
 
   // Handlers for cart items
   const handleIncreaseQty = async (id: string) => {
+    if (budgetLimit <= 0) {
+      showBudgetUnsetWarning();
+      return;
+    }
+
     const item = cartItems.find((i) => i.id === id);
     if (!item) return;
 
@@ -254,7 +276,14 @@ export const ShoppingPage: React.FC = () => {
   const handleSetQty = async (id: string, newQty: number) => {
     const safeQty = Math.max(1, Math.round(Number(newQty) || 1));
     const item = cartItems.find((i) => i.id === id);
-    if (item && budgetLimit > 0 && safeQty > item.quantity) {
+    if (!item) return;
+
+    if (safeQty > item.quantity) {
+      if (budgetLimit <= 0) {
+        showBudgetUnsetWarning();
+        return;
+      }
+
       const addedUnits = safeQty - item.quantity;
       const additionalCalc = calculateItemSubtotals(addedUnits, item.unitPrice, item.discounts);
       const projectedTotal = totals.finalTotal + additionalCalc.finalSubtotal;
@@ -327,6 +356,12 @@ export const ShoppingPage: React.FC = () => {
           discounts: data.discounts,
         });
       } else {
+        // Blokir mutlak jika batas anggaran belum diatur (limit <= 0)
+        if (budgetLimit <= 0) {
+          showBudgetUnsetWarning();
+          return;
+        }
+
         // Validasi batas anggaran ketat saat penambahan barang baru
         if (budgetLimit > 0) {
           const itemCost = calculateItemSubtotals(data.quantity, data.unitPrice, data.discounts).finalSubtotal;
@@ -445,7 +480,26 @@ export const ShoppingPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Success / Error Alerts */}
+      {/* Success / Error / Budget Alerts */}
+      {budgetUnsetToast && (
+        <div className="bg-amber-50 dark:bg-amber-950/80 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 px-4 py-3 rounded-2xl flex items-center justify-between gap-2.5 text-xs animate-fade-in shadow-soft">
+          <div className="flex items-center gap-2 min-w-0">
+            <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+            <span className="font-semibold">{budgetUnsetToast}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setBudgetUnsetToast(null);
+              setIsEditingBudget(true);
+            }}
+            className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] px-2.5 py-1.5 rounded-xl transition-all shrink-0 cursor-pointer shadow-xs active:scale-95"
+          >
+            {t('setLimit', language)}
+          </button>
+        </div>
+      )}
+
       {checkoutSuccessMessage && (
         <div className="bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 px-4 py-3 rounded-2xl flex items-center gap-2.5 text-xs animate-fade-in shadow-soft">
           <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
@@ -642,6 +696,7 @@ export const ShoppingPage: React.FC = () => {
               const projectedTotal = totals.finalTotal + additionalCost;
 
               // Validasi batas anggaran ketat: jika belanja aktif sudah mencapai/melebihi limit, atau penambahan unit membuat belanja melebihi pagu anggaran
+              const isBudgetUnset = budgetLimit <= 0;
               const isOverBudget =
                 budgetLimit > 0 &&
                 (totals.finalTotal >= budgetLimit ||
@@ -654,6 +709,10 @@ export const ShoppingPage: React.FC = () => {
                   type="button"
                   disabled={isOverBudget}
                   onClick={async () => {
+                    if (isBudgetUnset) {
+                      showBudgetUnsetWarning();
+                      return;
+                    }
                     if (isOverBudget) return;
 
                     if (existingItem) {
@@ -747,7 +806,7 @@ export const ShoppingPage: React.FC = () => {
           {cartItems.map((item) => {
             const itemUnitCost = calculateItemSubtotals(1, item.unitPrice, item.discounts).finalSubtotal;
             const isItemIncreaseDisabled =
-              budgetLimit > 0 && (totals.finalTotal >= budgetLimit || itemUnitCost > budgetStatus.remaining);
+              budgetLimit <= 0 || (totals.finalTotal >= budgetLimit || itemUnitCost > budgetStatus.remaining);
 
             return (
               <GroceryItemCard

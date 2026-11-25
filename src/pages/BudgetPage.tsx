@@ -291,6 +291,38 @@ export const BudgetPage: React.FC = () => {
               <span className="text-red-700 dark:text-rose-400 font-semibold">{t('budgetGuideRed', language)}</span>
             </li>
           </ul>
+
+          {/* Visual Bar Indikator 3 Zona (Safe - Warn - Danger) */}
+          <div className="pt-1.5 space-y-1">
+            <div className="w-full h-3 rounded-full overflow-hidden flex bg-gray-200 dark:bg-slate-700 shadow-inner p-0.5 gap-0.5">
+              <div
+                style={{ width: '70%' }}
+                className="bg-emerald-500 h-full rounded-l-full transition-all"
+                title="Safe (< 70%)"
+              />
+              <div
+                style={{ width: '20%' }}
+                className="bg-amber-400 h-full transition-all"
+                title="Warn (70% - 89%)"
+              />
+              <div
+                style={{ width: '10%' }}
+                className="bg-rose-500 h-full rounded-r-full transition-all"
+                title="Danger (≥ 90%)"
+              />
+            </div>
+            <div className="w-full flex text-[10px] font-extrabold tracking-wider uppercase pt-0.5 select-none">
+              <div style={{ width: '70%' }} className="text-emerald-600 dark:text-emerald-400 pl-1 text-left">
+                Safe
+              </div>
+              <div style={{ width: '20%' }} className="text-amber-600 dark:text-amber-400 text-center">
+                Warn
+              </div>
+              <div style={{ width: '10%' }} className="text-rose-600 dark:text-rose-400 pr-1 text-right">
+                Danger
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

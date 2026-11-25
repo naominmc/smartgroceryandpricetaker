@@ -55,6 +55,9 @@ interface AppState {
   // Payment method
   selectedPaymentMethod: string;
   setSelectedPaymentMethod: (method: string) => void;
+  isPaymentModalOpen: boolean;
+  openPaymentModal: () => void;
+  closePaymentModal: () => void;
 
   // Session Location & Date
   sessionLocation: string;
@@ -292,6 +295,10 @@ export const useStore = create<AppState>((set, get) => {
         (window as any).__smart_grocery_notify_sync();
       }
     },
+
+    isPaymentModalOpen: false,
+    openPaymentModal: () => set({ isPaymentModalOpen: true }),
+    closePaymentModal: () => set({ isPaymentModalOpen: false }),
 
     sessionLocation: typeof window !== 'undefined' ? (localStorage.getItem('smart_grocery_location') || 'LOTTE MART GROCERY - PURI INDAH').toUpperCase() : 'LOTTE MART GROCERY - PURI INDAH',
     setSessionLocation: (loc) => {

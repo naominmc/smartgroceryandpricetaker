@@ -163,6 +163,9 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
   const watchedPriceInIdr = convertCurrencyToIdr(enteredPriceNum);
   const liveCalc = calculateItemSubtotals(watchedQty, watchedPriceInIdr, watchedDiscounts);
 
+  // Check if budget is not set (limit <= 0)
+  const isBudgetUnset = !editingItem && (!budgetLimit || budgetLimit <= 0);
+
   // Check if item exceeds remaining budget (Proactive prevent)
   const isBudgetRestricted =
     budgetLimit > 0 &&
@@ -283,6 +286,10 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
       } else {
         finalUnitPriceInIdr = 10000; // safe default fallback in IDR so submission never blocks
       }
+    }
+
+    if (isBudgetUnset) {
+      return;
     }
 
     const safeQty = Math.max(1, Number(data.quantity) || 1);
@@ -789,6 +796,18 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
 
           {/* Submit Button */}
           <div className="pt-2">
+            {isBudgetUnset && (
+              <div className="bg-amber-50 dark:bg-amber-950/80 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-300 text-xs font-bold p-3 rounded-xl mb-2 text-center animate-fade-in flex items-center justify-center gap-1.5">
+                <span>
+                  ⚠️{' '}
+                  {language === 'zh'
+                    ? '尚未设置预算上限！请先通过“设置预算”按钮设置预算。'
+                    : language === 'en'
+                    ? 'Budget limit is not set! Please set your budget limit first via "Set Limit".'
+                    : 'Batas anggaran belum diatur! Silakan atur batas anggaran terlebih dahulu melalui tombol "Atur Batas".'}
+                </span>
+              </div>
+            )}
             {isBudgetRestricted && (
               <div className="bg-red-50 dark:bg-rose-950/80 border border-red-200 dark:border-rose-900 text-danger dark:text-rose-300 text-xs font-bold p-2.5 rounded-xl mb-2 text-center animate-fade-in flex items-center justify-center gap-1.5">
                 <span>
@@ -812,14 +831,16 @@ export const AddItemSheet: React.FC<AddItemSheetProps> = ({
             )}
             <button
               type="submit"
-              disabled={isSubmitting || isBudgetRestricted}
+              disabled={isSubmitting || isBudgetRestricted || isBudgetUnset}
               className="w-full bg-primary hover:bg-primary-hover active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl shadow-float transition-all disabled:opacity-50 min-h-[48px] flex items-center justify-center text-sm cursor-pointer"
             >
               {isSubmitting
                 ? t('savingSubtotal', language)
-                : editingItem
-                  ? t('saveChangesBtn', language)
-                  : t('addToCartBtn', language)}
+                : isBudgetUnset
+                  ? (language === 'zh' ? '请先设置预算上限' : language === 'en' ? 'Set budget limit first' : 'Atur batas anggaran dahulu')
+                  : editingItem
+                    ? t('saveChangesBtn', language)
+                    : t('addToCartBtn', language)}
             </button>
           </div>
         </form>
