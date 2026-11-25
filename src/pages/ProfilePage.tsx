@@ -32,6 +32,8 @@ import { useStore } from '../store/useStore';
 import { pwaService } from '../utils/pwa';
 import { t, type AppLanguage, getLanguageDisplayName } from '../utils/i18n';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { auth } from '../services/firebase';
+import { authService } from '../services/authService';
 
 interface ProfilePageProps {
   onLogout?: () => void;
@@ -392,6 +394,11 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
       updateUserProfile({ passwordMasked: newPassword });
       if (typeof window !== 'undefined') {
         localStorage.setItem('sg_password', newPassword);
+      }
+      if (auth.currentUser) {
+        authService.linkPasswordToGoogleUser(auth.currentUser, newPassword).catch((e) => {
+          console.warn('Profile password sync to auth error:', e);
+        });
       }
     }
 

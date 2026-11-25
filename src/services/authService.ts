@@ -16,6 +16,9 @@ import {
   signOut,
   updateProfile,
   sendPasswordResetEmail,
+  EmailAuthProvider,
+  linkWithCredential,
+  updatePassword,
   googleProvider,
   type User,
 } from './firebase';
@@ -375,17 +378,18 @@ class AuthService {
       ) {
         // Cek apakah akun ada di database Firestore
         if (accountProfile) {
-          // Jika akun terdaftar via Google dan belum memiliki kata sandi mandiri
+          // Jika akun terdaftar via Google dan belum memiliki kata sandi mandiri di Firebase Auth
           if (accountProfile.isGoogleLinked && !accountProfile.hasPassword) {
-            const err: any = new Error('GOOGLE_ONLY_ACCOUNT');
-            err.code = 'auth/google-only-account';
+            const err: any = new Error('GOOGLE_ACCOUNT_NEEDS_LINK');
+            err.code = 'auth/google-account-needs-link';
             err.email = targetEmail;
             err.username = accountProfile.username;
             err.fullName = accountProfile.fullName;
+            err.passwordEntered = cleanPw;
             throw err;
           }
 
-          // Akun ada di database, artinya kata sandi yang dimasukkan salah
+          // Akun ada di database dengan password aktif, artinya kata sandi yang dimasukkan salah
           const err: any = new Error('WRONG_PASSWORD');
           err.code = 'auth/wrong-password';
           throw err;
@@ -424,6 +428,47 @@ class AuthService {
 
     await sendPasswordResetEmail(auth, targetEmail.toLowerCase());
     return targetEmail.toLowerCase();
+  }
+
+  /**
+   * Tautkan kredensial email & password ke akun pengguna Firebase Auth (misalnya akun Google).
+   * Menjamin akun Google dan login Email/Username + password memiliki UID yang sama.
+   */
+  public async linkPasswordToGoogleUser(user: User, password: string): Promise<boolean> {
+    const cleanPw = password.trim();
+    if (!cleanPw || cleanPw.length < 6 || !user.email) return false;
+
+    try {
+      const hasPassword = user.providerData.some((p) => p.providerId === 'password');
+      if (hasPassword) {
+        // Sudah memiliki provider password di Firebase Auth, perbarui kata sandi
+        await updatePassword(user, cleanPw);
+      } else {
+        // Hubungkan kredensial email & password menggunakan linkWithCredential
+        const credential = EmailAuthProvider.credential(user.email, cleanPw);
+        await linkWithCredential(user, credential);
+      }
+
+      // Tandai hasPassword dan simpan password di profil Firestore
+      const cleanEmail = user.email.toLowerCase();
+      const existing = await this.findAccount(cleanEmail);
+      if (existing) {
+        existing.hasPassword = true;
+        existing.password = cleanPw;
+        if (!existing.authProviders?.includes('password')) {
+          existing.authProviders = [...(existing.authProviders || []), 'password'];
+        }
+        await this.saveAccountToFirestore(existing);
+      }
+
+      return true;
+    } catch (e: any) {
+      console.warn('linkPasswordToGoogleUser warning:', e);
+      if (e?.code === 'auth/credential-already-in-use') {
+        return true;
+      }
+      return false;
+    }
   }
 
   /**

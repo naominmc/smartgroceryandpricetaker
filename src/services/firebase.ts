@@ -22,6 +22,9 @@ import {
   signOut,
   updateProfile,
   sendPasswordResetEmail,
+  EmailAuthProvider,
+  linkWithCredential,
+  updatePassword,
   onAuthStateChanged,
   type User,
 } from 'firebase/auth';
@@ -59,6 +62,9 @@ export {
   signOut,
   updateProfile,
   sendPasswordResetEmail,
+  EmailAuthProvider,
+  linkWithCredential,
+  updatePassword,
   onAuthStateChanged,
   type User,
 };
