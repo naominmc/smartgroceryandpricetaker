@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ShieldCheck, AlertTriangle, AlertOctagon, TrendingDown, Edit3, CreditCard } from 'lucide-react';
+import { ShieldCheck, AlertTriangle, AlertOctagon, TrendingDown, Edit3 } from 'lucide-react';
 import { formatRupiah } from '../utils/currency';
 import type { BudgetStatus } from '../types';
 import { useStore } from '../store/useStore';
-import { getShortPaymentName } from '../data/paymentMethods';
 import { t, getBudgetZoneLabels, getBudgetZoneTooltip } from '../utils/i18n';
 
 interface BudgetSafetyCardProps {
@@ -19,7 +18,7 @@ export const BudgetSafetyCard: React.FC<BudgetSafetyCardProps> = ({
   totalSavings,
   onEditBudget,
 }) => {
-  const { language, currency, selectedPaymentMethod, openPaymentModal } = useStore();
+  const { language, currency } = useStore();
   const { limit, activeTotal, remaining, percentage, level, excessAmount } = budgetStatus;
   const isRedLevel = limit > 0 && (level === 'danger' || level === 'exceeded' || remaining <= 10000);
   const isYellowLevel = limit > 0 && !isRedLevel && level === 'warning';
@@ -99,45 +98,29 @@ export const BudgetSafetyCard: React.FC<BudgetSafetyCardProps> = ({
     <div
       className={`bg-card dark:bg-slate-800/90 rounded-card p-4 shadow-soft border ${theme.cardBorder} transition-all duration-200 relative overflow-hidden w-full max-w-full min-w-0 box-border`}
     >
-      {/* Top Banner Alert, Payment Bank Badge, & Edit Budget Button */}
+      {/* Top Banner Alert & Edit Budget Button */}
       <div className="flex items-center justify-between gap-1.5 mb-2.5 min-w-0 max-w-full">
         <div
-          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9.5px] sm:text-[10px] font-bold border whitespace-nowrap min-w-0 max-w-[45%] sm:max-w-[50%] tracking-tight leading-tight ${theme.badgeBg}`}
+          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9.5px] sm:text-[10px] font-bold border whitespace-nowrap min-w-0 max-w-[calc(100%-80px)] tracking-tight leading-tight ${theme.badgeBg}`}
         >
           <StatusIcon className="w-3 h-3 flex-shrink-0" />
           <span className="whitespace-nowrap truncate">{localizedMessage}</span>
         </div>
 
-        <div className="flex items-center gap-1.5 flex-shrink-0">
-          {/* Payment Bank Badge Button (Dipindahkan dari Header Kanan Atas) */}
+        {onEditBudget && (
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              openPaymentModal();
+              onEditBudget();
             }}
-            className="bg-white dark:bg-slate-700 text-blue-800 dark:text-blue-100 border border-blue-200/90 dark:border-slate-600 hover:bg-blue-50 dark:hover:bg-slate-650 active:scale-95 font-extrabold text-[10px] sm:text-[11px] px-2 sm:px-2.5 py-1 rounded-xl shadow-2xs transition-all flex items-center gap-1 min-h-[30px] sm:min-h-[32px] cursor-pointer whitespace-nowrap"
-            title={`${t('paymentSource', language)} (${selectedPaymentMethod})`}
+            className="flex items-center gap-1 text-[11px] font-medium text-text-secondary dark:text-slate-400 hover:text-primary dark:hover:text-blue-400 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors min-h-[36px] flex-shrink-0 cursor-pointer"
+            title={t('setLimit', language)}
           >
-            <CreditCard className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-600 dark:text-blue-300 flex-shrink-0" />
-            <span className="truncate max-w-[55px] sm:max-w-[75px]">{getShortPaymentName(selectedPaymentMethod, language)}</span>
+            <Edit3 className="w-3.5 h-3.5" />
+            <span>{t('setLimit', language)}</span>
           </button>
-
-          {onEditBudget && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEditBudget();
-              }}
-              className="flex items-center gap-1 text-[10.5px] sm:text-[11px] font-semibold text-text-secondary dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 px-1.5 sm:px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors min-h-[30px] sm:min-h-[32px] flex-shrink-0 cursor-pointer"
-              title={t('setLimit', language)}
-            >
-              <Edit3 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-              <span>{t('setLimit', language)}</span>
-            </button>
-          )}
-        </div>
+        )}
       </div>
 
       {/* Main Budget Numbers Grid */}

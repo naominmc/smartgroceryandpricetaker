@@ -8,7 +8,6 @@ import { HistoryPage } from './pages/HistoryPage';
 import { BudgetPage } from './pages/BudgetPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { LoginPage } from './pages/LoginPage';
-import { PaymentMethodSelectorModal } from './components/PaymentMethodSelectorModal';
 import { BarcodeScannerModal } from './components/BarcodeScannerModal';
 import { SyncModal } from './components/SyncModal';
 import { syncService } from './services/syncService';
@@ -16,7 +15,7 @@ import { groceryService } from './services/groceryService';
 import { soundService } from './utils/sound';
 import { t } from './utils/i18n';
 import type { ProductCategory } from './types';
-import { CreditCard, Scan, Sun, Moon, Volume2, VolumeX } from 'lucide-react';
+import { Scan, Sun, Moon, Volume2, VolumeX } from 'lucide-react';
 import { auth, onAuthStateChanged, signOut, type User, doc, firestore, getDoc } from './services/firebase';
 
 export const App: React.FC = () => {
@@ -36,8 +35,6 @@ export const App: React.FC = () => {
     language,
     isRefreshing,
     triggerRefresh,
-    isPaymentModalOpen,
-    closePaymentModal,
   } = useStore();
   const [isInitialized, setIsInitialized] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -381,11 +378,6 @@ export const App: React.FC = () => {
           isOpen={isScannerOpen}
           onClose={closeScanner}
           onAddToCart={handleBarcodeAddToCart}
-        />
-
-        <PaymentMethodSelectorModal
-          isOpen={isPaymentModalOpen}
-          onClose={closePaymentModal}
         />
 
         <SyncModal
