@@ -60,10 +60,15 @@ export const ShoppingPage: React.FC = () => {
   const currentPeriod = useMemo(() => {
     return sessionDate ? sessionDate.substring(0, 7) : getCurrentMonthPeriod();
   }, [sessionDate]);
-  const [budgetLimit, setBudgetLimit] = useState(1200000);
+  const [budgetLimit, setBudgetLimit] = useState<number>(() => {
+    return groceryService.getLastBudgetLimit();
+  });
   const [isEditingBudget, setIsEditingBudget] = useState(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
-  const [newBudgetInput, setNewBudgetInput] = useState('1200000');
+  const [newBudgetInput, setNewBudgetInput] = useState<string>(() => {
+    const last = groceryService.getLastBudgetLimit();
+    return last > 0 ? last.toString() : '';
+  });
   const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
   const [checkoutSuccessMessage, setCheckoutSuccessMessage] = useState<string | null>(null);
   const [checkoutErrorMessage, setCheckoutErrorMessage] = useState<string | null>(null);
@@ -188,11 +193,26 @@ export const ShoppingPage: React.FC = () => {
   );
 
   useEffect(() => {
-    if (budgetRecord && budgetRecord.limit > 0) {
-      setBudgetLimit(budgetRecord.limit);
-      setNewBudgetInput(budgetRecord.limit.toString());
+    if (budgetRecord) {
+      const isCustomized = typeof window !== 'undefined' && localStorage.getItem('smart_grocery_budget_customized') === 'true';
+      if (!isCustomized && budgetRecord.limit === 1200000) {
+        groceryService.setBudget(currentPeriod, 0).then(() => {
+          setBudgetLimit(0);
+          setNewBudgetInput('');
+        });
+      } else {
+        setBudgetLimit(budgetRecord.limit);
+        setNewBudgetInput(budgetRecord.limit > 0 ? budgetRecord.limit.toString() : '');
+      }
+    } else {
+      const lastLimit = groceryService.getLastBudgetLimit();
+      setBudgetLimit(lastLimit);
+      setNewBudgetInput(lastLimit > 0 ? lastLimit.toString() : '');
+      if (lastLimit > 0) {
+        groceryService.setBudget(currentPeriod, lastLimit);
+      }
     }
-  }, [budgetRecord]);
+  }, [budgetRecord, currentPeriod]);
 
   // Online/Offline detection
   useEffect(() => {
@@ -331,9 +351,9 @@ export const ShoppingPage: React.FC = () => {
   };
 
   const handleSaveBudgetLimit = async () => {
-    const rawDigits = (newBudgetInput || budgetLimit.toString()).replace(/\D/g, '');
+    const rawDigits = (newBudgetInput || '0').replace(/\D/g, '');
     const parsed = parseInt(rawDigits, 10);
-    const finalVal = isNaN(parsed) || parsed <= 0 ? 1200000 : parsed;
+    const finalVal = isNaN(parsed) || parsed < 0 ? 0 : parsed;
     await groceryService.setBudget(currentPeriod, finalVal);
     setBudgetLimit(finalVal);
     setIsEditingBudget(false);
@@ -453,8 +473,8 @@ export const ShoppingPage: React.FC = () => {
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 min-w-0">
                 {(() => {
-                  const isRedStatus = budgetStatus.remaining <= 10000 || budgetStatus.level === 'exceeded' || budgetStatus.level === 'danger';
-                  const isWarningStatus = !isRedStatus && budgetStatus.level === 'warning';
+                  const isRedStatus = budgetLimit > 0 && (budgetStatus.remaining <= 10000 || budgetStatus.level === 'exceeded' || budgetStatus.level === 'danger');
+                  const isWarningStatus = budgetLimit > 0 && !isRedStatus && budgetStatus.level === 'warning';
                   return (
                     <span
                       className={`inline-flex items-center gap-1 text-[11px] font-extrabold whitespace-nowrap shrink-0 ${
@@ -541,7 +561,7 @@ export const ShoppingPage: React.FC = () => {
               itemCount={cartItems.length}
               totalSavings={totals.discountTotal}
               onEditBudget={() => {
-                setNewBudgetInput(budgetLimit.toString());
+                setNewBudgetInput(budgetLimit > 0 ? budgetLimit.toString() : '');
                 setIsEditingBudget(true);
               }}
             />
@@ -814,9 +834,9 @@ export const ShoppingPage: React.FC = () => {
                 <input
                   type="text"
                   inputMode="numeric"
-                  value={formatNumberWithDots(newBudgetInput || budgetLimit.toString())}
+                  value={newBudgetInput ? formatNumberWithDots(newBudgetInput) : ''}
                   onChange={(e) => setNewBudgetInput(e.target.value.replace(/\D/g, ''))}
-                  placeholder="1.200.000"
+                  placeholder="0"
                   className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 font-bold text-base outline-none focus:ring-2 focus:ring-primary min-h-[44px]"
                 />
               </div>

@@ -1,5 +1,6 @@
 import { syncService } from './syncService';
 import { db } from '../db/database';
+import { useStore } from '../store/useStore';
 import { SUPERMARKET_CATALOG } from '../data/supermarketCatalog';
 import type {
   Product,
@@ -359,26 +360,71 @@ export const groceryService = {
   },
 
   /**
+   * Helper to get persistent last budget limit set by user (0 if never set)
+   */
+  getLastBudgetLimit(): number {
+    if (typeof window !== 'undefined') {
+      const isCustomized = localStorage.getItem('smart_grocery_budget_customized') === 'true';
+      if (isCustomized) {
+        const saved = localStorage.getItem('smart_grocery_budget_limit');
+        if (saved !== null) {
+          const val = parseInt(saved, 10);
+          if (!isNaN(val) && val >= 0) return val;
+        }
+      }
+    }
+    const profile = useStore.getState().userProfile;
+    if (profile && typeof profile.lastBudgetLimit === 'number' && profile.lastBudgetLimit >= 0) {
+      return profile.lastBudgetLimit;
+    }
+    return 0;
+  },
+
+  /**
+   * Helper to set persistent last budget limit across storage, profile, and Firestore
+   */
+  setLastBudgetLimit(limit: number) {
+    const safeLimit = Math.max(0, Math.round(Number(limit) || 0));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('smart_grocery_budget_limit', safeLimit.toString());
+      localStorage.setItem('smart_grocery_budget_customized', 'true');
+    }
+    useStore.getState().updateUserProfile({ lastBudgetLimit: safeLimit } as any);
+  },
+
+  /**
    * Gets or sets current month budget
-   * F-05
+   * F-05: Default initial budget is 0 for new accounts; carries forward persistent last budget
    */
   async getBudget(period: string = getCurrentMonthPeriod()): Promise<Budget> {
     let budget = await db.budgets.where('period').equals(period).first();
+    const lastLimit = this.getLastBudgetLimit();
+
     if (!budget) {
       budget = {
         id: `budget-${period}`,
         period,
-        limit: 1200000, // default Rp1.200.000
+        limit: lastLimit,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
       await db.budgets.put(budget);
+    } else {
+      // Clean up legacy hardcoded 1200000 if user never explicitly customized it
+      const isCustomized = typeof window !== 'undefined' && localStorage.getItem('smart_grocery_budget_customized') === 'true';
+      if (!isCustomized && budget.limit === 1200000) {
+        budget.limit = 0;
+        budget.updatedAt = new Date().toISOString();
+        await db.budgets.put(budget);
+      }
     }
     return budget;
   },
 
   async setBudget(period: string, limit: number): Promise<Budget> {
     const safeLimit = Math.max(0, Math.round(Number(limit) || 0));
+    this.setLastBudgetLimit(safeLimit);
+
     let budget = await db.budgets.where('period').equals(period).first();
 
     if (budget) {

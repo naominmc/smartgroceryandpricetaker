@@ -19,6 +19,7 @@ export interface UserProfile {
   isGoogleLinked: boolean;
   passwordMasked: string;
   isPwaDismissed?: boolean;
+  lastBudgetLimit?: number;
 }
 
 interface AppState {
@@ -118,6 +119,7 @@ const getInitialProfile = (): UserProfile => {
     if (!savedPw || savedPw === '••••••••••••••') {
       localStorage.setItem('sg_password', validPw);
     }
+    const savedBudgetLimit = localStorage.getItem('smart_grocery_budget_limit');
     return {
       fullName: localStorage.getItem('sg_fullName') || 'naomi miracle',
       username: localStorage.getItem('sg_username') || 'naomiiracle',
@@ -129,6 +131,7 @@ const getInitialProfile = (): UserProfile => {
       isGoogleLinked: true,
       passwordMasked: validPw,
       isPwaDismissed: localStorage.getItem('smart_grocery_pwa_dismissed') === 'true',
+      lastBudgetLimit: savedBudgetLimit ? parseInt(savedBudgetLimit, 10) : undefined,
     };
   }
   return {
@@ -259,6 +262,10 @@ export const useStore = create<AppState>((set, get) => {
             } else {
               localStorage.removeItem('smart_grocery_pwa_dismissed');
             }
+          }
+          if (data.lastBudgetLimit !== undefined) {
+            localStorage.setItem('smart_grocery_budget_limit', data.lastBudgetLimit.toString());
+            localStorage.setItem('smart_grocery_budget_customized', 'true');
           }
         }
         return {

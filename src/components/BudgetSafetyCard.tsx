@@ -20,11 +20,17 @@ export const BudgetSafetyCard: React.FC<BudgetSafetyCardProps> = ({
 }) => {
   const { language, currency } = useStore();
   const { limit, activeTotal, remaining, percentage, level, excessAmount } = budgetStatus;
-  const isRedLevel = level === 'danger' || level === 'exceeded' || remaining <= 10000;
-  const isYellowLevel = !isRedLevel && level === 'warning';
+  const isRedLevel = limit > 0 && (level === 'danger' || level === 'exceeded' || remaining <= 10000);
+  const isYellowLevel = limit > 0 && !isRedLevel && level === 'warning';
 
   const localizedMessage =
-    level === 'safe'
+    limit === 0
+      ? (language === 'zh'
+          ? '尚未设置预算上限'
+          : language === 'en'
+          ? 'Budget limit not set yet'
+          : 'Batas anggaran belum ditentukan')
+      : level === 'safe'
       ? t('statusSafeMsg', language)
       : isYellowLevel
         ? t('statusWarningMsg', language)

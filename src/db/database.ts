@@ -86,22 +86,18 @@ export async function seedInitialDataIfNeeded() {
   const prevPeriod = getPreviousMonthPeriod(currentPeriod);
 
   if (budgetCount === 0) {
-    // Seed default monthly budget for current month (Rp1.200.000 for student monthly grocery)
+    // Default initial budget is 0 for new accounts (or persistent last limit if customized previously)
+    const isCustomized = typeof window !== 'undefined' && localStorage.getItem('smart_grocery_budget_customized') === 'true';
+    const lastLimit = isCustomized && typeof window !== 'undefined'
+      ? (parseInt(localStorage.getItem('smart_grocery_budget_limit') || '0', 10) || 0)
+      : 0;
+
     await db.budgets.put({
       id: `budget-${currentPeriod}`,
       period: currentPeriod,
-      limit: 1200000,
+      limit: lastLimit,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-    });
-
-    // Also seed previous month budget
-    await db.budgets.put({
-      id: `budget-${prevPeriod}`,
-      period: prevPeriod,
-      limit: 1200000,
-      createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
-      updatedAt: new Date(Date.now() - 30 * 86400000).toISOString(),
     });
   }
 

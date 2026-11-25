@@ -26,7 +26,10 @@ import { t, translateCategory } from '../utils/i18n';
 export const BudgetPage: React.FC = () => {
   const { username, selectedPaymentMethod, language, currency } = useStore();
   const [currentPeriod] = useState(getCurrentMonthPeriod());
-  const [budgetLimitInput, setBudgetLimitInput] = useState('1200000');
+  const [budgetLimitInput, setBudgetLimitInput] = useState<string>(() => {
+    const last = groceryService.getLastBudgetLimit();
+    return last > 0 ? last.toString() : '';
+  });
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -38,12 +41,19 @@ export const BudgetPage: React.FC = () => {
 
   useEffect(() => {
     if (budgetRecord) {
-      setBudgetLimitInput(budgetRecord.limit.toString());
+      const isCustomized = typeof window !== 'undefined' && localStorage.getItem('smart_grocery_budget_customized') === 'true';
+      if (!isCustomized && budgetRecord.limit === 1200000) {
+        groceryService.setBudget(currentPeriod, 0).then(() => {
+          setBudgetLimitInput('');
+        });
+      } else {
+        setBudgetLimitInput(budgetRecord.limit > 0 ? budgetRecord.limit.toString() : '');
+      }
     }
-  }, [budgetRecord]);
+  }, [budgetRecord, currentPeriod]);
 
   const activeTotals = calculateCartTotals(cartItems);
-  const currentLimit = budgetRecord ? budgetRecord.limit : 1200000;
+  const currentLimit = budgetRecord ? budgetRecord.limit : groceryService.getLastBudgetLimit();
   const budgetStatus: BudgetStatus = evaluateBudgetSafety(
     currentLimit,
     activeTotals.finalTotal,
@@ -160,12 +170,12 @@ export const BudgetPage: React.FC = () => {
               <input
                 type="text"
                 inputMode="numeric"
-                value={formatNumberWithDots(budgetLimitInput)}
+                value={budgetLimitInput ? formatNumberWithDots(budgetLimitInput) : ''}
                 onChange={(e) => {
                   const rawDigits = e.target.value.replace(/\D/g, '');
                   setBudgetLimitInput(rawDigits);
                 }}
-                placeholder="1.200.000"
+                placeholder="0"
                 className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-slate-100 font-bold text-base outline-none focus:ring-2 focus:ring-primary min-h-[44px]"
               />
             </div>
