@@ -5,7 +5,6 @@ import {
   Camera,
   Mail,
   Clock,
-  CheckCircle2,
   Lock,
   Eye,
   EyeOff,
@@ -408,17 +407,12 @@ export const AccountProfileModal: React.FC<AccountProfileModalProps> = ({
                 </div>
               </div>
 
-              {/* Login Time & Google Linked Status */}
+              {/* Login Time */}
               <div className="flex items-center justify-between text-[10px] text-text-secondary dark:text-slate-400 pt-0.5">
                 <span className="flex items-center gap-1">
                   <Clock className="w-3 h-3 text-gray-400 dark:text-slate-500" />
                   WAKTU MASUK: <strong className="font-semibold text-text-main dark:text-slate-300">{userProfile.loginTime}</strong>
                 </span>
-              </div>
-
-              <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Akun Google Terhubung (Google OAuth Verified)</span>
               </div>
             </div>
           </div>

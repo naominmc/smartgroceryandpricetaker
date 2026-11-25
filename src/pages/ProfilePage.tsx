@@ -4,7 +4,6 @@ import {
   Camera,
   Mail,
   Clock,
-  CheckCircle2,
   Lock,
   Eye,
   EyeOff,
@@ -716,12 +715,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
               <Mail className="w-3 h-3 flex-shrink-0" />
               <span className="truncate">{userProfile.email}</span>
             </div>
-          </div>
-
-          {/* Google Linked Status */}
-          <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 pt-0.5">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-            <span>{t('googleOAuthVerified', language)}</span>
           </div>
         </div>
       </div>
