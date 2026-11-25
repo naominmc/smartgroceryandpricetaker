@@ -67,7 +67,6 @@ export const ShoppingPage: React.FC = () => {
   const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
   const [checkoutSuccessMessage, setCheckoutSuccessMessage] = useState<string | null>(null);
   const [checkoutErrorMessage, setCheckoutErrorMessage] = useState<string | null>(null);
-  const [budgetWarningMessage, setBudgetWarningMessage] = useState<string | null>(null);
   const [itemToDelete, setItemToDelete] = useState<CartItem | null>(null);
   const [isClearCartConfirmOpen, setIsClearCartConfirmOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -213,16 +212,6 @@ export const ShoppingPage: React.FC = () => {
   const totals = calculateCartTotals(cartItems);
   const budgetStatus = evaluateBudgetSafety(budgetLimit, totals.finalTotal, totals.discountTotal);
 
-  const showBudgetWarning = (message: string) => {
-    try {
-      soundService.error();
-    } catch {}
-    setBudgetWarningMessage(message);
-    setTimeout(() => {
-      setBudgetWarningMessage((prev) => (prev === message ? null : prev));
-    }, 3500);
-  };
-
   // Handlers for cart items
   const handleIncreaseQty = async (id: string) => {
     const item = cartItems.find((i) => i.id === id);
@@ -232,13 +221,9 @@ export const ShoppingPage: React.FC = () => {
       const unitAddCalc = calculateItemSubtotals(1, item.unitPrice, item.discounts);
       const projectedTotal = totals.finalTotal + unitAddCalc.finalSubtotal;
       if (totals.finalTotal >= budgetLimit || projectedTotal > budgetLimit || unitAddCalc.finalSubtotal > budgetStatus.remaining) {
-        showBudgetWarning(
-          language === 'zh'
-            ? `增加 ${item.nameSnapshot} (${formatRupiah(unitAddCalc.finalSubtotal)}) 将超出剩余预算 (${formatRupiah(Math.max(0, budgetStatus.remaining))})！`
-            : language === 'en'
-            ? `Increasing ${item.nameSnapshot} (${formatRupiah(unitAddCalc.finalSubtotal)}) exceeds remaining budget (${formatRupiah(Math.max(0, budgetStatus.remaining))})!`
-            : `Peringatan: Menambah ${item.nameSnapshot} (${formatRupiah(unitAddCalc.finalSubtotal)}) akan melebihi sisa anggaran (${formatRupiah(Math.max(0, budgetStatus.remaining))})!`
-        );
+        try {
+          soundService.error();
+        } catch {}
         return;
       }
     }
@@ -254,13 +239,9 @@ export const ShoppingPage: React.FC = () => {
       const additionalCalc = calculateItemSubtotals(addedUnits, item.unitPrice, item.discounts);
       const projectedTotal = totals.finalTotal + additionalCalc.finalSubtotal;
       if (totals.finalTotal >= budgetLimit || projectedTotal > budgetLimit || additionalCalc.finalSubtotal > budgetStatus.remaining) {
-        showBudgetWarning(
-          language === 'zh'
-            ? `增加数量 (${formatRupiah(additionalCalc.finalSubtotal)}) 将超出剩余预算 (${formatRupiah(Math.max(0, budgetStatus.remaining))})！`
-            : language === 'en'
-            ? `Increasing quantity (${formatRupiah(additionalCalc.finalSubtotal)}) exceeds remaining budget (${formatRupiah(Math.max(0, budgetStatus.remaining))})!`
-            : `Peringatan: Menambah jumlah (${formatRupiah(additionalCalc.finalSubtotal)}) akan melebihi sisa anggaran (${formatRupiah(Math.max(0, budgetStatus.remaining))})!`
-        );
+        try {
+          soundService.error();
+        } catch {}
         return;
       }
     }
@@ -331,13 +312,9 @@ export const ShoppingPage: React.FC = () => {
           const itemCost = calculateItemSubtotals(data.quantity, data.unitPrice, data.discounts).finalSubtotal;
           const projectedTotal = totals.finalTotal + itemCost;
           if (totals.finalTotal >= budgetLimit || projectedTotal > budgetLimit || itemCost > budgetStatus.remaining) {
-            showBudgetWarning(
-              language === 'zh'
-                ? `商品金额 (${formatRupiah(itemCost)}) 超出剩余预算 (${formatRupiah(Math.max(0, budgetStatus.remaining))})！`
-                : language === 'en'
-                ? `Item total (${formatRupiah(itemCost)}) exceeds remaining budget (${formatRupiah(Math.max(0, budgetStatus.remaining))})!`
-                : `Peringatan: Harga barang (${formatRupiah(itemCost)}) melebihi sisa anggaran (${formatRupiah(Math.max(0, budgetStatus.remaining))})!`
-            );
+            try {
+              soundService.error();
+            } catch {}
             return;
           }
         }
@@ -397,14 +374,6 @@ export const ShoppingPage: React.FC = () => {
 
   return (
     <div className="space-y-4 pt-3 pb-3 w-full max-w-full min-w-0 box-border">
-      {/* Toast Peringatan Batas Anggaran */}
-      {budgetWarningMessage && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-rose-600 dark:bg-rose-700 text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-2xl border border-white/20 animate-fade-in flex items-center gap-2 max-w-[90%] text-center">
-          <AlertCircle className="w-4 h-4 flex-shrink-0" />
-          <span>{budgetWarningMessage}</span>
-        </div>
-      )}
-
       {/* PWA Installation Prompt if applicable */}
       <PWAInstallBanner />
 
@@ -663,19 +632,9 @@ export const ShoppingPage: React.FC = () => {
                 <button
                   key={rec.name}
                   type="button"
-                  aria-disabled={isOverBudget}
+                  disabled={isOverBudget}
                   onClick={async () => {
-                    // Validasi Wajib (Hard Block): Jika over budget, batalkan mutlak dan tampilkan peringatan batas anggaran
-                    if (isOverBudget) {
-                      showBudgetWarning(
-                        language === 'zh'
-                          ? `添加 ${rec.name} (${formatRupiah(additionalCost)}) 将超出剩余预算 (${formatRupiah(Math.max(0, budgetStatus.remaining))})！`
-                          : language === 'en'
-                          ? `Adding ${rec.name} (${formatRupiah(additionalCost)}) exceeds remaining budget (${formatRupiah(Math.max(0, budgetStatus.remaining))})!`
-                          : `Peringatan: Menambahkan ${rec.name} (${formatRupiah(additionalCost)}) akan melebihi sisa anggaran (${formatRupiah(Math.max(0, budgetStatus.remaining))})!`
-                      );
-                      return;
-                    }
+                    if (isOverBudget) return;
 
                     if (existingItem) {
                       await handleIncreaseQty(existingItem.id);
@@ -693,7 +652,7 @@ export const ShoppingPage: React.FC = () => {
                   }}
                   className={`flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-2xl border text-left transition-all shadow-2xs min-h-[44px] ${
                     isOverBudget
-                      ? 'opacity-40 cursor-not-allowed select-none bg-gray-100/80 dark:bg-slate-800/60 border-gray-200 dark:border-slate-700 text-gray-400 dark:text-slate-500'
+                      ? 'opacity-35 cursor-not-allowed pointer-events-none select-none bg-gray-100/80 dark:bg-slate-800/60 border-gray-200 dark:border-slate-700 text-gray-400 dark:text-slate-500'
                       : inCart
                       ? 'bg-blue-50 dark:bg-blue-950/70 border-blue-300 dark:border-blue-700 text-blue-950 dark:text-blue-100 active:scale-95 cursor-pointer'
                       : 'bg-white dark:bg-slate-800 border-gray-200/90 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-600 text-text-main dark:text-slate-100 active:scale-95 cursor-pointer'
@@ -701,10 +660,10 @@ export const ShoppingPage: React.FC = () => {
                   title={
                     isOverBudget
                       ? language === 'zh'
-                        ? `超出剩余预算 (${formatRupiah(Math.max(0, budgetStatus.remaining))})，无法添加`
+                        ? '已超出剩余预算，无法再增加'
                         : language === 'en'
-                        ? `Exceeds remaining budget (${formatRupiah(Math.max(0, budgetStatus.remaining))}), cannot add`
-                        : `Melebihi sisa anggaran (${formatRupiah(Math.max(0, budgetStatus.remaining))}), tidak dapat menambah`
+                        ? 'Exceeds remaining budget, cannot add more'
+                        : 'Melebihi sisa anggaran, tidak dapat menambah'
                       : undefined
                   }
                 >
