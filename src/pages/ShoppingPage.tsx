@@ -482,8 +482,8 @@ export const ShoppingPage: React.FC = () => {
       {/* PWA Installation Prompt if applicable */}
       <PWAInstallBanner />
 
-      {/* Top Header: Lokasi Supermarket & Ikon Kalender (Tanpa Teks Bulan/Tahun) */}
-      <div className="pt-1 flex items-center justify-end gap-1.5 max-w-full min-w-0">
+      {/* Top Header: Lokasi Supermarket & Ikon Kalender (Rata Kiri, Tanpa Ruang Kosong di Kiri) */}
+      <div className="pt-1 flex items-center justify-start gap-1.5 max-w-full min-w-0">
         <button
           type="button"
           onClick={() => setIsLocationModalOpen(true)}
@@ -500,27 +500,27 @@ export const ShoppingPage: React.FC = () => {
         </button>
 
         {/* Ikon Kalender Saja (Buka picker saat ditekan, tanpa teks angka tanggal terbuka) */}
-          <div
-            onClick={(e) => {
-              const input = e.currentTarget.querySelector('input') as HTMLInputElement | null;
-              if (input && typeof input.showPicker === 'function') {
-                try {
-                  input.showPicker();
-                } catch {}
-              }
-            }}
-            className="w-9 h-9 flex items-center justify-center bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-xl border border-gray-200 dark:border-slate-700 cursor-pointer shadow-xs relative transition-colors"
-            title="Pilih tanggal belanja"
-          >
-            <Calendar className="w-4 h-4 text-primary dark:text-blue-400 pointer-events-none flex-shrink-0" />
-            <input
-              type="date"
-              value={sessionDate}
-              onChange={(e) => setSessionDate(e.target.value)}
-              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-              aria-label="Pilih tanggal belanja"
-            />
-          </div>
+        <div
+          onClick={(e) => {
+            const input = e.currentTarget.querySelector('input') as HTMLInputElement | null;
+            if (input && typeof input.showPicker === 'function') {
+              try {
+                input.showPicker();
+              } catch {}
+            }
+          }}
+          className="w-9 h-9 flex items-center justify-center bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-xl border border-gray-200 dark:border-slate-700 cursor-pointer shadow-xs relative transition-colors flex-shrink-0"
+          title="Pilih tanggal belanja"
+        >
+          <Calendar className="w-4 h-4 text-primary dark:text-blue-400 pointer-events-none flex-shrink-0" />
+          <input
+            type="date"
+            value={sessionDate}
+            onChange={(e) => setSessionDate(e.target.value)}
+            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+            aria-label="Pilih tanggal belanja"
+          />
+        </div>
       </div>
 
       {/* Success / Error / Budget Alerts */}
