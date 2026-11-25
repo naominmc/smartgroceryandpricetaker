@@ -21,6 +21,7 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   updateProfile,
+  sendPasswordResetEmail,
   onAuthStateChanged,
   type User,
 } from 'firebase/auth';
@@ -57,6 +58,7 @@ export {
   createUserWithEmailAndPassword,
   signOut,
   updateProfile,
+  sendPasswordResetEmail,
   onAuthStateChanged,
   type User,
 };

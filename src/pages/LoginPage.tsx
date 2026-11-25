@@ -42,6 +42,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   } = useStore();
 
   const [activeAuthTab, setActiveAuthTab] = useState<'signin' | 'signup'>('signin');
+  const [loginIdentifier, setLoginIdentifier] = useState('');
   const [emailInput, setEmailInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -77,35 +78,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const handleGoogleSuccess = async (googleUser: any) => {
     setIsLoading(true);
     try {
-      const email = googleUser.email?.trim().toLowerCase() || '';
-      const fullName = googleUser.displayName || email.split('@')[0] || 'Pengguna Google';
-      const username = (email.split('@')[0] || 'user').replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
-      const avatarUrl = googleUser.photoURL || '';
-
-      let account = await authService.findAccount(email);
-      if (!account) {
-        account = await authService.registerAccount({
-          fullName,
-          username,
-          email,
-          password: `google_${googleUser.uid}`,
-          avatarUrl,
-          isGoogleLinked: true,
-        });
-      } else {
-        if (!account.isGoogleLinked || (avatarUrl && !account.avatarUrl)) {
-          account.isGoogleLinked = true;
-          if (avatarUrl && !account.avatarUrl) account.avatarUrl = avatarUrl;
-          await authService.saveAccountToFirestore(account);
-        }
-      }
+      // Sinkronkan data profil pengguna di Firestore (users/{email}, users/{uid}, dan usernames/{username})
+      const account = await authService.syncGoogleUser(googleUser);
 
       updateUserProfile({
-        fullName: account.fullName || fullName,
-        username: account.username || username,
-        email: account.email || email,
-        avatarUrl: account.avatarUrl || avatarUrl || userProfile.avatarUrl,
-        passwordMasked: account.password,
+        fullName: account.fullName,
+        username: account.username,
+        email: account.email,
+        avatarUrl: account.avatarUrl || userProfile.avatarUrl,
+        passwordMasked: account.password || '••••••••••••••',
         isGoogleLinked: true,
         loginTime:
           new Date().toLocaleDateString(language === 'zh' ? 'zh-CN' : language === 'en' ? 'en-US' : 'id-ID', {
@@ -122,10 +103,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       });
 
       if (typeof window !== 'undefined') {
-        localStorage.setItem('sg_password', account.password);
-        localStorage.setItem('sg_fullName', account.fullName || fullName);
-        localStorage.setItem('sg_username', account.username || username);
-        localStorage.setItem('sg_email', account.email || email);
+        if (account.password) {
+          localStorage.setItem('sg_password', account.password);
+        }
+        localStorage.setItem('sg_fullName', account.fullName);
+        localStorage.setItem('sg_username', account.username);
+        localStorage.setItem('sg_email', account.email);
         localStorage.setItem('smart_grocery_authenticated', 'true');
       }
 
@@ -136,7 +119,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       syncService.reconnect();
 
       setIsLoading(false);
-      showToast(t('signInSuccess', language, { name: account.fullName || fullName }));
+      showToast(t('signInSuccess', language, { name: account.fullName }));
 
       setTimeout(() => {
         setActiveTab('shopping');
@@ -145,7 +128,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     } catch (err: any) {
       console.error('Google Auth Success error:', err);
       setIsLoading(false);
-      showToast(t('googleConnectionFailed', language));
+      showToast(t('googleConnectionFailed', language), 'error');
     }
   };
 
@@ -214,6 +197,29 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       }
     }
   };
+  const handleForgotPassword = async () => {
+    const target = loginIdentifier.trim();
+    if (!target) {
+      showToast('Masukkan email atau username akun Anda di kolom atas terlebih dahulu.', 'error');
+      return;
+    }
+    try {
+      setIsLoading(true);
+      const email = await authService.sendPasswordReset(target);
+      setIsLoading(false);
+      showToast(t('passwordResetSent', language, { email }));
+    } catch (err: any) {
+      setIsLoading(false);
+      if (err?.code === 'auth/username-not-found') {
+        showToast(t('usernameNotFound', language, { user: err?.username || target }), 'error');
+      } else if (err?.code === 'auth/user-not-found') {
+        showToast(t('accountNotFound', language), 'error');
+      } else {
+        showToast(`Gagal mengirim reset sandi: ${err?.message || 'Silakan coba lagi.'}`, 'error');
+      }
+    }
+  };
+
   const handleSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -253,14 +259,21 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         setIsLoading(false);
         // Reset form & alihkan ke Sign In tanpa auto-login (wajib login ulang)
         setActiveAuthTab('signin');
-        setEmailInput(cleanEmail);
+        setLoginIdentifier(cleanEmail);
         setPasswordInput('');
         showToast(t('registeredSuccessRedirect', language));
       } catch (err: any) {
         setIsLoading(false);
-        if (err?.code === 'auth/email-already-in-use') {
+        if (err?.code === 'auth/account-exists-with-google') {
+          showToast(t('emailRegisteredGoogle', language), 'error');
+          setActiveAuthTab('signin');
+          setLoginIdentifier(cleanEmail);
+        } else if (err?.code === 'auth/email-already-in-use') {
           setIsEmailTaken(true);
           showToast(t('emailTaken', language), 'error');
+        } else if (err?.code === 'auth/username-already-in-use') {
+          setIsUsernameTaken(true);
+          showToast(t('usernameTaken', language), 'error');
         } else if (err?.code === 'auth/weak-password') {
           showToast(t('minPassword', language), 'error');
         } else if (err?.code === 'auth/invalid-email') {
@@ -271,7 +284,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       }
     } else {
       // SIGN IN (MASUK)
-      const inputQuery = emailInput.trim();
+      const inputQuery = loginIdentifier.trim();
       if (!inputQuery) {
         showToast(t('fillEmailUser', language), 'error');
         return;
@@ -327,18 +340,27 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         }, 400);
       } catch (err: any) {
         setIsLoading(false);
-        if (err?.code === 'auth/user-not-found' || err?.code === 'auth/invalid-credential') {
+        if (err?.code === 'auth/invalid-email-format') {
+          showToast(t('invalidEmailDetail', language), 'error');
+        } else if (err?.code === 'auth/username-not-found') {
+          showToast(t('usernameNotFound', language, { user: err?.username || inputQuery }), 'error');
+        } else if (err?.code === 'auth/google-only-account') {
+          // Akun terdaftar melalui Google, arahkan ke tombol Lanjutkan dengan Google
+          showToast(t('accountRegisteredGoogle', language), 'error');
+          // Tetap di tab Sign In!
+        } else if (err?.code === 'auth/wrong-password') {
+          showToast(t('wrongPassword', language), 'error');
+        } else if (err?.code === 'auth/user-not-found') {
+          // Akun benar-benar belum terdaftar
           showToast(t('accountNotFound', language), 'error');
           setActiveAuthTab('signup');
           if (inputQuery.includes('@')) {
             setEmailInput(inputQuery);
+            setUsernameInput('');
           } else {
             setUsernameInput(inputQuery.replace(/^@/, ''));
+            setEmailInput('');
           }
-        } else if (err?.code === 'auth/wrong-password') {
-          showToast(t('wrongPassword', language), 'error');
-        } else if (err?.code === 'auth/invalid-email') {
-          showToast(t('invalidEmail', language), 'error');
         } else if (err?.code === 'auth/too-many-requests') {
           showToast('⚠️ Terlalu banyak percobaan gagal. Silakan coba beberapa saat lagi.', 'error');
         } else {
@@ -510,7 +532,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                         type="email"
                         placeholder="naomi@mutiarabangsa.sch.id"
                         value={emailInput}
-                        onChange={(e) => setEmailInput(e.target.value)}
+                        onChange={(e) => {
+                          setEmailInput(e.target.value);
+                          setIsEmailTaken(false);
+                        }}
                         className={`w-full pl-9 pr-8 py-2 rounded-xl border text-xs font-semibold outline-none transition-all min-h-[40px] ${
                           isEmailTaken
                             ? 'border-red-500 bg-red-50/60 dark:bg-red-950/20 text-red-700 dark:text-red-300 focus:ring-2 focus:ring-red-400'
@@ -568,7 +593,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                           type="text"
                           placeholder="naomiiracle"
                           value={usernameInput}
-                          onChange={(e) => setUsernameInput(e.target.value)}
+                          onChange={(e) => {
+                            setUsernameInput(e.target.value);
+                            setIsUsernameTaken(false);
+                          }}
                           className={`w-full pl-7 pr-8 py-2 rounded-xl border text-xs font-semibold outline-none transition-all min-h-[40px] ${
                             isUsernameTaken
                               ? 'border-red-500 bg-red-50/60 dark:bg-red-950/20 text-red-700 dark:text-red-300 focus:ring-2 focus:ring-red-400'
@@ -601,8 +629,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                       <input
                         type="text"
                         placeholder="naomi@mutiarabangsa.sch.id / @naomiiracle"
-                        value={emailInput}
-                        onChange={(e) => setEmailInput(e.target.value)}
+                        value={loginIdentifier}
+                        onChange={(e) => setLoginIdentifier(e.target.value)}
                         className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-gray-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary min-h-[40px]"
                         required
                       />
@@ -617,7 +645,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                       </label>
                       <button
                         type="button"
-                        onClick={() => showToast('Gunakan akun naomi miracle atau daftar akun baru.')}
+                        onClick={handleForgotPassword}
                         className="text-[11px] text-text-secondary hover:text-primary dark:text-slate-400 dark:hover:text-blue-400 font-medium cursor-pointer"
                       >
                         {t('forgotPassword', language)}
@@ -668,6 +696,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                       type="button"
                       onClick={() => {
                         setActiveAuthTab('signup');
+                        if (loginIdentifier.includes('@')) {
+                          setEmailInput(loginIdentifier.trim());
+                          setUsernameInput('');
+                        } else if (loginIdentifier.trim()) {
+                          setUsernameInput(loginIdentifier.trim().replace(/^@/, ''));
+                          setEmailInput('');
+                        }
                         soundService.pop();
                       }}
                       className="font-bold text-primary dark:text-blue-400 hover:underline cursor-pointer"
@@ -682,6 +717,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                       type="button"
                       onClick={() => {
                         setActiveAuthTab('signin');
+                        if (emailInput.trim()) {
+                          setLoginIdentifier(emailInput.trim());
+                        } else if (usernameInput.trim()) {
+                          setLoginIdentifier(usernameInput.trim().replace(/^@/, ''));
+                        }
                         soundService.pop();
                       }}
                       className="font-bold text-primary dark:text-blue-400 hover:underline cursor-pointer"
