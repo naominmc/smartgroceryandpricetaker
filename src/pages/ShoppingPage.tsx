@@ -13,7 +13,6 @@ import {
   Check,
   TrendingDown,
   Scan,
-  CreditCard,
   ChevronRight,
   ChevronDown,
   ChevronUp,
@@ -842,17 +841,6 @@ export const ShoppingPage: React.FC = () => {
               <span className="flex-shrink-0">-{formatRupiah(totals.discountTotal)}</span>
             </div>
           )}
-
-          {/* Payment Method Badge */}
-          <div className="flex items-center justify-between text-xs pt-1 border-t border-gray-100/80 dark:border-slate-700 gap-2 min-w-0">
-            <span className="text-gray-500 dark:text-slate-400 flex items-center gap-1 truncate">
-              <CreditCard className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-              <span className="truncate">{t('paymentSourceShort', language)}</span>
-            </span>
-            <span className="font-bold text-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 px-2 py-0.5 rounded-lg border border-blue-100 dark:border-blue-900 truncate max-w-[140px] flex-shrink-0">
-              {selectedPaymentMethod}
-            </span>
-          </div>
 
           <div className="flex items-center justify-between border-t border-gray-100 dark:border-slate-700 pt-2 gap-2 min-w-0">
             <div className="min-w-0 flex-1">

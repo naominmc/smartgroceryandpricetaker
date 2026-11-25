@@ -1,10 +1,10 @@
-import React from 'react';
-import { ShieldCheck, AlertTriangle, AlertOctagon, TrendingDown, Edit3, CreditCard, Info } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { ShieldCheck, AlertTriangle, AlertOctagon, TrendingDown, Edit3, CreditCard } from 'lucide-react';
 import { formatRupiah } from '../utils/currency';
 import type { BudgetStatus } from '../types';
 import { useStore } from '../store/useStore';
 import { getShortPaymentName } from '../data/paymentMethods';
-import { t } from '../utils/i18n';
+import { t, getBudgetZoneLabels, getBudgetZoneTooltip } from '../utils/i18n';
 
 interface BudgetSafetyCardProps {
   budgetStatus: BudgetStatus;
@@ -23,6 +23,32 @@ export const BudgetSafetyCard: React.FC<BudgetSafetyCardProps> = ({
   const { limit, activeTotal, remaining, percentage, level, excessAmount } = budgetStatus;
   const isRedLevel = limit > 0 && (level === 'danger' || level === 'exceeded' || remaining <= 10000);
   const isYellowLevel = limit > 0 && !isRedLevel && level === 'warning';
+
+  const [activeZoneTooltip, setActiveZoneTooltip] = useState<'safe' | 'warn' | 'danger' | null>(null);
+  const tooltipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleZoneClick = (zone: 'safe' | 'warn' | 'danger') => {
+    if (tooltipTimeoutRef.current) {
+      clearTimeout(tooltipTimeoutRef.current);
+      tooltipTimeoutRef.current = null;
+    }
+    if (activeZoneTooltip === zone) {
+      setActiveZoneTooltip(null);
+      return;
+    }
+    setActiveZoneTooltip(zone);
+    tooltipTimeoutRef.current = setTimeout(() => {
+      setActiveZoneTooltip(null);
+    }, 2800);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (tooltipTimeoutRef.current) clearTimeout(tooltipTimeoutRef.current);
+    };
+  }, []);
+
+  const zoneLabels = getBudgetZoneLabels(language);
 
   const localizedMessage =
     limit === 0
@@ -171,99 +197,108 @@ export const BudgetSafetyCard: React.FC<BudgetSafetyCardProps> = ({
         </div>
       )}
 
-      {/* Panduan Batas Anggaran Box with 3-Zone Indicator Bar */}
-      <div className="mt-3 pt-2.5 border-t border-gray-100 dark:border-slate-700/60">
-        <div className="bg-slate-50/90 dark:bg-slate-850/60 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-3 sm:p-3.5 space-y-2.5">
-          {/* Header dengan Ikon Info (i) Berwarna Biru */}
-          <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
-            <Info className="w-4 h-4 flex-shrink-0 text-blue-600 dark:text-blue-400" />
-            <h4 className="text-xs font-bold text-text-main dark:text-slate-100 tracking-tight">
-              {language === 'zh'
-                ? '预算上限指南：'
-                : language === 'en'
-                ? 'Budget Limit Guide:'
-                : 'Panduan Batas Anggaran:'}
-            </h4>
-          </div>
-
-          {/* 3 Poin Keterangan Warna dengan Teks Berwarna Senada */}
-          <div className="space-y-1.5 text-[11px] leading-relaxed pl-0.5">
-            <div className="flex items-start gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 mt-1 flex-shrink-0" />
-              <p className="text-emerald-700 dark:text-emerald-400 font-medium">
-                <strong className="font-bold">
-                  {language === 'zh' ? '绿色 (< 70%):' : language === 'en' ? 'Green (< 70%):' : 'Hijau (< 70%):'}
-                </strong>{' '}
-                {language === 'zh'
-                  ? '安全，适合额外需求。'
-                  : language === 'en'
-                  ? 'Safe for additional essentials.'
-                  : 'Aman untuk kebutuhan tambahan.'}
-              </p>
-            </div>
-
-            <div className="flex items-start gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-amber-500 mt-1 flex-shrink-0" />
-              <p className="text-amber-700 dark:text-amber-400 font-medium">
-                <strong className="font-bold">
-                  {language === 'zh' ? '黄色 (70% - 89%):' : language === 'en' ? 'Yellow (70% - 89%):' : 'Kuning (70% - 89%):'}
-                </strong>{' '}
-                {language === 'zh'
-                  ? '警戒，限制非必需品或零食。'
-                  : language === 'en'
-                  ? 'Caution, limit tertiary goods/snacks.'
-                  : 'Waspada, batasi barang tersier/camilan.'}
-              </p>
-            </div>
-
-            <div className="flex items-start gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-rose-500 mt-1 flex-shrink-0" />
-              <p className="text-rose-700 dark:text-rose-400 font-medium">
-                <strong className="font-bold">
-                  {language === 'zh' ? '红色 (≥ 90%):' : language === 'en' ? 'Red (≥ 90%):' : 'Merah (≥ 90%):'}
-                </strong>{' '}
-                {language === 'zh'
-                  ? '危急，立即重新核对购物车商品。'
-                  : language === 'en'
-                  ? 'Critical, review items in cart immediately.'
-                  : 'Kritis, segera cek ulang barang di troli.'}
-              </p>
+      {/* 3-Zone Timeline Bar (Hijau, Kuning, Merah) */}
+      <div className="mt-3 pt-2.5 border-t border-gray-100 dark:border-slate-700/60 relative">
+        {/* Temporary Percentage Range Badge / Tooltip on Click */}
+        {activeZoneTooltip && (
+          <div className="flex justify-center mb-1.5 animate-fade-in">
+            <div
+              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold shadow-xs transition-all border ${
+                activeZoneTooltip === 'safe'
+                  ? 'bg-emerald-50 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700'
+                  : activeZoneTooltip === 'warn'
+                  ? 'bg-amber-50 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700'
+                  : 'bg-rose-50 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 border-rose-300 dark:border-rose-700'
+              }`}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  activeZoneTooltip === 'safe'
+                    ? 'bg-emerald-500'
+                    : activeZoneTooltip === 'warn'
+                    ? 'bg-amber-500'
+                    : 'bg-rose-500'
+                }`}
+              />
+              <span>{getBudgetZoneTooltip(activeZoneTooltip, language)}</span>
             </div>
           </div>
+        )}
 
-          {/* Visual Bar Indikator 3 Zona (Safe - Warn - Danger) */}
-          <div className="pt-1 space-y-1">
-            {/* Horizontal Multi-segment Bar */}
-            <div className="w-full h-3 rounded-full overflow-hidden flex bg-gray-200 dark:bg-slate-700 shadow-inner p-0.5 gap-0.5">
-              <div
-                style={{ width: '70%' }}
-                className="bg-emerald-500 h-full rounded-l-full transition-all"
-                title="Safe (< 70%)"
-              />
-              <div
-                style={{ width: '20%' }}
-                className="bg-amber-400 h-full transition-all"
-                title="Warn (70% - 89%)"
-              />
-              <div
-                style={{ width: '10%' }}
-                className="bg-rose-500 h-full rounded-r-full transition-all"
-                title="Danger (≥ 90%)"
-              />
-            </div>
+        {/* Horizontal Multi-segment Interactive Timeline Bar */}
+        <div className="w-full h-3 rounded-full overflow-hidden flex bg-gray-200 dark:bg-slate-700 shadow-inner p-0.5 gap-0.5">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleZoneClick('safe');
+            }}
+            style={{ width: '70%' }}
+            className={`bg-emerald-500 h-full rounded-l-full transition-all cursor-pointer hover:opacity-90 active:scale-y-95 ${
+              activeZoneTooltip === 'safe' ? 'ring-2 ring-emerald-300 dark:ring-emerald-400' : ''
+            }`}
+            title={`${zoneLabels.safe}: < 70%`}
+            aria-label={`${zoneLabels.safe}: < 70%`}
+          />
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleZoneClick('warn');
+            }}
+            style={{ width: '20%' }}
+            className={`bg-amber-400 h-full transition-all cursor-pointer hover:opacity-90 active:scale-y-95 ${
+              activeZoneTooltip === 'warn' ? 'ring-2 ring-amber-300 dark:ring-amber-400' : ''
+            }`}
+            title={`${zoneLabels.warn}: 70% - 89%`}
+            aria-label={`${zoneLabels.warn}: 70% - 89%`}
+          />
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleZoneClick('danger');
+            }}
+            style={{ width: '10%' }}
+            className={`bg-rose-500 h-full rounded-r-full transition-all cursor-pointer hover:opacity-90 active:scale-y-95 ${
+              activeZoneTooltip === 'danger' ? 'ring-2 ring-rose-300 dark:ring-rose-400' : ''
+            }`}
+            title={`${zoneLabels.danger}: ≥ 90%`}
+            aria-label={`${zoneLabels.danger}: ≥ 90%`}
+          />
+        </div>
 
-            {/* Labels Sejajar dengan Segmen Warna */}
-            <div className="w-full flex text-[10px] font-extrabold tracking-wider uppercase pt-0.5 select-none">
-              <div style={{ width: '70%' }} className="text-emerald-600 dark:text-emerald-400 pl-1 text-left">
-                Safe
-              </div>
-              <div style={{ width: '20%' }} className="text-amber-600 dark:text-amber-400 text-center">
-                Warn
-              </div>
-              <div style={{ width: '10%' }} className="text-rose-600 dark:text-rose-400 pr-1 text-right">
-                Danger
-              </div>
-            </div>
+        {/* Labels Sejajar dengan Segmen Warna (Anti-mepet tepi kanan di mobile) */}
+        <div className="w-full flex text-[10px] font-extrabold tracking-wider uppercase pt-0.5 select-none px-1">
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              handleZoneClick('safe');
+            }}
+            style={{ width: '60%' }}
+            className="text-emerald-600 dark:text-emerald-400 text-left pl-0.5 truncate cursor-pointer hover:underline"
+          >
+            {zoneLabels.safe}
+          </div>
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              handleZoneClick('warn');
+            }}
+            style={{ width: '24%' }}
+            className="text-amber-600 dark:text-amber-400 text-center truncate cursor-pointer hover:underline"
+          >
+            {zoneLabels.warn}
+          </div>
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              handleZoneClick('danger');
+            }}
+            style={{ width: '16%' }}
+            className="text-rose-600 dark:text-rose-400 text-right pr-0.5 sm:pr-1 whitespace-nowrap cursor-pointer hover:underline"
+          >
+            {zoneLabels.danger}
           </div>
         </div>
       </div>

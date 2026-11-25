@@ -339,6 +339,9 @@ export const translations = {
     budgetSafe: 'Aman',
     budgetWarning: 'Waspada',
     budgetDanger: 'Bahaya (Over Budget)',
+    budgetZoneSafe: 'AMAN',
+    budgetZoneWarn: 'WASPADA',
+    budgetZoneDanger: 'BAHAYA',
     editBudgetBtn: 'Ubah Batas Anggaran',
     resetBudgetBtn: 'Atur Ulang Anggaran',
     budgetAnalysisTitle: 'Analisis Keselamatan Anggaran',
@@ -723,6 +726,9 @@ export const translations = {
     budgetSafe: 'Safe',
     budgetWarning: 'Caution',
     budgetDanger: 'Danger (Over Budget)',
+    budgetZoneSafe: 'SAFE',
+    budgetZoneWarn: 'WARN',
+    budgetZoneDanger: 'DANGER',
     editBudgetBtn: 'Change Budget Limit',
     resetBudgetBtn: 'Reset Budget',
     budgetAnalysisTitle: 'Budget Safety Analysis',
@@ -1107,6 +1113,9 @@ export const translations = {
     budgetSafe: '正常',
     budgetWarning: '预警',
     budgetDanger: '超支 (Over Budget)',
+    budgetZoneSafe: '安全',
+    budgetZoneWarn: '警告',
+    budgetZoneDanger: '危险',
     editBudgetBtn: '修改预算上限',
     resetBudgetBtn: '重置预算',
     budgetAnalysisTitle: '预算安全分析',
@@ -1202,4 +1211,34 @@ export const translateCategory = (category: string, lang: AppLanguage = 'id'): s
     return matched[lang] || matched.id;
   }
   return category;
+};
+
+export const getBudgetZoneLabels = (lang: AppLanguage = 'id') => {
+  switch (lang) {
+    case 'zh':
+      return { safe: '安全', warn: '警告', danger: '危险' };
+    case 'en':
+      return { safe: 'SAFE', warn: 'WARN', danger: 'DANGER' };
+    case 'id':
+    default:
+      return { safe: 'AMAN', warn: 'WASPADA', danger: 'BAHAYA' };
+  }
+};
+
+export const getBudgetZoneTooltip = (zone: 'safe' | 'warn' | 'danger', lang: AppLanguage = 'id') => {
+  switch (lang) {
+    case 'zh':
+      if (zone === 'safe') return '安全 (< 70%)';
+      if (zone === 'warn') return '警告 (70% - 89%)';
+      return '危险 (≥ 90%)';
+    case 'en':
+      if (zone === 'safe') return 'SAFE (< 70%)';
+      if (zone === 'warn') return 'WARN (70% - 89%)';
+      return 'DANGER (≥ 90%)';
+    case 'id':
+    default:
+      if (zone === 'safe') return 'AMAN (< 70%)';
+      if (zone === 'warn') return 'WASPADA (70% - 89%)';
+      return 'BAHAYA (≥ 90%)';
+  }
 };
