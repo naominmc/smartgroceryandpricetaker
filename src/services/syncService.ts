@@ -418,7 +418,12 @@ class SyncService {
       if (userProfile && JSON.stringify(userProfile) !== JSON.stringify(store.userProfile)) {
         store.updateUserProfile(userProfile);
       }
-      // Note: themeMode is kept strictly manual per device screen preference and not auto-switched by remote sync
+      // Sync Theme Mode across devices
+      if (themeMode && (themeMode === 'light' || themeMode === 'dark')) {
+        if (themeMode !== store.themeMode) {
+          store.setThemeMode(themeMode, true);
+        }
+      }
       if (language && language !== store.language) {
         store.setLanguage(language);
       }

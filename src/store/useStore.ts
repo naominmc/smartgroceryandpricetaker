@@ -3,6 +3,7 @@ import type { CartItem, SupermarketCatalogItem } from '../types';
 import { PAYMENT_ACCOUNTS } from '../data/paymentMethods';
 import { soundService } from '../utils/sound';
 import type { AppLanguage } from '../utils/i18n';
+import { auth, firestore, doc, setDoc } from '../services/firebase';
 
 export type NavigationTab = 'shopping' | 'history' | 'budget' | 'profile';
 export type ThemeMode = 'light' | 'dark';
@@ -29,7 +30,7 @@ interface AppState {
   // Dark / Light Theme Mode
   themeMode: ThemeMode;
   toggleThemeMode: () => void;
-  setThemeMode: (mode: ThemeMode) => void;
+  setThemeMode: (mode: ThemeMode, skipSync?: boolean) => void;
 
   // Language Selection: id | en | zh
   language: AppLanguage;
@@ -161,20 +162,19 @@ export const useStore = create<AppState>((set, get) => {
     themeMode: getInitialTheme(),
     toggleThemeMode: () => {
       const nextMode: ThemeMode = get().themeMode === 'dark' ? 'light' : 'dark';
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('smart_grocery_theme', nextMode);
-        if (nextMode === 'dark') {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
-      }
-      set({ themeMode: nextMode });
-      if (typeof window !== 'undefined' && (window as any).__smart_grocery_notify_sync) {
-        (window as any).__smart_grocery_notify_sync();
-      }
+      get().setThemeMode(nextMode, false);
     },
-    setThemeMode: (mode) => {
+    setThemeMode: (mode: ThemeMode, skipSync: boolean = false) => {
+      if (get().themeMode === mode) {
+        if (typeof window !== 'undefined') {
+          if (mode === 'dark') {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        }
+        return;
+      }
       if (typeof window !== 'undefined') {
         localStorage.setItem('smart_grocery_theme', mode);
         if (mode === 'dark') {
@@ -184,8 +184,17 @@ export const useStore = create<AppState>((set, get) => {
         }
       }
       set({ themeMode: mode });
-      if (typeof window !== 'undefined' && (window as any).__smart_grocery_notify_sync) {
-        (window as any).__smart_grocery_notify_sync();
+
+      if (!skipSync) {
+        if (typeof window !== 'undefined' && (window as any).__smart_grocery_notify_sync) {
+          (window as any).__smart_grocery_notify_sync();
+        }
+        try {
+          const email = auth.currentUser?.email?.toLowerCase();
+          if (email) {
+            setDoc(doc(firestore, 'users', email), { themeMode: mode }, { merge: true }).catch(() => {});
+          }
+        } catch {}
       }
     },
 

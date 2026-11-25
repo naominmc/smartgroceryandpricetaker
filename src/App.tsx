@@ -16,7 +16,7 @@ import { soundService } from './utils/sound';
 import { t } from './utils/i18n';
 import type { ProductCategory } from './types';
 import { Scan, Sun, Moon, Volume2, VolumeX } from 'lucide-react';
-import { auth, onAuthStateChanged, signOut, type User, doc, firestore, getDoc } from './services/firebase';
+import { auth, onAuthStateChanged, signOut, type User, doc, firestore, getDoc, onSnapshot } from './services/firebase';
 
 export const App: React.FC = () => {
   const {
@@ -43,7 +43,14 @@ export const App: React.FC = () => {
 
   // Pantau sesi autentikasi Firebase asli secara realtime (onAuthStateChanged)
   useEffect(() => {
+    let unsubscribeUserDoc: (() => void) | null = null;
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (unsubscribeUserDoc) {
+        unsubscribeUserDoc();
+        unsubscribeUserDoc = null;
+      }
+
       setCurrentUser(user);
       if (user) {
         if (typeof window !== 'undefined') {
@@ -66,6 +73,11 @@ export const App: React.FC = () => {
               avatarUrl: photo || data.avatarUrl,
               isGoogleLinked: isGoogle || !!data.isGoogleLinked,
             });
+            if (data.themeMode === 'light' || data.themeMode === 'dark') {
+              if (useStore.getState().themeMode !== data.themeMode) {
+                useStore.getState().setThemeMode(data.themeMode, true);
+              }
+            }
           } else {
             useStore.getState().updateUserProfile({
               fullName,
@@ -84,6 +96,23 @@ export const App: React.FC = () => {
             isGoogleLinked: isGoogle,
           });
         }
+
+        // Pasang real-time listener pada user doc untuk sinkronisasi preferensi tema lintas perangkat
+        try {
+          unsubscribeUserDoc = onSnapshot(doc(firestore, 'users', email), (docSnap) => {
+            if (docSnap.exists()) {
+              const udata = docSnap.data();
+              if (udata?.themeMode === 'light' || udata?.themeMode === 'dark') {
+                if (useStore.getState().themeMode !== udata.themeMode) {
+                  useStore.getState().setThemeMode(udata.themeMode, true);
+                }
+              }
+            }
+          });
+        } catch (e) {
+          console.warn('User doc realtime listener note:', e);
+        }
+
         syncService.reconnect();
       } else {
         if (typeof window !== 'undefined') {
@@ -93,7 +122,12 @@ export const App: React.FC = () => {
       setIsAuthChecking(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      if (unsubscribeUserDoc) {
+        unsubscribeUserDoc();
+      }
+    };
   }, []);
 
   // Reset posisi scroll ke paling atas setiap kali berpindah section (berlaku untuk semua section)

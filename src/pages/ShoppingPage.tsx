@@ -431,31 +431,24 @@ export const ShoppingPage: React.FC = () => {
       {/* PWA Installation Prompt if applicable */}
       <PWAInstallBanner />
 
-      {/* Top Header: Bulan dan Tahun (Tanpa Teks "Belanja Bulanan"), Sejajar dengan Lokasi & Kalender */}
-      <div className="pt-1 flex items-center justify-between gap-2 sm:gap-2.5 max-w-full min-w-0">
-        {/* Kiri: Menampilkan Bulan dan Tahun warna hitam dengan ukuran font kompak */}
-        <div className="min-w-0 flex-shrink-0">
-          <span className="text-xs text-text-main dark:text-slate-100 font-bold truncate block">
-            {formatPeriodLabel(currentPeriod, language)}
-          </span>
-        </div>
-
-        {/* Kanan: Lokasi Supermarket & Ikon Kalender */}
-        <div className="flex items-center gap-1.5 min-w-0 flex-1 justify-end">
-          <button
-            type="button"
-            onClick={() => setIsLocationModalOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-teal-50 dark:bg-teal-950/80 border border-teal-200/80 dark:border-teal-800/80 text-[#0f766e] dark:text-teal-400 hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-colors shadow-2xs cursor-pointer max-w-[210px] sm:max-w-[280px] min-h-[36px] min-w-0"
-            title="Klik untuk memilih supermarket (Jabodetabek)"
-          >
+      {/* Top Header: Lokasi Supermarket & Ikon Kalender (Tanpa Teks Bulan/Tahun) */}
+      <div className="pt-1 flex items-center justify-end gap-1.5 max-w-full min-w-0">
+        <button
+          type="button"
+          onClick={() => setIsLocationModalOpen(true)}
+          className="flex items-center justify-between gap-1.5 px-3 py-1.5 rounded-xl bg-teal-50 dark:bg-teal-950/80 border border-teal-200/80 dark:border-teal-800/80 text-[#0f766e] dark:text-teal-400 hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-colors shadow-2xs cursor-pointer min-w-[190px] sm:min-w-[230px] max-w-[calc(100%-48px)] min-h-[36px]"
+          title="Klik untuk memilih supermarket (Jabodetabek)"
+        >
+          <div className="flex items-center gap-1.5 min-w-0 flex-1">
             <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-[#0f766e] dark:text-teal-400" />
             <span className="text-[11px] font-extrabold uppercase truncate leading-tight">
               {sessionLocation || t('selectSupermarket', language)}
             </span>
-            <ChevronRight className="w-3 h-3 flex-shrink-0 text-teal-600 dark:text-teal-400" />
-          </button>
+          </div>
+          <ChevronDown className="w-3.5 h-3.5 flex-shrink-0 text-teal-600 dark:text-teal-400 ml-1" />
+        </button>
 
-          {/* Ikon Kalender Saja (Buka picker saat ditekan, tanpa teks angka tanggal terbuka) */}
+        {/* Ikon Kalender Saja (Buka picker saat ditekan, tanpa teks angka tanggal terbuka) */}
           <div
             onClick={(e) => {
               const input = e.currentTarget.querySelector('input') as HTMLInputElement | null;
