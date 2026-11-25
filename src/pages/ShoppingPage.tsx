@@ -38,6 +38,28 @@ import { formatPeriodLabel, getCurrentMonthPeriod } from '../utils/priceComparis
 import { t } from '../utils/i18n';
 import type { CartItem, ProductCategory } from '../types';
 
+const formatShortDate = (dateStr?: string): string => {
+  if (!dateStr) {
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = String(now.getFullYear()).slice(-2);
+    return `${day}/${month}/${year}`;
+  }
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    const [year, month, day] = parts;
+    const shortYear = year.slice(-2);
+    return `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${shortYear}`;
+  }
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = String(d.getFullYear()).slice(-2);
+  return `${day}/${month}/${year}`;
+};
+
 export const ShoppingPage: React.FC = () => {
   const {
     isAddItemSheetOpen,
@@ -482,24 +504,24 @@ export const ShoppingPage: React.FC = () => {
       {/* PWA Installation Prompt if applicable */}
       <PWAInstallBanner />
 
-      {/* Top Header: Lokasi Supermarket & Ikon Kalender (Rata Kiri, Tanpa Ruang Kosong di Kiri) */}
+      {/* Top Header: Lokasi Supermarket & Tombol Kalender (Warna Seragam Netral & Tanggal DD/MM/YY) */}
       <div className="pt-1 flex items-center justify-start gap-1.5 max-w-full min-w-0">
         <button
           type="button"
           onClick={() => setIsLocationModalOpen(true)}
-          className="flex items-center justify-between gap-1.5 px-3 py-1.5 rounded-xl bg-teal-50 dark:bg-teal-950/80 border border-teal-200/80 dark:border-teal-800/80 text-[#0f766e] dark:text-teal-400 hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-colors shadow-2xs cursor-pointer min-w-[220px] sm:min-w-[240px] max-w-[calc(100%-48px)] min-h-[36px]"
+          className="flex items-center justify-between gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 transition-colors shadow-xs cursor-pointer min-w-[190px] sm:min-w-[240px] max-w-[calc(100%-115px)] min-h-[36px]"
           title="Klik untuk memilih supermarket (Jabodetabek)"
         >
           <div className="flex items-center gap-1.5 min-w-0 flex-1">
-            <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-[#0f766e] dark:text-teal-400" />
-            <span className="text-[11px] font-extrabold uppercase truncate leading-tight">
+            <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-primary dark:text-blue-400" />
+            <span className="text-[11px] font-extrabold uppercase truncate leading-tight text-text-main dark:text-slate-100">
               {sessionLocation || t('selectSupermarket', language)}
             </span>
           </div>
-          <ChevronDown className="w-3.5 h-3.5 flex-shrink-0 text-teal-600 dark:text-teal-400 ml-1" />
+          <ChevronDown className="w-3.5 h-3.5 flex-shrink-0 text-gray-500 dark:text-slate-400 ml-1" />
         </button>
 
-        {/* Ikon Kalender Saja (Buka picker saat ditekan, tanpa teks angka tanggal terbuka) */}
+        {/* Tombol Kalender dengan Tanggal DD/MM/YY */}
         <div
           onClick={(e) => {
             const input = e.currentTarget.querySelector('input') as HTMLInputElement | null;
@@ -509,10 +531,13 @@ export const ShoppingPage: React.FC = () => {
               } catch {}
             }
           }}
-          className="w-9 h-9 flex items-center justify-center bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-xl border border-gray-200 dark:border-slate-700 cursor-pointer shadow-xs relative transition-colors flex-shrink-0"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-700 cursor-pointer shadow-xs relative transition-colors min-h-[36px] flex-shrink-0"
           title="Pilih tanggal belanja"
         >
-          <Calendar className="w-4 h-4 text-primary dark:text-blue-400 pointer-events-none flex-shrink-0" />
+          <Calendar className="w-3.5 h-3.5 text-primary dark:text-blue-400 pointer-events-none flex-shrink-0" />
+          <span className="text-[11px] font-bold text-text-main dark:text-slate-100 font-mono tracking-tight pointer-events-none select-none">
+            {formatShortDate(sessionDate)}
+          </span>
           <input
             type="date"
             value={sessionDate}
