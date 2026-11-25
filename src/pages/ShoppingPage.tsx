@@ -504,12 +504,12 @@ export const ShoppingPage: React.FC = () => {
       {/* PWA Installation Prompt if applicable */}
       <PWAInstallBanner />
 
-      {/* Top Header: Lokasi Supermarket & Tombol Kalender (Warna Seragam Netral & Tanggal DD/MM/YY) */}
-      <div className="pt-1 flex items-center justify-start gap-1.5 max-w-full min-w-0">
+      {/* Top Header: Lokasi Supermarket & Tombol Kalender (Sejajar Rata Tepi, Seragam & Proporsional) */}
+      <div className="pt-1 flex items-center justify-between gap-2 sm:gap-2.5 w-full max-w-full min-w-0">
         <button
           type="button"
           onClick={() => setIsLocationModalOpen(true)}
-          className="flex items-center justify-between gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 transition-colors shadow-xs cursor-pointer min-w-[190px] sm:min-w-[240px] max-w-[calc(100%-115px)] min-h-[36px]"
+          className="flex items-center justify-between gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 transition-colors shadow-xs cursor-pointer flex-1 min-w-[200px] sm:min-w-[280px] min-h-[36px]"
           title="Klik untuk memilih supermarket (Jabodetabek)"
         >
           <div className="flex items-center gap-1.5 min-w-0 flex-1">
@@ -521,7 +521,7 @@ export const ShoppingPage: React.FC = () => {
           <ChevronDown className="w-3.5 h-3.5 flex-shrink-0 text-gray-500 dark:text-slate-400 ml-1" />
         </button>
 
-        {/* Tombol Kalender dengan Tanggal DD/MM/YY */}
+        {/* Tombol Kalender dengan Tanggal DD/MM/YY (Mepet ke Kanan) */}
         <div
           onClick={(e) => {
             const input = e.currentTarget.querySelector('input') as HTMLInputElement | null;
@@ -531,11 +531,11 @@ export const ShoppingPage: React.FC = () => {
               } catch {}
             }
           }}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-700 cursor-pointer shadow-xs relative transition-colors min-h-[36px] flex-shrink-0"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-700 cursor-pointer shadow-xs relative transition-colors min-h-[36px] flex-shrink-0 ml-auto"
           title="Pilih tanggal belanja"
         >
           <Calendar className="w-3.5 h-3.5 text-primary dark:text-blue-400 pointer-events-none flex-shrink-0" />
-          <span className="text-[11px] font-bold text-text-main dark:text-slate-100 font-mono tracking-tight pointer-events-none select-none">
+          <span className="text-[11px] font-extrabold uppercase leading-tight text-text-main dark:text-slate-100 pointer-events-none select-none">
             {formatShortDate(sessionDate)}
           </span>
           <input
