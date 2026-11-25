@@ -505,7 +505,7 @@ export const ShoppingPage: React.FC = () => {
       <PWAInstallBanner />
 
       {/* Top Header: Lokasi Supermarket & Tombol Kalender (Sejajar Rata Tepi, Seragam & Proporsional) */}
-      <div className="pt-1 flex items-center justify-between gap-2 sm:gap-2.5 w-full max-w-full min-w-0">
+      <div className="pt-0.5 flex items-center justify-between gap-2 sm:gap-2.5 w-full max-w-full min-w-0">
         <button
           type="button"
           onClick={() => setIsLocationModalOpen(true)}
@@ -600,7 +600,7 @@ export const ShoppingPage: React.FC = () => {
       )}
 
       {/* Sticky Floating Container: Budget Safety Card & Quick Checkout Bar */}
-      <div className="sticky top-0 z-20 space-y-2 pt-2.5 pb-2 bg-white/98 dark:bg-slate-900/98 backdrop-blur-md -mx-4 px-4 shadow-sm border-b border-gray-100 dark:border-slate-800 transition-all duration-200 w-[calc(100%+2rem)] box-border">
+      <div className="sticky top-0 z-20 space-y-2 !mt-1.5 pt-1 pb-2 bg-white/98 dark:bg-slate-900/98 backdrop-blur-md -mx-4 px-4 shadow-sm border-b border-gray-100 dark:border-slate-800 transition-all duration-200 w-[calc(100%+2rem)] box-border">
         {isMinimized ? (
           /* Minimized Compact Floating Bar (~48px tinggi, seluruh kotak bisa diklik untuk buka detail) */
           <div
