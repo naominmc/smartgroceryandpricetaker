@@ -466,9 +466,9 @@ export const ShoppingPage: React.FC = () => {
               value={sessionDate}
               onChange={(e) => setSessionDate(e.target.value)}
               className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+              aria-label="Pilih tanggal belanja"
             />
           </div>
-        </div>
       </div>
 
       {/* Success / Error / Budget Alerts */}
