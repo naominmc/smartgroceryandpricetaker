@@ -13,7 +13,6 @@ import {
   Check,
   TrendingDown,
   Scan,
-  ChevronRight,
   ChevronDown,
   ChevronUp,
   ShieldCheck,
@@ -436,7 +435,7 @@ export const ShoppingPage: React.FC = () => {
         <button
           type="button"
           onClick={() => setIsLocationModalOpen(true)}
-          className="flex items-center justify-between gap-1.5 px-3 py-1.5 rounded-xl bg-teal-50 dark:bg-teal-950/80 border border-teal-200/80 dark:border-teal-800/80 text-[#0f766e] dark:text-teal-400 hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-colors shadow-2xs cursor-pointer min-w-[190px] sm:min-w-[230px] max-w-[calc(100%-48px)] min-h-[36px]"
+          className="flex items-center justify-between gap-1.5 px-3 py-1.5 rounded-xl bg-teal-50 dark:bg-teal-950/80 border border-teal-200/80 dark:border-teal-800/80 text-[#0f766e] dark:text-teal-400 hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-colors shadow-2xs cursor-pointer min-w-[220px] sm:min-w-[240px] max-w-[calc(100%-48px)] min-h-[36px]"
           title="Klik untuk memilih supermarket (Jabodetabek)"
         >
           <div className="flex items-center gap-1.5 min-w-0 flex-1">

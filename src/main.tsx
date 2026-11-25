@@ -10,6 +10,10 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       registration.update();
     }
   });
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    window.location.reload();
+  });
 }
 
 createRoot(document.getElementById('root')!).render(
